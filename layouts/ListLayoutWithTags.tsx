@@ -87,7 +87,7 @@ export default function ListLayoutWithTags({
             {title}
           </h1>
         </div>
-        <div className="flex sm:space-x-8">
+        <div className="flex sm:space-x-14">
           <div className="hidden h-full max-h-screen max-w-[200px] min-w-[200px] flex-wrap overflow-auto rounded-sm bg-gray-50 pt-5 shadow-md sm:flex dark:bg-gray-900/70 dark:shadow-gray-800/40">
             <div className="px-6 py-4">
               {pathname.startsWith('/blog') ? (
@@ -151,7 +151,7 @@ export default function ListLayoutWithTags({
                             ))}
                           </div>
                         </div>
-                        <div className="prose max-w-none text-gray-500 dark:text-gray-400">
+                        <div className="prose prose-lg max-w-none text-gray-500 dark:text-gray-400">
                           {summary}
                         </div>
                       </div>

@@ -141,7 +141,7 @@ export default function ListLayout({
                         ))}
                       </div>
                     </div>
-                    <div className="prose max-w-none text-gray-500 dark:text-gray-400">
+                    <div className="prose prose-lg max-w-none text-gray-500 dark:text-gray-400">
                       {summary}
                     </div>
                   </div>
