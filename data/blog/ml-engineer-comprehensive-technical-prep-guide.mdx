@@ -1,0 +1,1404 @@
+---
+title: 'ML Engineer: Comprehensive Technical Prep Guide'
+date: '2026-06-07'
+tags: ['python', 'pytorch', 'numpy', 'distributed-training', 'mlops', 'guide']
+draft: false
+summary: 'A comprehensive guide covering Python for ML infrastructure, NumPy, tensors, PyTorch core, data loading, distributed training, scientific data formats, MLflow, checkpointing, and common coding patterns.'
+---
+
+&nbsp;
+
+**Table of Contents**
+
+1. [Python for ML Infrastructure](#1-python-for-ml-infrastructure)
+2. [NumPy — The Foundation Under Everything](#2-numpy--the-foundation-under-everything)
+3. [Tensors — What They Actually Are](#3-tensors--what-they-actually-are)
+4. [PyTorch Core](#4-pytorch-core)
+5. [Data Loading in PyTorch](#5-data-loading-in-pytorch)
+6. [Distributed ML at Terabyte Scale](#6-distributed-ml-at-terabyte-scale)
+7. [Scientific Data Formats (Zarr, HDF5, TensorStore)](#7-scientific-data-formats)
+8. [MLflow & Checkpointing](#8-mlflow--checkpointing)
+9. [Common Coding Patterns](#9-common-coding-patterns)
+
+
+## 1. PYTHON FOR ML INFRASTRUCTURE
+
+### Why This Matters
+
+Writing Python that other people can extend without breaking is the foundation of ML infrastructure. Your code gets new requirements constantly, and bad structure collapses.
+
+### Dataclasses — Your Config Object
+
+A dataclass is a lightweight class that auto-generates `__init__`, `__repr__`, and `__eq__` from field definitions.
+
+**Why use them instead of dicts?** Dicts are flexible but have no structure — you can typo a key and get `None` silently. Dataclasses give you autocomplete, type checking, and clear documentation of what fields exist.
+
+```python
+from dataclasses import dataclass, field, asdict
+from typing import Optional, List
+from pathlib import Path
+
+@dataclass
+class TrainingConfig:
+    model_name: str = "resnet50"
+    learning_rate: float = 1e-4
+    batch_size: int = 32
+    num_epochs: int = 100
+    checkpoint_dir: Path = Path("./checkpoints")
+    gpus: List[int] = field(default_factory=lambda: [0, 1, 2, 3])
+    mixed_precision: bool = True
+    
+    # Easy to add new fields later — nothing breaks
+    wandb_project: Optional[str] = None
+
+# Create with defaults or overrides
+config = TrainingConfig(learning_rate=3e-4)
+config.checkpoint_dir.mkdir(parents=True, exist_ok=True)
+
+# Convert to dict (for serialization, logging, etc.)
+as_dict = asdict(config)
+```
+
+**Key concept:** When a new requirement comes in (e.g., "now also track the dataset version"), you just add a field to the dataclass. Every existing call site still works because of defaults.
+
+
+### Generators — Processing Data You Can't Fit in Memory
+
+A generator is a function that `yield`s values one at a time instead of returning a complete list. The critical difference: a list holds everything in memory simultaneously, but a generator only holds the current item.
+
+**Why this matters:** When working with large-scale datasets, you cannot load everything into RAM. Generators let you process data item-by-item.
+
+```python
+# BAD: loads entire file into memory
+def read_all_lines(path):
+    with open(path) as f:
+        return f.readlines()  # all lines in memory at once
+
+# GOOD: yields one line at a time
+def read_lines(path):
+    with open(path) as f:
+        for line in f:
+            yield line.strip()
+
+# Process without loading entire file
+for line in read_lines("huge_dataset.txt"):
+    process(line)
+
+# Generic batching utility — works on any iterable
+from itertools import islice
+
+def batched(iterable, batch_size):
+    """Yield successive batches from an iterable."""
+    it = iter(iterable)
+    while True:
+        batch = list(islice(it, batch_size))
+        if not batch:
+            break
+        yield batch
+
+# Now you can batch ANYTHING — files, database rows, API results
+for batch in batched(read_lines("data.txt"), batch_size=1000):
+    process_batch(batch)  # list of 1000 lines
+```
+
+**Generator expression** (like list comprehension but lazy):
+```python
+# List comprehension — builds the entire list in memory
+squares = [x**2 for x in range(10_000_000)]  # ~80MB in memory
+
+# Generator expression — computes on demand
+squares = (x**2 for x in range(10_000_000))  # almost no memory
+total = sum(squares)  # processes one at a time
+```
+
+
+### Context Managers — Resource Cleanup
+
+A context manager is the `with` block pattern. It guarantees cleanup happens even if an error occurs. You'll use this for files, GPU memory, database connections, timers.
+
+```python
+from contextlib import contextmanager
+import time
+
+@contextmanager
+def timer(label=""):
+    """Time a code block. Works even if the code throws an error."""
+    start = time.perf_counter()
+    try:
+        yield  # code inside the 'with' block runs here
+    finally:
+        elapsed = time.perf_counter() - start
+        print(f"{label}: {elapsed:.3f}s")
+
+# Usage
+with timer("data loading"):
+    data = load_dataset()
+# prints "data loading: 2.341s"
+```
+
+
+### Decorators — Wrapping Functions
+
+A decorator takes a function and returns a modified version. Common uses: retry logic, timing, logging, caching.
+
+```python
+from functools import wraps
+
+def retry(max_attempts=3, delay=1.0):
+    """Retry a function if it fails. Useful for flaky I/O."""
+    def decorator(fn):
+        @wraps(fn)  # preserves original function's name/docstring
+        def wrapper(*args, **kwargs):
+            for attempt in range(max_attempts):
+                try:
+                    return fn(*args, **kwargs)
+                except Exception as e:
+                    if attempt == max_attempts - 1:
+                        raise
+                    time.sleep(delay * (2 ** attempt))  # exponential backoff
+        return wrapper
+    return decorator
+
+@retry(max_attempts=3)
+def save_checkpoint(model, path):
+    torch.save(model.state_dict(), path)
+```
+
+**How decorators work conceptually:** `@retry(max_attempts=3)` on `save_checkpoint` is equivalent to `save_checkpoint = retry(max_attempts=3)(save_checkpoint)`. The original function gets replaced by the wrapper.
+
+
+### Pathlib — Modern File Handling
+
+```python
+from pathlib import Path
+
+root = Path("/data/experiments")
+model_dir = root / "models" / "resnet"     # joins paths with /
+model_dir.mkdir(parents=True, exist_ok=True)
+
+# Find files
+checkpoints = sorted(model_dir.glob("*.pt"))       # non-recursive
+all_zarr    = list(root.rglob("*.zarr"))            # recursive
+
+# File info
+for p in checkpoints:
+    print(f"{p.stem}: {p.stat().st_size / 1e6:.1f} MB")
+    # p.stem = filename without extension
+    # p.suffix = ".pt"
+    # p.name = "model_v3.pt"
+    # p.parent = the directory containing it
+```
+
+### Type Hints — For Clean Interfaces
+
+Type hints don't enforce types at runtime — they're documentation that tools can check.
+
+```python
+from typing import Dict, List, Optional, Tuple, Union, Callable
+
+def load_data(
+    path: str,
+    batch_size: int = 32,
+    transform: Optional[Callable] = None,
+) -> List[Dict[str, torch.Tensor]]:
+    ...
+```
+
+
+## 2. NUMPY — THE FOUNDATION UNDER EVERYTHING
+
+### What NumPy Actually Is
+
+NumPy provides N-dimensional arrays (ndarrays) stored as contiguous blocks of typed memory. This is fundamentally different from Python lists:
+
+- **Python list**: Array of pointers to Python objects scattered in memory. Each element has type info, reference count, value. A list of 1 million ints uses ~28MB.
+- **NumPy array**: Contiguous block of raw numbers. A million int32s uses exactly 4MB. No per-element overhead.
+
+This is why NumPy operations are 10-100x faster than Python loops — they operate on compact memory blocks using optimized C code.
+
+### Array Creation
+
+```python
+import numpy as np
+
+# From Python data
+a = np.array([1, 2, 3])                        # 1D
+b = np.array([[1, 2], [3, 4]])                  # 2D
+
+# Filled arrays
+np.zeros((3, 4))                                # all zeros
+np.ones((2, 3, 4), dtype=np.float32)            # all ones, specific type
+np.full((3, 3), fill_value=7.0)                 # all sevens
+np.empty((5, 5))                                # uninitialized (fast, garbage values)
+np.eye(4)                                       # 4x4 identity matrix
+
+# Ranges
+np.arange(0, 10, 0.5)                           # [0, 0.5, 1, ..., 9.5]
+np.linspace(0, 1, num=100)                      # 100 evenly spaced points
+
+# Random (modern API)
+rng = np.random.default_rng(seed=42)
+rng.standard_normal((3, 4))                     # normal distribution
+rng.uniform(0, 1, size=(100,))                  # uniform [0, 1)
+rng.integers(0, 10, size=(5, 5))                # random ints
+```
+
+
+### Key Array Attributes
+
+```python
+arr = np.zeros((2, 3, 4), dtype=np.float32)
+
+arr.shape      # (2, 3, 4) — dimensions
+arr.ndim       # 3 — number of dimensions
+arr.dtype      # float32 — data type of each element
+arr.size       # 24 — total number of elements
+arr.nbytes     # 96 — total bytes (24 elements × 4 bytes each)
+arr.strides    # (48, 16, 4) — bytes to jump per dimension
+```
+
+**What strides mean:** To get to the next element along dimension 0, NumPy jumps 48 bytes (= 3×4×4). Along dimension 1, it jumps 16 bytes (= 4×4). Along dimension 2, it jumps 4 bytes (= 1 float32). This is how NumPy maps N-dimensional indices to flat memory.
+
+
+### Views vs. Copies — Critical Concept
+
+**A view shares memory with the original array.** Modifying the view modifies the original. This is fast (no data copy) but can cause subtle bugs.
+
+**A copy has its own memory.** Independent of the original.
+
+```python
+a = np.arange(10)
+
+# VIEWS (share memory, modifications propagate)
+b = a[2:5]           # slicing creates a view
+b[0] = 99            # a[2] is now 99 too!
+c = a.reshape(2, 5)  # reshape usually creates a view
+d = a.T              # transpose of 2D array is a view
+
+# COPIES (independent memory)
+e = a[2:5].copy()    # explicit copy
+f = a[[0, 3, 7]]     # fancy indexing always copies
+g = a[a > 5]         # boolean indexing always copies
+```
+
+**How to check:** `np.shares_memory(a, b)` returns True if they share memory.
+
+
+### Reshaping
+
+```python
+arr = np.arange(24)
+
+arr.reshape(2, 3, 4)     # new shape — must preserve total elements
+arr.reshape(6, -1)        # -1 means "infer this dimension" → (6, 4)
+arr.reshape(-1)           # flatten to 1D
+
+# Transpose
+m = np.zeros((3, 4))
+m.T                       # (4, 3) — transpose (view, no copy)
+
+# For 3D+ arrays, specify axis order
+t = np.zeros((2, 3, 4))
+t.transpose(0, 2, 1)      # (2, 4, 3) — swap last two dims
+
+# Add/remove dimensions
+a = np.array([1, 2, 3])   # shape (3,)
+a[np.newaxis, :]           # shape (1, 3) — add batch dimension
+a[:, np.newaxis]           # shape (3, 1) — add feature dimension
+np.expand_dims(a, axis=0)  # same as newaxis
+
+b = np.zeros((1, 3, 1, 4))
+np.squeeze(b)              # removes all size-1 dims → (3, 4)
+np.squeeze(b, axis=0)      # remove specific dim → (3, 1, 4)
+
+# Concatenate vs Stack
+x = np.ones((3, 4))
+y = np.zeros((3, 4))
+np.concatenate([x, y], axis=0)  # (6, 4) — join along existing axis
+np.stack([x, y], axis=0)        # (2, 3, 4) — creates NEW axis
+```
+
+
+### Broadcasting — How NumPy Handles Mismatched Shapes
+
+Broadcasting is NumPy's way of performing operations on arrays of different shapes without explicitly copying data. This is not just a convenience — it's critical for writing efficient, vectorized code.
+
+**The rules (applied from the trailing dimension):**
+1. If arrays have different numbers of dimensions, the smaller one is padded with 1s on the left.
+2. Dimensions are compatible if they're equal OR one of them is 1.
+3. The output shape is the maximum size along each dimension.
+
+```python
+# Example: Normalize data (subtract mean per feature)
+data = np.random.randn(1000, 64)   # 1000 samples, 64 features
+mean = data.mean(axis=0)            # shape (64,)
+
+# Broadcasting: (1000, 64) - (64,) → (64,) becomes (1, 64) → (1000, 64)
+centered = data - mean  # works! each row gets the mean subtracted
+
+# Example: Outer product
+col = np.array([[1], [2], [3]])     # shape (3, 1)
+row = np.array([10, 20, 30])        # shape (3,)
+# Broadcasting: (3, 1) * (3,) → (3, 1) * (1, 3) → (3, 3)
+outer = col * row
+
+# COMMON GOTCHA — shapes that DON'T broadcast:
+# (4, 3) + (4,)  → ERROR! trailing dims 3 vs 4 don't match
+# Fix: reshape (4,) to (4, 1)
+```
+
+
+### Indexing — The Complete Picture
+
+```python
+arr = np.arange(20).reshape(4, 5)
+# [[ 0,  1,  2,  3,  4],
+#  [ 5,  6,  7,  8,  9],
+#  [10, 11, 12, 13, 14],
+#  [15, 16, 17, 18, 19]]
+
+# Basic slicing (returns VIEWS)
+arr[1:3]             # rows 1-2
+arr[:, 2:]           # all rows, columns 2 onward
+arr[::2]             # every other row (step=2)
+arr[::-1]            # reversed rows
+
+# Boolean indexing (returns COPIES)
+mask = arr > 10
+arr[mask]             # flat array of elements where mask is True
+arr[arr % 3 == 0]     # elements divisible by 3
+
+# Fancy indexing (returns COPIES)
+arr[[0, 2, 3]]        # select rows 0, 2, 3
+arr[[0, 2], [1, 3]]   # elements at (0,1) and (2,3) → array([1, 13])
+
+# np.where — conditional selection
+np.where(arr > 10, arr, 0)  # keep values > 10, replace rest with 0
+```
+
+
+### Vectorized Operations — Avoid Python Loops
+
+The key performance principle: **let NumPy do the looping in C, not in Python.**
+
+```python
+# SLOW — Python loop
+def normalize_slow(data):
+    result = np.empty_like(data)
+    for i in range(len(data)):
+        result[i] = (data[i] - data.mean()) / data.std()
+    return result
+
+# FAST — vectorized (100x faster)
+def normalize_fast(data):
+    return (data - data.mean()) / data.std()
+
+# Einstein summation — powerful shorthand for complex operations
+A = np.random.randn(3, 4)
+B = np.random.randn(4, 5)
+
+np.einsum('ij,jk->ik', A, B)     # matrix multiply (same as A @ B)
+np.einsum('ii->', A[:3, :3])      # trace (sum of diagonal)
+np.einsum('ij->j', A)             # sum over rows (same as A.sum(axis=0))
+
+# Batch operations
+batch_A = np.random.randn(8, 3, 4)
+batch_B = np.random.randn(8, 4, 5)
+np.einsum('bij,bjk->bik', batch_A, batch_B)  # batch matmul
+```
+
+
+
+## 3. TENSORS — WHAT THEY ACTUALLY ARE
+
+### The Concept
+
+A tensor is a multi-dimensional array of numbers. That's it. The word comes from mathematics/physics, but in ML it just means "N-dimensional array."
+
+- **Scalar** = 0D tensor (a single number): `42`
+- **Vector** = 1D tensor (a list of numbers): `[1, 2, 3]`
+- **Matrix** = 2D tensor (a grid of numbers): `[[1, 2], [3, 4]]`
+- **3D tensor** = a "stack of matrices" (e.g., an RGB image: height × width × 3 channels)
+- **4D tensor** = a batch of 3D tensors (e.g., a batch of images: batch × channels × height × width)
+
+### Memory Layout — How Tensors Are Actually Stored
+
+No matter how many dimensions a tensor has, it's stored as a **flat, contiguous 1D block of memory**. The shape and strides are just metadata that tell you how to interpret that flat memory as a multi-dimensional structure.
+
+```
+Tensor: [[1, 2, 3],
+         [4, 5, 6]]
+
+Shape: (2, 3)
+In memory: [1, 2, 3, 4, 5, 6]  ← just a flat array
+
+Strides: (3, 1)
+  - To move to the next row: skip 3 elements
+  - To move to the next column: skip 1 element
+
+To access element [1, 2]:
+  offset = 1×3 + 2×1 = 5  →  memory[5] = 6  ✓
+```
+
+**Why strides matter:** When you transpose a matrix, PyTorch does NOT copy the data. It just swaps the strides.
+
+```
+Original:      Transposed (no data copy!):
+Shape (2, 3)   Shape (3, 2)
+Stride (3, 1)  Stride (1, 3)
+Memory: [1, 2, 3, 4, 5, 6]  ← SAME memory for both!
+```
+
+The transposed tensor reads the same memory in a different order. Element `[0, 1]` of the transpose: offset = 0×1 + 1×3 = 3 → memory[3] = 4. That's row 1, col 0 of the original. Correct!
+
+**Contiguous vs Non-contiguous:** A tensor is "contiguous" when its elements are laid out in memory in the standard row-major order (no gaps, no weird strides). After a transpose, the tensor is NON-contiguous — the strides don't match the standard layout.
+
+```python
+t = torch.tensor([[1, 2, 3], [4, 5, 6]])
+t.is_contiguous()       # True — standard layout
+t.stride()              # (3, 1)
+
+t2 = t.T
+t2.is_contiguous()      # False — transposed, strides are swapped
+t2.stride()             # (1, 3)
+
+# view() requires contiguous memory — it will fail on t2
+# t2.view(-1)  → RuntimeError!
+
+# Solutions:
+t2.contiguous().view(-1)  # make a contiguous copy first
+t2.reshape(-1)            # reshape handles non-contiguous automatically
+```
+
+**Key insight for the interview:** `.view()` never copies data (fast, but requires contiguous). `.reshape()` may copy if needed (always works). `.contiguous()` creates a copy only if the tensor isn't already contiguous.
+
+
+### Data Types (dtypes)
+
+```
+torch.float32  (torch.float)   — default. 4 bytes per element.
+torch.float64  (torch.double)  — double precision. 8 bytes. Rarely needed in ML.
+torch.float16  (torch.half)    — half precision. 2 bytes. Faster but overflows easily.
+torch.bfloat16                 — "brain" float. 2 bytes. Same RANGE as float32 
+                                  but less precision. PREFERRED for training large models.
+torch.int32    (torch.int)     — 32-bit integers
+torch.int64    (torch.long)    — 64-bit integers. Used for indices/labels.
+torch.bool                     — True/False
+```
+
+**Why bfloat16 matters:** When training billion-parameter models on large GPU clusters, bfloat16 cuts memory in half with minimal accuracy loss. The "brain" in bfloat16 comes from Google Brain, which designed it specifically for ML training.
+
+
+
+## 4. PYTORCH CORE
+
+### Tensor Creation
+
+```python
+import torch
+
+# From data
+t = torch.tensor([1.0, 2.0, 3.0])
+t = torch.tensor([[1, 2], [3, 4]], dtype=torch.float32)
+
+# Filled tensors
+torch.zeros(3, 4)
+torch.ones(2, 3)
+torch.full((3, 3), fill_value=3.14)
+torch.empty(5, 5)          # uninitialized (fast, garbage values)
+torch.eye(4)               # identity matrix
+
+# Ranges
+torch.arange(0, 10, 2)     # [0, 2, 4, 6, 8]
+torch.linspace(0, 1, 50)   # 50 points from 0 to 1
+
+# Random
+torch.rand(3, 4)            # uniform [0, 1)
+torch.randn(3, 4)           # normal distribution (mean=0, std=1)
+torch.randint(0, 10, (3, 4)) # random integers
+
+# Like another tensor (same shape, dtype, device)
+x = torch.randn(3, 4, device='cuda')
+y = torch.zeros_like(x)    # same shape/dtype/device as x
+```
+
+
+### NumPy ↔ PyTorch Conversion
+
+**Critical concept: `from_numpy()` shares memory with the original array.** Changes to one affect the other. This is fast but can cause bugs.
+
+```python
+import numpy as np
+
+# NumPy → PyTorch (SHARES memory)
+np_arr = np.array([1.0, 2.0, 3.0])
+t = torch.from_numpy(np_arr)
+t[0] = 99
+print(np_arr[0])   # 99.0 — both changed!
+
+# PyTorch → NumPy
+t = torch.randn(3, 4)
+n = t.numpy()           # shares memory (CPU tensor only)
+n = t.detach().cpu().numpy()  # safe way for GPU tensors
+# .detach() = remove from computation graph
+# .cpu() = move to CPU
+# .numpy() = convert to numpy
+```
+
+
+### Device Management (CPU ↔ GPU)
+
+```python
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# Move existing tensor
+t = torch.randn(3, 4)
+t_gpu = t.to(device)          # generic (works for any device)
+t_gpu = t.cuda()               # shorthand for GPU
+t_cpu = t_gpu.cpu()            # back to CPU
+
+# Create directly on GPU
+t = torch.randn(3, 4, device=device)
+
+# Pin memory (important for DataLoader)
+# "Pinned" memory = page-locked RAM that GPU can access directly
+# Makes CPU→GPU transfer faster
+t = torch.randn(3, 4).pin_memory()
+t_gpu = t.to(device, non_blocking=True)  # async transfer
+```
+
+**Why pin_memory matters:** Normal CPU memory can be swapped to disk by the OS. Pinned memory is locked in RAM, so the GPU can DMA (direct memory access) from it without waiting for the OS. This speeds up data transfer significantly during training.
+
+
+### Shape Operations
+
+```python
+t = torch.arange(24)
+
+# Reshape
+t.view(2, 3, 4)       # requires contiguous, never copies
+t.reshape(2, 3, 4)    # always works, may copy
+t.view(-1, 4)          # infer first dim → (6, 4)
+
+# Transpose / Permute
+m = torch.randn(3, 4)
+m.T                    # transpose 2D (same as m.t())
+t3d = torch.randn(2, 3, 4)
+t3d.permute(0, 2, 1)   # (2, 4, 3) — reorder dimensions
+
+# Squeeze / Unsqueeze
+t = torch.randn(1, 3, 1, 4)
+t.squeeze()             # (3, 4) — remove ALL size-1 dims
+t.squeeze(0)            # (3, 1, 4) — remove specific dim
+
+t2 = torch.randn(3, 4)
+t2.unsqueeze(0)         # (1, 3, 4) — add batch dim
+t2.unsqueeze(-1)        # (3, 4, 1) — add trailing dim
+
+# Concatenate / Stack
+a = torch.randn(3, 4)
+b = torch.randn(3, 4)
+torch.cat([a, b], dim=0)    # (6, 4) — join along existing dim
+torch.stack([a, b], dim=0)  # (2, 3, 4) — creates new dim
+
+# Expand (no copy) vs Repeat (copies)
+t = torch.randn(1, 3)
+t.expand(4, 3)          # (4, 3) — reads same memory 4 times
+t.repeat(4, 1)          # (4, 3) — actually copies data 4 times
+```
+
+
+### Autograd — Automatic Differentiation
+
+This is how PyTorch computes gradients for training. When you set `requires_grad=True`, PyTorch records every operation on that tensor in a computation graph. When you call `.backward()`, it walks the graph in reverse to compute gradients.
+
+```python
+# Basic gradient computation
+x = torch.tensor([2.0, 3.0], requires_grad=True)
+y = (x ** 2).sum()    # y = x[0]^2 + x[1]^2 = 4 + 9 = 13
+y.backward()           # compute dy/dx
+print(x.grad)          # tensor([4., 6.])  — dy/dx = 2x
+
+# In a training loop
+optimizer.zero_grad()          # reset gradients from previous step
+output = model(input_data)     # forward pass (builds computation graph)
+loss = criterion(output, target)
+loss.backward()                # backward pass (computes gradients)
+optimizer.step()               # update parameters using gradients
+
+# Disable gradient tracking (for inference)
+with torch.no_grad():
+    predictions = model(test_data)
+    # no graph built, no memory for intermediate activations
+    # MUCH faster and uses less memory
+
+# Detach from graph
+z = x.detach()    # new tensor, no grad tracking, shares data
+```
+
+
+### Mixed Precision Training (AMP)
+
+The idea: use float16/bfloat16 for most operations (faster, less memory) but keep float32 for operations that need precision (like loss computation and parameter updates).
+
+```python
+from torch.amp import autocast, GradScaler
+
+scaler = GradScaler()
+
+for data, target in dataloader:
+    optimizer.zero_grad()
+    
+    # Forward pass in mixed precision
+    with autocast(device_type='cuda'):
+        output = model(data)       # computed in float16/bfloat16
+        loss = criterion(output, target)
+    
+    # Backward pass with gradient scaling
+    # (prevents float16 gradients from underflowing to zero)
+    scaler.scale(loss).backward()
+    scaler.step(optimizer)
+    scaler.update()
+```
+
+
+
+## 5. DATA LOADING IN PYTORCH
+
+### The Concept
+
+PyTorch's data loading has two main classes:
+- **Dataset** — defines WHAT data you have and HOW to get a single sample
+- **DataLoader** — wraps a Dataset and handles batching, shuffling, parallel loading
+
+The key design principle: **lazy loading.** Your Dataset's `__getitem__` loads one sample at a time. The DataLoader calls it many times in parallel (using multiple worker processes) and assembles batches.
+
+### Custom Dataset
+
+```python
+from torch.utils.data import Dataset, DataLoader
+
+class CustomDataset(Dataset):
+    """
+    You must implement:
+    - __len__: how many samples total
+    - __getitem__: load and return one sample by index
+    """
+    def __init__(self, data_dir, transform=None):
+        self.data_dir = Path(data_dir)
+        # Build an index of all files (lightweight — don't load data yet)
+        self.file_list = sorted(self.data_dir.glob("*.npy"))
+        self.transform = transform
+    
+    def __len__(self):
+        return len(self.file_list)
+    
+    def __getitem__(self, idx):
+        # Load SINGLE sample (called by DataLoader in parallel)
+        data = np.load(self.file_list[idx])
+        tensor = torch.from_numpy(data).float()
+        
+        if self.transform:
+            tensor = self.transform(tensor)
+        
+        return tensor, idx  # often return (data, label) tuple
+```
+
+
+### DataLoader — The Workhorse
+
+```python
+dataset = CustomDataset("/data/samples")
+
+loader = DataLoader(
+    dataset,
+    batch_size=32,          # samples per batch
+    shuffle=True,           # randomize order each epoch
+    num_workers=4,          # parallel loading processes
+    pin_memory=True,        # faster CPU→GPU transfer
+    drop_last=True,         # drop incomplete final batch
+    prefetch_factor=2,      # batches loaded ahead per worker
+    persistent_workers=True, # keep workers alive between epochs
+)
+
+# Training loop
+for epoch in range(num_epochs):
+    for batch_data, batch_labels in loader:
+        batch_data = batch_data.to(device, non_blocking=True)
+        # ... train
+```
+
+**What happens under the hood:**
+1. DataLoader spawns `num_workers` child processes
+2. Each worker calls `dataset.__getitem__(idx)` for different indices
+3. Workers run in parallel — while GPU trains on batch N, workers load batch N+1
+4. `pin_memory=True` puts loaded tensors in page-locked memory for fast GPU transfer
+5. `prefetch_factor=2` means each worker has 2 batches ready before you ask
+
+
+### Collate Functions — Handling Variable-Length Data
+
+The default collate stacks all samples into a single tensor. But what if your samples have different sizes (e.g., sequences of different lengths)?
+
+```python
+from torch.nn.utils.rnn import pad_sequence
+
+def collate_variable_length(batch):
+    """
+    Custom collate for variable-length sequences.
+    Pads shorter sequences with zeros to match the longest.
+    """
+    sequences = [item[0] for item in batch]  # list of tensors, different lengths
+    labels = torch.tensor([item[1] for item in batch])
+    lengths = torch.tensor([len(s) for s in sequences])
+    
+    # Pad all sequences to the length of the longest
+    padded = pad_sequence(sequences, batch_first=True, padding_value=0)
+    
+    # Create attention mask: 1 where real data, 0 where padding
+    mask = torch.arange(padded.size(1)).unsqueeze(0) < lengths.unsqueeze(1)
+    
+    return {"sequences": padded, "labels": labels, "mask": mask, "lengths": lengths}
+
+loader = DataLoader(dataset, batch_size=32, collate_fn=collate_variable_length)
+```
+
+
+### IterableDataset — For Truly Massive Data
+
+Use when data is too large to index (no random access), e.g., streaming from cloud storage or reading a massive file sequentially.
+
+```python
+class StreamingDataset(torch.utils.data.IterableDataset):
+    def __init__(self, shard_paths):
+        self.shard_paths = shard_paths  # list of file paths
+    
+    def __iter__(self):
+        # Split shards across workers (if using num_workers > 0)
+        worker_info = torch.utils.data.get_worker_info()
+        if worker_info is None:
+            shards = self.shard_paths
+        else:
+            # Each worker gets a subset of shards
+            per_worker = len(self.shard_paths) // worker_info.num_workers
+            start = worker_info.id * per_worker
+            shards = self.shard_paths[start:start + per_worker]
+        
+        for path in shards:
+            data = np.load(path, mmap_mode='r')  # memory-mapped
+            for i in range(len(data)):
+                yield torch.from_numpy(data[i].copy()).float()
+```
+
+**When to use which:**
+- `Dataset` (map-style): You know how many samples you have and can access any by index. Most common.
+- `IterableDataset`: Data is streaming, too large to index, or comes from a source with no random access.
+
+
+### Performance Tuning Rules of Thumb
+
+```
+num_workers:
+  - Start with num_CPU_cores // num_GPUs
+  - Too few → GPU starves waiting for data
+  - Too many → CPU contention, worker overhead
+  - Profile: if GPU utilization < 90%, increase workers
+
+pin_memory:
+  - Always True when training on GPU
+  - Pairs with non_blocking=True on .to(device)
+
+prefetch_factor:
+  - Default 2 is usually fine
+  - Increase for high-latency storage (NFS, cloud)
+
+persistent_workers:
+  - True if Dataset __init__ is expensive
+  - Avoids respawning workers every epoch
+```
+
+
+
+## 6. DISTRIBUTED ML AT TERABYTE SCALE
+
+### Why Distribute Training?
+
+Two reasons:
+1. **Data is too large** — Training on TB of data takes weeks on one GPU. Split across 64 GPUs = ~64x faster.
+2. **Model is too large** — A 7B parameter model in float32 = 28GB. One A100 has 80GB. Add optimizer states (~3x model size) and activations → won't fit.
+
+### Key Concepts
+
+**World Size** = total number of processes (usually = total GPUs across all machines).
+
+**Rank** = unique ID for each process (0 to world_size - 1).
+
+**Local Rank** = GPU index within a single machine (0 to num_gpus_per_node - 1).
+
+**Backend** = the communication library. NCCL for GPUs (fastest), Gloo for CPUs.
+
+
+### DDP — Distributed Data Parallel
+
+**The concept:** Each GPU gets a full copy of the model. Data is split across GPUs. After each backward pass, gradients are averaged across all GPUs using all-reduce, so all copies stay in sync.
+
+**How all-reduce works (ring algorithm):**
+Imagine 4 GPUs in a ring. Each has gradients G0, G1, G2, G3.
+
+Phase 1 (reduce-scatter): Each GPU sends a chunk to its neighbor. After P-1 steps, each GPU has the SUM of one chunk.
+
+Phase 2 (all-gather): Each GPU sends its summed chunk around. After P-1 steps, every GPU has the complete summed gradient.
+
+The beauty: each GPU only sends/receives N/P data per step, where N = gradient size, P = number of GPUs. Bandwidth scales perfectly.
+
+```python
+import torch.distributed as dist
+from torch.nn.parallel import DistributedDataParallel as DDP
+from torch.utils.data import DistributedSampler
+
+def main():
+    # torchrun sets these environment variables automatically
+    rank = int(os.environ["RANK"])
+    local_rank = int(os.environ["LOCAL_RANK"])
+    world_size = int(os.environ["WORLD_SIZE"])
+    
+    # Initialize process group
+    dist.init_process_group(backend="nccl")
+    torch.cuda.set_device(local_rank)
+    device = torch.device(f"cuda:{local_rank}")
+    
+    # Model — wrap with DDP
+    model = MyModel().to(device)
+    model = DDP(model, device_ids=[local_rank])
+    # Note: to access the original model, use model.module
+    
+    # Data — DistributedSampler splits data across GPUs
+    dataset = MyDataset(data_path)
+    sampler = DistributedSampler(dataset, num_replicas=world_size, rank=rank)
+    loader = DataLoader(
+        dataset,
+        batch_size=32,
+        sampler=sampler,    # replaces shuffle=True
+        num_workers=4,
+        pin_memory=True,
+    )
+    
+    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
+    
+    for epoch in range(num_epochs):
+        sampler.set_epoch(epoch)  # CRITICAL — ensures different shuffling each epoch
+        
+        for data, target in loader:
+            data = data.to(device, non_blocking=True)
+            target = target.to(device, non_blocking=True)
+            
+            optimizer.zero_grad()
+            loss = compute_loss(model(data), target)
+            loss.backward()      # gradients are all-reduced automatically by DDP
+            optimizer.step()
+        
+        # Save checkpoint — ONLY on rank 0
+        if rank == 0:
+            torch.save({
+                "epoch": epoch,
+                "model_state_dict": model.module.state_dict(),  # .module!
+                "optimizer_state_dict": optimizer.state_dict(),
+            }, f"checkpoint_{epoch}.pt")
+    
+    dist.destroy_process_group()
+```
+
+**Launch command:**
+```bash
+# Single machine, 4 GPUs
+torchrun --standalone --nproc_per_node=4 train.py
+
+# 2 machines, 4 GPUs each (run on each machine)
+torchrun --nnodes=2 --nproc_per_node=4 \
+         --node_rank=0 --master_addr=10.0.0.1 --master_port=29500 \
+         train.py
+```
+
+
+### Three Critical DDP Rules
+
+1. **`sampler.set_epoch(epoch)` every epoch** — without this, every epoch uses the same data ordering. The sampler uses the epoch number as a random seed for shuffling.
+
+2. **Save only on rank 0** — all GPUs have identical model parameters (DDP keeps them in sync). Saving from multiple ranks = redundant writes and potential file conflicts.
+
+3. **Use `model.module.state_dict()`** — DDP wraps your model. The actual parameters are inside `.module`. If you save `model.state_dict()`, the keys will have a `module.` prefix that breaks loading on a single GPU.
+
+
+### FSDP — Fully Sharded Data Parallel
+
+**When to use:** Your model doesn't fit on a single GPU even in mixed precision.
+
+**The concept:** Instead of each GPU having a FULL copy of the model (DDP), FSDP shards the parameters, gradients, and optimizer states across GPUs. Each GPU holds only 1/N of the model.
+
+When a layer needs to run: FSDP gathers that layer's full parameters from all GPUs → runs forward/backward → discards the full copy → keeps only its shard.
+
+**The tradeoff:** More communication (gather before each layer) but much less memory per GPU. FSDP can train models ~4x larger than DDP on the same hardware.
+
+```python
+from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
+
+# Wrap model with FSDP
+model = FSDP(
+    model,
+    sharding_strategy=ShardingStrategy.FULL_SHARD,  # shard everything
+    mixed_precision=MixedPrecision(
+        param_dtype=torch.bfloat16,
+        reduce_dtype=torch.bfloat16,
+    ),
+    device_id=local_rank,
+)
+```
+
+
+### Gradient Accumulation
+
+When batch size is limited by GPU memory but you want a larger effective batch:
+
+```python
+accumulation_steps = 4
+# effective_batch_size = batch_size × accumulation_steps × world_size
+
+for step, (data, target) in enumerate(loader):
+    loss = model(data, target) / accumulation_steps  # scale loss
+    
+    if (step + 1) % accumulation_steps != 0:
+        with model.no_sync():  # skip gradient sync (DDP optimization)
+            loss.backward()
+    else:
+        loss.backward()        # gradients synced here
+        optimizer.step()
+        optimizer.zero_grad()
+```
+
+**Why `model.no_sync()`:** In DDP, every `.backward()` triggers an all-reduce across GPUs. If you're accumulating gradients over 4 steps, you only need to sync on the 4th step. `no_sync()` skips the communication on intermediate steps.
+
+
+
+## 7. SCIENTIFIC DATA FORMATS
+
+### The Problem
+
+Scientific data is:
+- Huge (terabytes of images, sensor data, etc.)
+- N-dimensional (not flat tables)
+- Needs chunked access (you can't load a TB file into RAM)
+- May need cloud storage (S3, GCS)
+- Needs compression (raw data is too big)
+- Must be readable by multiple processes simultaneously
+
+### How Chunked Storage Works
+
+Imagine a 10,000 × 10,000 array. Instead of storing it as one huge file:
+
+```
+Without chunking:                With chunking (1000×1000):
+┌──────────────────────┐         ┌────┬────┬────┬─ ...
+│                      │         │ C0 │ C1 │ C2 │
+│  One giant block     │         ├────┼────┼────┤
+│  Must read ALL       │         │ C3 │ C4 │ C5 │
+│  to access anything  │         ├────┼────┼────┤
+│                      │         │ C6 │ C7 │ C8 │
+└──────────────────────┘         └────┴────┴────┘
+                                 100 separate chunks
+                                 Each compressed independently
+                                 Read only what you need
+```
+
+**Key insight:** To read row 500, with chunking you only read chunks C0-C9 (the first row of chunks). Without chunking, you read the entire file.
+
+**Chunk alignment matters:** If your access pattern always reads single images (row access), chunk as `(1, 10000)` — one row per chunk. If you access spatial patches, chunk as `(1000, 1000)`. The optimal chunk shape depends on your access patterns.
+
+
+### HDF5 — The Established Format
+
+HDF5 is a single-file format that works like a filesystem inside a file: groups (folders) and datasets (arrays). It's been around 20+ years and is widely supported across languages.
+
+```python
+import h5py
+import numpy as np
+
+# ── Writing ──
+with h5py.File("experiment.h5", "w") as f:
+    # Create groups (like directories)
+    microscopy = f.create_group("microscopy")
+    
+    # Create a chunked, compressed dataset
+    images = microscopy.create_dataset(
+        "images",
+        shape=(10000, 512, 512),       # 10000 images, 512×512 each
+        dtype=np.float32,
+        chunks=(1, 512, 512),          # one image per chunk
+        compression="gzip",
+        compression_opts=4,            # compression level (1-9)
+    )
+    
+    # Write data
+    images[0] = np.random.randn(512, 512)      # write single image
+    images[10:20] = np.random.randn(10, 512, 512)  # write a batch
+    
+    # Metadata (key-value attributes on any group or dataset)
+    f.attrs["experiment_name"] = "imaging_v3"
+    images.attrs["pixel_size_um"] = 0.65
+
+# ── Reading ──
+with h5py.File("experiment.h5", "r") as f:
+    # Navigate hierarchy
+    print(list(f.keys()))                 # ['microscopy']
+    print(list(f["microscopy"].keys()))   # ['images']
+    
+    # Read a single image (only that chunk is loaded from disk)
+    img = f["microscopy/images"][42]
+    
+    # Read a slice
+    batch = f["microscopy/images"][100:132]
+    
+    # Inspect without loading
+    ds = f["microscopy/images"]
+    print(f"Shape: {ds.shape}, Chunks: {ds.chunks}, Compression: {ds.compression}")
+```
+
+
+### Zarr — The Modern Alternative
+
+Zarr stores each chunk as a **separate file** in a directory. This is what makes it cloud-native — each chunk is an independent object in S3/GCS that can be read/written in parallel.
+
+**Zarr directory structure:**
+```
+experiment.zarr/
+├── .zgroup                          # JSON: group metadata
+├── microscopy/
+│   ├── .zgroup
+│   └── images/
+│       ├── .zarray                  # JSON: shape, chunks, dtype, compressor
+│       ├── 0.0                      # chunk at position (0, 0)
+│       ├── 0.1                      # chunk at position (0, 1)
+│       ├── 1.0                      # chunk at position (1, 0)
+│       └── ...                      # each chunk is a separate file
+```
+
+```python
+import zarr
+import numpy as np
+
+# ── Writing ──
+root = zarr.open("experiment.zarr", mode="w")
+
+# Create group
+microscopy = root.create_group("microscopy")
+
+# Create chunked, compressed array
+images = microscopy.create_array(
+    "images",
+    shape=(10000, 512, 512),
+    chunks=(10, 512, 512),    # 10 images per chunk
+    dtype=np.float32,
+)
+
+# Write data
+images[0:10] = np.random.randn(10, 512, 512).astype(np.float32)
+
+# Attributes (metadata)
+images.attrs["pixel_size_um"] = 0.65
+
+# ── Reading ──
+root = zarr.open("experiment.zarr", mode="r")
+img = root["microscopy/images"][42]           # reads only the chunk containing image 42
+batch = root["microscopy/images"][100:132]
+
+# Info
+arr = root["microscopy/images"]
+print(f"Shape: {arr.shape}, Chunks: {arr.chunks}, Dtype: {arr.dtype}")
+```
+
+**The API is intentionally almost identical to h5py.** Zarr was designed to be a drop-in replacement for many HDF5 use cases.
+
+
+### When to Use Which
+
+```
+HDF5:
+  ✓ Multi-language support (C, Java, Fortran, MATLAB)
+  ✓ Single file (easy to move around)
+  ✓ Mature, battle-tested (20+ years)
+  ✗ Not cloud-native (single file = can't parallelize I/O well)
+  ✗ Limited parallel write support
+
+Zarr:
+  ✓ Cloud-native (each chunk is a separate object in S3/GCS)
+  ✓ Parallel reads AND writes (different chunks = no conflict)
+  ✓ Better compression options (any numcodecs codec)
+  ✓ No GIL issues for compression/decompression
+  ✗ Creates many small files (can be slow on local filesystems)
+  ✗ Less multi-language support (mostly Python)
+
+Rule of thumb:
+  - Cloud storage → Zarr
+  - Multi-language interop → HDF5
+  - Parallel writes from many processes → Zarr
+  - Small experiments, local files → either works
+```
+
+
+### TensorStore — Google's Unified API
+
+TensorStore provides a single API that reads/writes to Zarr, N5, local files, GCS, S3. Google uses it for petabyte-scale model checkpoints across TPU pods.
+
+```python
+import tensorstore as ts
+
+spec = {
+    'driver': 'zarr',
+    'kvstore': {
+        'driver': 'file',
+        'path': '/data/experiment.zarr/images',
+    },
+}
+dataset = ts.open(spec, open=True).result()
+data = dataset[0:10].read().result()  # returns numpy array
+```
+
+
+### Using Zarr/HDF5 as a PyTorch Dataset
+
+```python
+class ZarrDataset(torch.utils.data.Dataset):
+    def __init__(self, zarr_path, key="images"):
+        self.data = zarr.open(zarr_path, mode="r")[key]
+    
+    def __len__(self):
+        return self.data.shape[0]
+    
+    def __getitem__(self, idx):
+        # Only reads the chunk containing this sample
+        return torch.from_numpy(self.data[idx].astype(np.float32))
+
+loader = DataLoader(ZarrDataset("data.zarr"), batch_size=32, num_workers=8)
+```
+
+
+
+## 8. MLFLOW & CHECKPOINTING
+
+### MLflow Core Concepts
+
+MLflow is an open-source platform for managing the ML lifecycle. The key components:
+
+**Tracking** — Log parameters, metrics, and artifacts from training runs. Think of it as a structured lab notebook.
+
+**Models** — Package models in a standard format that works across frameworks.
+
+**Registry** — Version and stage models (staging → production).
+
+### Experiment Tracking
+
+```python
+import mlflow
+
+mlflow.set_tracking_uri("http://mlflow-server:5000")
+mlflow.set_experiment("model-training")
+
+with mlflow.start_run(run_name="finetune-v3"):
+    # Log hyperparameters (logged once)
+    mlflow.log_params({
+        "model": "resnet50",
+        "lr": 1e-4,
+        "batch_size": 32,
+        "num_gpus": 4,
+    })
+    
+    # Log metrics over time (logged per step/epoch)
+    for epoch in range(100):
+        train_loss = train_one_epoch(model, loader)
+        val_loss = evaluate(model, val_loader)
+        
+        mlflow.log_metrics({
+            "train_loss": train_loss,
+            "val_loss": val_loss,
+        }, step=epoch)
+    
+    # Log files as artifacts
+    mlflow.log_artifact("config.yaml")                   # any file
+    mlflow.log_artifact("checkpoint.pt", "checkpoints")  # into a subdirectory
+    
+    # Log the final model
+    mlflow.pytorch.log_model(model, "model")
+```
+
+
+### PyTorch Checkpointing — The Complete Pattern
+
+A checkpoint should contain everything needed to resume training exactly where it left off.
+
+```python
+def save_checkpoint(model, optimizer, scheduler, epoch, loss, path):
+    """Save complete training state."""
+    torch.save({
+        "epoch": epoch,
+        "model_state_dict": model.state_dict(),
+        "optimizer_state_dict": optimizer.state_dict(),
+        "scheduler_state_dict": scheduler.state_dict() if scheduler else None,
+        "loss": loss,
+        "rng_state": torch.random.get_rng_state(),
+        "cuda_rng_state": torch.cuda.get_rng_state_all(),
+    }, path)
+
+def load_checkpoint(model, optimizer, scheduler, path, device):
+    """Resume training from checkpoint."""
+    ckpt = torch.load(path, map_location=device, weights_only=False)
+    
+    model.load_state_dict(ckpt["model_state_dict"])
+    optimizer.load_state_dict(ckpt["optimizer_state_dict"])
+    if scheduler and ckpt.get("scheduler_state_dict"):
+        scheduler.load_state_dict(ckpt["scheduler_state_dict"])
+    
+    # Restore RNG state for reproducibility
+    torch.random.set_rng_state(ckpt["rng_state"])
+    if ckpt.get("cuda_rng_state"):
+        torch.cuda.set_rng_state_all(ckpt["cuda_rng_state"])
+    
+    return ckpt["epoch"] + 1  # next epoch to train
+```
+
+**Why save RNG state?** Data augmentation and dropout use random numbers. If you resume without restoring the RNG, the sequence of random operations will be different, making training non-reproducible.
+
+
+### Checkpoint Management
+
+```python
+class CheckpointManager:
+    """Keep only the N most recent checkpoints to save disk space."""
+    
+    def __init__(self, directory, max_kept=5):
+        self.directory = Path(directory)
+        self.directory.mkdir(parents=True, exist_ok=True)
+        self.max_kept = max_kept
+    
+    def save(self, state_dict, epoch):
+        path = self.directory / f"ckpt_{epoch:04d}.pt"
+        tmp = path.with_suffix(".tmp")
+        torch.save(state_dict, tmp)  # write to temp file
+        tmp.rename(path)             # atomic rename (no partial files)
+        self._cleanup()
+        return path
+    
+    def latest(self):
+        ckpts = sorted(self.directory.glob("ckpt_*.pt"))
+        return ckpts[-1] if ckpts else None
+    
+    def _cleanup(self):
+        ckpts = sorted(self.directory.glob("ckpt_*.pt"))
+        for old in ckpts[:-self.max_kept]:
+            old.unlink()
+```
+
+**Atomic saves:** Always write to a temp file first, then rename. If your process crashes mid-write, you get a corrupt temp file — but the previous checkpoint is still intact. The rename operation is atomic on most filesystems.
+
+
+### Distributed Checkpointing (DCP)
+
+For FSDP models, each GPU holds only a shard of the parameters. Regular `torch.save()` doesn't work because no single GPU has the full model.
+
+```python
+import torch.distributed.checkpoint as dcp
+
+# Save — ALL ranks participate (each saves its shard)
+state = {"model": model.state_dict(), "optimizer": optimizer.state_dict()}
+dcp.save(state, checkpoint_id="/checkpoints/step_10000")
+# Creates:
+# /checkpoints/step_10000/
+#   ├── .metadata      (shard mapping)
+#   ├── __0_0.distcp    (rank 0's shard)
+#   ├── __1_0.distcp    (rank 1's shard)
+#   └── ...
+
+# Load — reshards automatically!
+# Save on 8 GPUs → load on 4 GPUs: DCP handles it
+state = {"model": model.state_dict(), "optimizer": optimizer.state_dict()}
+dcp.load(state, checkpoint_id="/checkpoints/step_10000")
+model.load_state_dict(state["model"])
+```
+
+
+
+## 9. COMMON CODING PATTERNS
+
+### Pattern: Registry + Small Functions
+
+Define operations as small functions, register them in a dict, and compose them via config. This is the most extensible pattern — when new requirements come in, you add functions without touching existing code.
+
+```python
+# Start simple: "Process some data with normalization"
+
+def normalize(data, mean=0, std=1):
+    return (data - mean) / (std + 1e-8)
+
+def process(data, config):
+    return normalize(data, config.get("mean", 0), config.get("std", 1))
+
+# New requirement: "Now also support log transform and clipping"
+# With a registry, you just ADD functions. Nothing existing changes.
+
+TRANSFORMS = {
+    "normalize": lambda data, **kw: (data - kw.get("mean", 0)) / (kw.get("std", 1) + 1e-8),
+    "log": lambda data, **kw: np.log1p(np.clip(data, 0, None)),
+    "clip": lambda data, **kw: np.clip(data, kw.get("low", 0), kw.get("high", 1)),
+}
+
+def process(data, steps):
+    """steps = [{"name": "clip", "low": 0, "high": 100}, {"name": "normalize"}]"""
+    for step in steps:
+        name = step["name"]
+        params = {k: v for k, v in step.items() if k != "name"}
+        data = TRANSFORMS[name](data, **params)
+    return data
+
+# Another requirement: "Now support custom user-defined transforms"
+# Registry is already a dict — users just add to it:
+TRANSFORMS["custom_scale"] = lambda data, **kw: data * kw.get("factor", 1.0)
+```
+
+### Pattern: Abstract Base Class for Swappable Backends
+
+```python
+from abc import ABC, abstractmethod
+
+class DataReader(ABC):
+    @abstractmethod
+    def read(self, key, slices=None): ...
+    
+    @abstractmethod
+    def keys(self): ...
+
+class HDF5Reader(DataReader):
+    def __init__(self, path):
+        self.f = h5py.File(path, "r")
+    def read(self, key, slices=None):
+        return self.f[key][slices] if slices else self.f[key][:]
+    def keys(self):
+        return list(self.f.keys())
+
+class ZarrReader(DataReader):
+    def __init__(self, path):
+        self.store = zarr.open(path, "r")
+    def read(self, key, slices=None):
+        return self.store[key][slices] if slices else self.store[key][:]
+    def keys(self):
+        return list(self.store.keys())
+
+# Factory
+def open_data(path):
+    if path.endswith(".h5"):
+        return HDF5Reader(path)
+    return ZarrReader(path)
+
+# Caller doesn't care about the format
+reader = open_data(some_path)
+data = reader.read("images", slice(0, 32))
+```
+
+
