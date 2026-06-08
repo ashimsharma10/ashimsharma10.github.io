@@ -91,7 +91,7 @@ export default function ListLayoutWithTags({
               ) : (
                 <Link
                   href={`/write-up`}
-                  className="hover:text-primary-500 dark:hover:text-primary-500 font-bold text-gray-700 uppercase dark:text-gray-200"
+                  className="hover:text-primary-500 dark:hover:text-primary-500 font-bold text-gray-700 uppercase dark:text-gray-300"
                 >
                   All Write-ups
                 </Link>
@@ -107,7 +107,7 @@ export default function ListLayoutWithTags({
                       ) : (
                         <Link
                           href={`/tags/${slug(t)}`}
-                          className="hover:text-primary-500 dark:hover:text-primary-500 py-2 text-sm font-medium text-gray-500 uppercase dark:text-gray-200"
+                          className="hover:text-primary-500 dark:hover:text-primary-500 py-2 text-sm font-medium text-gray-500 uppercase dark:text-gray-300"
                           aria-label={`View posts tagged ${t}`}
                         >
                           {`${t} (${tagCounts[t]})`}
