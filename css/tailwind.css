@@ -81,41 +81,73 @@
 
 @layer utilities {
   .prose {
+    color: #000;
+
     & a {
-      color: var(--color-primary-500);
+      color: #2563eb;
+      text-decoration: underline;
+      text-underline-offset: 2px;
       &:hover {
-        color: var(--color-primary-600);
+        color: #1d4ed8;
       }
       & code {
-        color: var(--color-primary-400);
+        color: #2563eb;
       }
     }
     & :where(h1, h2) {
       font-weight: 700;
       letter-spacing: var(--tracking-tight);
     }
+    & h2 {
+      font-size: 1.25rem;
+      line-height: 1.75rem;
+    }
     & h3 {
       font-weight: 600;
+      font-size: 1.1rem;
+      line-height: 1.5rem;
     }
     & :where(code):not(pre code) {
-      color: var(--color-indigo-500);
+      color: #000;
     }
   }
 
   .prose-invert {
+    color: var(--color-gray-200);
+
     & a {
-      color: var(--color-primary-500);
+      color: #60a5fa;
+      text-decoration: underline;
+      text-underline-offset: 2px;
       &:hover {
-        color: var(--color-primary-400);
+        color: #93bbfd;
       }
       & code {
-        color: var(--color-primary-400);
+        color: #60a5fa;
       }
     }
     & :where(h1, h2, h3, h4, h5, h6) {
       color: var(--color-gray-100);
     }
   }
+}
+
+.not-prose a {
+  color: #2563eb;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.not-prose a:hover {
+  color: #1d4ed8;
+}
+
+:where(.dark) .not-prose a {
+  color: #60a5fa;
+}
+
+:where(.dark) .not-prose a:hover {
+  color: #93bbfd;
 }
 
 .task-list-item::before {
