@@ -112,6 +112,26 @@
     }
   }
 
+  :where(.dark, .dark *) .prose {
+    color: var(--color-gray-400);
+
+    & a {
+      color: #60a5fa;
+      &:hover {
+        color: #93bbfd;
+      }
+      & code {
+        color: #60a5fa;
+      }
+    }
+    & :where(h1, h2, h3, h4, h5, h6) {
+      color: var(--color-gray-100);
+    }
+    & :where(code):not(pre code) {
+      color: var(--color-gray-200);
+    }
+  }
+
   .prose-invert {
     color: var(--color-gray-200);
 
