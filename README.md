@@ -1,6 +1,6 @@
 # ashimsharma10.github.io
 
-Personal portfolio and write-ups by Ashim Sharma.
+Personal portfolio and write-ups.
 
 Built with Next.js, Tailwind CSS, and Contentlayer.
 
