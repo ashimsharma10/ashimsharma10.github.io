@@ -100,7 +100,7 @@ export default function ListLayout({
               />
             </label>
             <svg
-              className="absolute top-3 right-3 h-5 w-5 text-gray-400 dark:text-gray-300"
+              className="absolute top-3 right-3 h-5 w-5 text-gray-400 dark:text-gray-200"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
@@ -124,7 +124,7 @@ export default function ListLayout({
                 <article className="space-y-2 xl:grid xl:grid-cols-4 xl:items-baseline xl:space-y-0">
                   <dl>
                     <dt className="sr-only">Published on</dt>
-                    <dd className="text-base leading-6 font-medium text-gray-500 dark:text-gray-300">
+                    <dd className="text-base leading-6 font-medium text-gray-500 dark:text-gray-200">
                       <time dateTime={date}>{formatDate(date, siteMetadata.locale)}</time>
                     </dd>
                   </dl>
@@ -141,7 +141,7 @@ export default function ListLayout({
                         ))}
                       </div>
                     </div>
-                    <div className="prose prose-lg max-w-none text-gray-500 dark:text-gray-300">
+                    <div className="prose prose-lg dark:prose-invert max-w-none text-gray-500 dark:text-gray-200">
                       {summary}
                     </div>
                   </div>
