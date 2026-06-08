@@ -14,7 +14,7 @@ export default function Home({ posts }) {
           <h1 className="text-3xl leading-9 font-extrabold tracking-tight text-gray-900 sm:text-4xl sm:leading-10 md:text-5xl md:leading-13 dark:text-gray-100">
             Latest
           </h1>
-          <p className="text-lg leading-7 text-gray-500 dark:text-gray-400">
+          <p className="text-lg leading-7 text-gray-500 dark:text-gray-200">
             {siteMetadata.description}
           </p>
         </div>
@@ -28,7 +28,7 @@ export default function Home({ posts }) {
                   <div className="space-y-1 xl:grid xl:grid-cols-[200px_1fr] xl:items-baseline xl:space-y-0">
                     <dl>
                       <dt className="sr-only">Published on</dt>
-                      <dd className="text-base leading-6 font-medium text-gray-500 dark:text-gray-400">
+                      <dd className="text-base leading-6 font-medium text-gray-500 dark:text-gray-200">
                         <time dateTime={date}>{formatDate(date, siteMetadata.locale)}</time>
                       </dd>
                     </dl>
@@ -37,7 +37,7 @@ export default function Home({ posts }) {
                         <div>
                           <h2 className="text-2xl leading-8 font-bold tracking-tight">
                             <Link
-                              href={`/blog/${slug}`}
+                              href={`/write-up/${slug}`}
                               className="text-gray-900 dark:text-gray-100"
                             >
                               {title}
@@ -49,13 +49,13 @@ export default function Home({ posts }) {
                             ))}
                           </div>
                         </div>
-                        <div className="prose max-w-none text-gray-500 dark:text-gray-400">
+                        <div className="prose dark:prose-invert max-w-none text-gray-500 dark:text-gray-200">
                           {summary}
                         </div>
                       </div>
                       <div className="text-base leading-6 font-medium">
                         <Link
-                          href={`/blog/${slug}`}
+                          href={`/write-up/${slug}`}
                           className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
                           aria-label={`Read more: "${title}"`}
                         >
@@ -73,11 +73,11 @@ export default function Home({ posts }) {
       {posts.length > MAX_DISPLAY && (
         <div className="flex justify-end text-base leading-6 font-medium">
           <Link
-            href="/blog"
+            href="/write-up"
             className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
-            aria-label="All posts"
+            aria-label="All write-ups"
           >
-            All Posts &rarr;
+            All Write-ups &rarr;
           </Link>
         </div>
       )}

@@ -1,6 +1,9 @@
 {
-  "pytorch": 1,
-  "deep-learning": 1,
-  "distributed-training": 1,
-  "guide": 1
+  "python": 1,
+  "pytorch": 2,
+  "numpy": 1,
+  "distributed-training": 2,
+  "mlops": 1,
+  "guide": 2,
+  "deep-learning": 1
 }

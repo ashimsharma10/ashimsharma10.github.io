@@ -43,7 +43,7 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
               <dl className="space-y-10">
                 <div>
                   <dt className="sr-only">Published on</dt>
-                  <dd className="text-xs leading-5 font-medium text-gray-500 dark:text-gray-400">
+                  <dd className="text-xs leading-5 font-medium text-gray-500 dark:text-gray-200">
                     <time dateTime={date}>
                       {new Date(date).toLocaleDateString(siteMetadata.locale, postDateTemplate)}
                     </time>
@@ -59,7 +59,7 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
             <div className="prose dark:prose-invert max-w-none pt-10 pb-8">{children}</div>
             {siteMetadata.comments && (
               <div
-                className="pt-6 pb-6 text-center text-gray-700 dark:text-gray-300"
+                className="pt-6 pb-6 text-center text-gray-700 dark:text-gray-200"
                 id="comment"
               >
                 <Comments slug={slug} />
