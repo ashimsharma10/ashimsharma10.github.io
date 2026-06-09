@@ -111,7 +111,9 @@
       font-size: 1.1rem;
       line-height: 1.5rem;
     }
-    & h2, & h3, & h4 {
+    & h2,
+    & h3,
+    & h4 {
       margin-top: 1.25rem;
       margin-bottom: 0.4rem;
     }
@@ -131,7 +133,8 @@
       margin-top: 0.6rem;
       margin-bottom: 0.6rem;
     }
-    & ul, & ol {
+    & ul,
+    & ol {
       margin-top: 0.4rem;
       margin-bottom: 0.4rem;
     }
