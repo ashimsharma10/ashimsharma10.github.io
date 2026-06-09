@@ -1,9 +1,12 @@
 {
-  "python": 1,
+  "pandas": 1,
+  "data-preprocessing": 1,
+  "feature-engineering": 1,
+  "python": 2,
+  "guide": 3,
   "pytorch": 2,
   "numpy": 1,
   "distributed-training": 2,
   "mlops": 1,
-  "guide": 2,
   "deep-learning": 1
 }
