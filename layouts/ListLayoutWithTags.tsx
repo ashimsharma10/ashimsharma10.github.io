@@ -119,7 +119,7 @@ export default function ListLayoutWithTags({
               </ul>
             </div>
           </div>
-          <div className="flex-1 min-w-0">
+          <div className="min-w-0 flex-1">
             <ul>
               {displayPosts.map((post) => {
                 const { path, date, title, summary, tags } = post
@@ -147,7 +147,7 @@ export default function ListLayoutWithTags({
                             ))}
                           </div>
                         </div>
-                        <div className="prose dark:prose-invert max-w-none text-sm text-gray-900 dark:text-gray-400 truncate">
+                        <div className="prose dark:prose-invert max-w-none truncate text-sm text-gray-900 dark:text-gray-400">
                           {summary}
                         </div>
                       </div>
