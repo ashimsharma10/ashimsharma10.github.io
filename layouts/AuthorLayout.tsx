@@ -93,6 +93,7 @@ const certifications = [
     logoInitial: 'S',
     logoBg: 'bg-red-700',
     logoUrl: '/static/images/logos/stanford.png',
+    url: 'https://www.coursera.org/account/accomplishments/verify/ZD4PHJ2FEF4H',
   },
   {
     title: 'Data Engineering Specialization',
@@ -100,6 +101,7 @@ const certifications = [
     logoInitial: 'AWS',
     logoBg: 'bg-gray-900',
     logoUrl: '/static/images/logos/aws.png',
+    url: 'https://www.coursera.org/account/accomplishments/specialization/637M2BBSLAF5',
   },
   {
     title: 'Deep Learning Specialization',
@@ -107,6 +109,7 @@ const certifications = [
     logoInitial: 'C',
     logoBg: 'bg-blue-600',
     logoUrl: '/static/images/logos/coursera.png',
+    url: 'https://www.coursera.org/account/accomplishments/specialization/UZE6U8PEXWGV',
   },
   {
     title: 'Linear Algebra & Calculus',
@@ -114,6 +117,7 @@ const certifications = [
     logoInitial: 'MIT',
     logoBg: 'bg-red-800',
     logoUrl: '/static/images/logos/mit.svg',
+    url: '',
   },
 ]
 
@@ -206,7 +210,7 @@ export default function AuthorLayout({ children, content }: Props) {
   }, [])
 
   return (
-    <div className="lg:flex lg:gap-16 xl:gap-24">
+    <div className="lg:flex lg:gap-8 xl:gap-12">
       {/* Left sticky sidebar */}
       <aside className="pt-8 pb-8 lg:sticky lg:top-8 lg:w-56 lg:flex-shrink-0 lg:self-start xl:w-64">
         <div className="flex flex-col items-center text-center">
@@ -408,9 +412,20 @@ export default function AuthorLayout({ children, content }: Props) {
                   name={cert.issuer}
                 />
                 <div>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                    {cert.title}
-                  </p>
+                  {cert.url ? (
+                    <a
+                      href={cert.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm font-semibold text-gray-900 hover:underline dark:text-gray-100"
+                    >
+                      {cert.title}
+                    </a>
+                  ) : (
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                      {cert.title}
+                    </p>
+                  )}
                   <p className="text-xs text-gray-600 dark:text-gray-400">{cert.issuer}</p>
                 </div>
               </li>
