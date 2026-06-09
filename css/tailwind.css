@@ -94,9 +94,13 @@
         color: #2563eb;
       }
     }
-    & :where(h1, h2) {
+    & :where(h1, h2, h3, h4, h5, h6) {
       font-weight: 700;
       letter-spacing: var(--tracking-tight);
+      color: #000;
+    }
+    & :where(h3, h4, h5, h6) {
+      font-weight: 700;
     }
     & h2 {
       font-size: 1.25rem;
@@ -107,7 +111,34 @@
       font-size: 1.1rem;
       line-height: 1.5rem;
     }
+    & h2, & h3, & h4 {
+      margin-top: 1.25rem;
+      margin-bottom: 0.4rem;
+    }
+    & p {
+      margin-top: 0.6rem;
+      margin-bottom: 0.6rem;
+    }
+    & hr {
+      margin-top: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+    & pre {
+      margin-top: 0.6rem;
+      margin-bottom: 0.6rem;
+    }
+    & table {
+      margin-top: 0.6rem;
+      margin-bottom: 0.6rem;
+    }
+    & ul, & ol {
+      margin-top: 0.4rem;
+      margin-bottom: 0.4rem;
+    }
     & :where(code):not(pre code) {
+      color: #000;
+    }
+    & strong {
       color: #000;
     }
   }

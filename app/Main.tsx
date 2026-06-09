@@ -23,7 +23,7 @@ export default function Home({ posts }) {
           {posts.slice(0, MAX_DISPLAY).map((post) => {
             const { slug, date, title, summary, tags } = post
             return (
-              <li key={slug} className="py-6">
+              <li key={slug} className="py-4">
                 <article>
                   <div className="space-y-1 xl:grid xl:grid-cols-[200px_1fr] xl:items-baseline xl:space-y-0">
                     <dl>
@@ -32,10 +32,10 @@ export default function Home({ posts }) {
                         <time dateTime={date}>{formatDate(date, siteMetadata.locale)}</time>
                       </dd>
                     </dl>
-                    <div className="space-y-5">
-                      <div className="space-y-6">
+                    <div className="space-y-2">
+                      <div className="space-y-1">
                         <div>
-                          <h2 className="text-2xl leading-8 font-bold tracking-tight">
+                          <h2 className="text-xl leading-7 font-bold tracking-tight">
                             <Link
                               href={`/write-up/${slug}`}
                               className="text-gray-900 dark:text-gray-100"
@@ -49,11 +49,11 @@ export default function Home({ posts }) {
                             ))}
                           </div>
                         </div>
-                        <div className="prose dark:prose-invert max-w-none text-gray-900 dark:text-gray-400">
+                        <div className="prose dark:prose-invert max-w-none text-sm text-gray-900 dark:text-gray-400 truncate">
                           {summary}
                         </div>
                       </div>
-                      <div className="text-base leading-6 font-medium">
+                      <div className="text-sm leading-5 font-medium">
                         <Link
                           href={`/write-up/${slug}`}
                           className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"

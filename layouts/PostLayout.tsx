@@ -56,7 +56,7 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
             </div>
           </header>
           <div className="pb-8">
-            <div className="prose dark:prose-invert max-w-none pt-10 pb-8">{children}</div>
+            <div className="prose dark:prose-invert max-w-none pt-4 pb-8">{children}</div>
             {siteMetadata.comments && (
               <div
                 className="pt-6 pb-6 text-center text-gray-700 dark:text-gray-200"
