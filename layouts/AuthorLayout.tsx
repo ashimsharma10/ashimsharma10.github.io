@@ -112,6 +112,7 @@ const certifications = [
     logoInitial: 'C',
     logoBg: 'bg-blue-600',
     logoUrl: '/static/images/logos/coursera.png',
+    cover: true,
     url: 'https://www.coursera.org/account/accomplishments/specialization/UZE6U8PEXWGV',
   },
   {
@@ -415,6 +416,7 @@ export default function AuthorLayout({ children, content }: Props) {
                   initial={cert.logoInitial}
                   bg={cert.logoBg}
                   name={cert.issuer}
+                  cover={cert.cover}
                 />
                 <div>
                   {cert.url ? (
