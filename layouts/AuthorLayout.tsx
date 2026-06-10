@@ -304,8 +304,8 @@ export default function AuthorLayout({ children, content }: Props) {
                       <p className="text-sm text-gray-900 dark:text-gray-400">{job.company}</p>
                     </div>
                     <div className="flex-shrink-0 sm:text-right">
-                      <p className="text-xs text-gray-900 dark:text-gray-500">{job.period}</p>
-                      <p className="text-xs text-gray-900 dark:text-gray-500">{job.location}</p>
+                      <p className="text-xs text-black dark:text-gray-100">{job.period}</p>
+                      <p className="text-xs text-black dark:text-gray-100">{job.location}</p>
                     </div>
                   </div>
                 </div>
@@ -347,8 +347,8 @@ export default function AuthorLayout({ children, content }: Props) {
                       <p className="text-sm text-gray-900 dark:text-gray-400">{edu.school}</p>
                     </div>
                     <div className="flex-shrink-0 sm:text-right">
-                      <p className="text-xs text-gray-900 dark:text-gray-500">{edu.period}</p>
-                      <p className="text-xs text-gray-900 dark:text-gray-500">{edu.location}</p>
+                      <p className="text-xs text-black dark:text-gray-100">{edu.period}</p>
+                      <p className="text-xs text-black dark:text-gray-100">{edu.location}</p>
                     </div>
                   </div>
                   {edu.note && (
