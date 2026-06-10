@@ -233,10 +233,10 @@ export default function AuthorLayout({ children, content }: Props) {
           <p className="mt-2 text-sm text-gray-900 dark:text-gray-400">{occupation}</p>
 
           {/* Section nav — desktop only */}
-          <nav className="mt-10 hidden self-start lg:block">
+          <nav className="mt-10 hidden lg:block w-full">
             <ul className="space-y-3">
               {navLinks.map(({ id, label }) => (
-                <li key={id}>
+                <li key={id} className="flex justify-center">
                   <a
                     href={`#${id}`}
                     className={`group flex items-center gap-2 text-xs font-semibold tracking-widest transition-all duration-200 ${
