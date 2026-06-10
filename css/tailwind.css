@@ -220,6 +220,11 @@
   @apply no-underline;
 }
 
+.prose .not-prose a {
+  color: inherit;
+  text-decoration: none;
+}
+
 .csl-entry {
   @apply my-5;
 }

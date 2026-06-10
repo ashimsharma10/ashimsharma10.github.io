@@ -42,3 +42,5 @@ yarn-error.log*
 
 # Contentlayer
 .contentlayer
+CLAUDE.md
+AGENTS.md
