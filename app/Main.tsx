@@ -49,7 +49,7 @@ export default function Home({ posts }) {
                             ))}
                           </div>
                         </div>
-                        <div className="prose dark:prose-invert max-w-none truncate text-sm text-gray-900 dark:text-gray-400">
+                        <div className="prose dark:prose-invert max-w-none line-clamp-2 text-sm text-gray-900 dark:text-gray-400">
                           {summary}
                         </div>
                       </div>
