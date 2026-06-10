@@ -271,7 +271,7 @@ export default function AuthorLayout({ children, content }: Props) {
       </aside>
 
       {/* Right scrollable content */}
-      <main className="min-w-0 flex-1 py-8 lg:py-16">
+      <main className="min-w-0 flex-1 py-8 lg:py-16 lg:pb-[60vh]">
         {/* About */}
         <section id="about" className="mb-16 scroll-mt-8">
           <h2 className="mb-5 text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 lg:sr-only">
