@@ -69,7 +69,7 @@ const education = [
 ]
 
 const skillGroups = [
-  { label: 'Languages', value: 'Python, C#, SQL, C++, TypeScript' },
+  { label: 'Languages', value: 'Python, SQL, C++, TypeScript' },
   { label: 'AI Frameworks', value: 'LangChain, PyTorch, TensorFlow, OpenAI, HuggingFace, LlamaIndex' },
   { label: 'Machine Learning', value: 'Natural Language Processing, Deep Learning, Pre-trained Models, Model Integration' },
   { label: 'Cloud Technologies', value: 'AWS, Azure, GCP, Databricks (Delta Lake, MLflow), Data Lakes' },
@@ -79,8 +79,11 @@ const skillGroups = [
 
 const publications = [
   {
-    citation:
-      'Gaire R.R., Subedi R., Sharma A., Subedi S., Ghimire S.K., Shakya S. (2022) GAN-Based Two-Step Pipeline for Real-World Image Super-Resolution.',
+    citationParts: [
+      { text: 'Gaire R.R., Subedi R., ', bold: false },
+      { text: 'Sharma A.', bold: true },
+      { text: ', Subedi S., Ghimire S.K., Shakya S. (2022) GAN-Based Two-Step Pipeline for Real-World Image Super-Resolution.', bold: false },
+    ],
     venue: 'ICT with Intelligent Applications. Smart Innovation, Systems and Technologies, vol 248. Springer, Singapore.',
     url: 'https://link.springer.com/chapter/10.1007%2F978-981-16-4177-0_75',
   },
@@ -109,6 +112,7 @@ const certifications = [
     logoInitial: 'C',
     logoBg: 'bg-blue-600',
     logoUrl: '/static/images/logos/coursera.png',
+    cover: true,
     url: 'https://www.coursera.org/account/accomplishments/specialization/UZE6U8PEXWGV',
   },
   {
@@ -235,14 +239,14 @@ export default function AuthorLayout({ children, content }: Props) {
                 <li key={id}>
                   <a
                     href={`#${id}`}
-                    className={`group flex items-center gap-3 text-xs font-semibold tracking-widest transition-all duration-200 ${
+                    className={`group flex items-center gap-2 text-xs font-semibold tracking-widest transition-all duration-200 ${
                       activeSection === id
                         ? 'text-gray-900 dark:text-gray-100'
                         : 'text-gray-400 hover:text-gray-900 dark:text-gray-500 dark:hover:text-gray-300'
                     }`}
                   >
                     <span
-                      className={`block h-px transition-all duration-200 ${
+                      className={`block h-px flex-shrink-0 transition-all duration-200 ${
                         activeSection === id
                           ? 'w-12 bg-gray-900 dark:bg-gray-100'
                           : 'w-6 bg-gray-300 group-hover:w-10 group-hover:bg-gray-900 dark:bg-gray-600 dark:group-hover:bg-gray-400'
@@ -267,7 +271,7 @@ export default function AuthorLayout({ children, content }: Props) {
       </aside>
 
       {/* Right scrollable content */}
-      <main className="min-w-0 flex-1 py-8 lg:py-16">
+      <main className="min-w-0 flex-1 py-8 lg:py-16 lg:pb-[60vh]">
         {/* About */}
         <section id="about" className="mb-16 scroll-mt-8">
           <h2 className="mb-5 text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 lg:sr-only">
@@ -300,8 +304,8 @@ export default function AuthorLayout({ children, content }: Props) {
                       <p className="text-sm text-gray-900 dark:text-gray-400">{job.company}</p>
                     </div>
                     <div className="flex-shrink-0 sm:text-right">
-                      <p className="text-xs text-gray-900 dark:text-gray-500">{job.period}</p>
-                      <p className="text-xs text-gray-900 dark:text-gray-500">{job.location}</p>
+                      <p className="text-xs text-black dark:text-gray-100">{job.period}</p>
+                      <p className="text-xs text-black dark:text-gray-100">{job.location}</p>
                     </div>
                   </div>
                 </div>
@@ -343,8 +347,8 @@ export default function AuthorLayout({ children, content }: Props) {
                       <p className="text-sm text-gray-900 dark:text-gray-400">{edu.school}</p>
                     </div>
                     <div className="flex-shrink-0 sm:text-right">
-                      <p className="text-xs text-gray-900 dark:text-gray-500">{edu.period}</p>
-                      <p className="text-xs text-gray-900 dark:text-gray-500">{edu.location}</p>
+                      <p className="text-xs text-black dark:text-gray-100">{edu.period}</p>
+                      <p className="text-xs text-black dark:text-gray-100">{edu.location}</p>
                     </div>
                   </div>
                   {edu.note && (
@@ -388,7 +392,9 @@ export default function AuthorLayout({ children, content }: Props) {
                     rel="noopener noreferrer"
                     className="hover:underline"
                   >
-                    {pub.citation}
+                    {pub.citationParts.map((part, j) =>
+                      part.bold ? <strong key={j}>{part.text}</strong> : <span key={j}>{part.text}</span>
+                    )}
                   </a>{' '}
                   <span className="italic">{pub.venue}</span>
                 </p>
@@ -402,7 +408,7 @@ export default function AuthorLayout({ children, content }: Props) {
           <h2 className="mb-8 text-xs font-semibold uppercase tracking-widest text-gray-900 dark:text-gray-500">
             Certifications
           </h2>
-          <ul className="space-y-4">
+          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {certifications.map((cert, i) => (
               <li key={i} className="flex items-center gap-3">
                 <OrgLogo
@@ -410,6 +416,7 @@ export default function AuthorLayout({ children, content }: Props) {
                   initial={cert.logoInitial}
                   bg={cert.logoBg}
                   name={cert.issuer}
+                  cover={cert.cover}
                 />
                 <div>
                   {cert.url ? (
