@@ -408,7 +408,7 @@ export default function AuthorLayout({ children, content }: Props) {
           <h2 className="mb-8 text-xs font-semibold uppercase tracking-widest text-gray-900 dark:text-gray-500">
             Certifications
           </h2>
-          <ul className="space-y-4">
+          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {certifications.map((cert, i) => (
               <li key={i} className="flex items-center gap-3">
                 <OrgLogo
