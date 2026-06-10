@@ -1,0 +1,17 @@
+# Ashim Sharma
+
+> Software engineer sharing projects, notes, and guides on ML infrastructure.
+
+## Write-ups
+
+- [From Raw Data to ML-Ready: A Pandas Walkthrough](https://ashimsharma10.github.io/write-up/from-raw-data-to-ml-ready-a-pandas-walkthrough/index.md): Full ML data prep lifecycle in Pandas: load, clean, impute, engineer features, encode, scale, and ship to model.
+- [ML Engineer: Comprehensive Technical Prep Guide](https://ashimsharma10.github.io/write-up/ml-engineer-comprehensive-technical-prep-guide/index.md): ML engineer prep: Python infra, NumPy, PyTorch, distributed training, scientific formats, MLflow, and common coding patterns.
+- [PyTorch: From First Tensor to Distributed Training](https://ashimsharma10.github.io/write-up/pytorch-from-first-tensor-to-distributed-training/index.md): Deep guide for ML engineers: tensors, autograd, nn.Module, training loops, DDP, FSDP, checkpointing, and debugging at scale.
+
+## About
+
+- [Profile](https://ashimsharma10.github.io/profile.md): Bio, skills, experience, contact
+
+## Optional
+
+- [Full site content](https://ashimsharma10.github.io/llms-full.txt): All posts concatenated
