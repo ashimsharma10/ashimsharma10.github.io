@@ -20,10 +20,10 @@ const experience = [
     logoInitial: 'R',
     logoBg: 'bg-yellow-600',
     bullets: [
-      'Built scalable RAG pipelines on Databricks (Delta Lake, MLflow) using vector embeddings (Pinecone/FAISS) and LangChain to enable intelligent retrieval across large automotive regulatory corpora, reducing manual review effort by 95%.',
-      'Preprocessed and analyzed 50,000+ unstructured customer reviews from Reddit and X (Twitter); built and evaluated an NLP sentiment classifier (85%+ accuracy) and entity recognition pipeline, surfacing 200+ actionable automotive product insights per month and reducing issue response time by 40%.',
-      'Tracked model performance and hyperparameter configurations in MLflow; maintained reproducible experiment logs and version-controlled all pipeline code via Git.',
-      'Built Tableau dashboards to communicate model behavior and insights to senior leadership; partnered with cross-functional stakeholders to accelerate delivery by 20%.',
+      'Built scalable <strong>RAG pipelines</strong> on <strong>Databricks</strong> (Delta Lake, MLflow) using <strong>vector embeddings</strong> (Pinecone/FAISS) and <strong>LangChain</strong> to enable intelligent retrieval across large automotive regulatory corpora, reducing manual review effort by <strong>95%</strong>.',
+      'Preprocessed and analyzed <strong>50,000+ unstructured customer reviews</strong> from Reddit and X (Twitter); built and evaluated an <strong>NLP sentiment classifier</strong> (<strong>85%+ accuracy</strong>) and <strong>entity recognition pipeline</strong>, surfacing 200+ actionable automotive product insights per month and reducing issue response time by <strong>40%</strong>.',
+      'Tracked model performance and hyperparameter configurations in <strong>MLflow</strong>; maintained reproducible experiment logs and version-controlled all pipeline code via <strong>Git</strong>.',
+      'Built <strong>Tableau dashboards</strong> to communicate model behavior and insights to senior leadership; partnered with cross-functional stakeholders to accelerate delivery by <strong>20%</strong>.',
     ],
   },
   {
@@ -35,8 +35,8 @@ const experience = [
     logoInitial: 'C',
     logoBg: 'bg-red-600',
     bullets: [
-      'Led applied ML and GenAI curriculum with CGI Inc., mentoring 150+ students on statistical modeling, model evaluation, EDA, and LLM fine-tuning; designed hands-on Python labs covering regression, classification, and ensemble methods.',
-      'Delivered comprehensive training on AI frameworks including PyTorch, Transformer architectures, GPT, BERT, and prompt engineering; designed hands-on labs covering machine learning algorithms for 50+ students.',
+      'Led applied <strong>ML and GenAI</strong> curriculum with <strong>CGI Inc.</strong>, mentoring <strong>150+ students</strong> on statistical modeling, model evaluation, EDA, and <strong>LLM fine-tuning</strong>; designed hands-on Python labs covering regression, classification, and ensemble methods.',
+      'Delivered comprehensive training on AI frameworks including <strong>PyTorch</strong>, <strong>Transformer architectures</strong>, <strong>GPT</strong>, <strong>BERT</strong>, and <strong>prompt engineering</strong>; designed hands-on labs covering machine learning algorithms for <strong>50+ students</strong>.',
     ],
   },
   {
@@ -48,9 +48,9 @@ const experience = [
     logoInitial: 'F',
     logoBg: 'bg-blue-600',
     bullets: [
-      'Built and evaluated deep learning models (3D U-Net, PyTorch) for medical image segmentation achieving ~0.85 Dice score; assessed new clinical data sources and preprocessed multi-modal datasets using PySpark for scalable downstream modeling.',
-      'Developed EHR-based disease prognosis pipelines using Cox proportional hazards and XGBoost; improved early-detection AUC from 0.72 to 0.81 and presented results to clinical stakeholders via dashboards.',
-      'Contributed to REST API integrations for model inference; collaborated with IT on deployment workflows, model versioning, and production readiness.',
+      'Built and evaluated deep learning models (<strong>3D U-Net</strong>, <strong>PyTorch</strong>) for medical image segmentation achieving <strong>~0.85 Dice score</strong>; assessed new clinical data sources and preprocessed multi-modal datasets using <strong>PySpark</strong> for scalable downstream modeling.',
+      'Developed <strong>EHR-based</strong> disease prognosis pipelines using <strong>Cox proportional hazards</strong> and <strong>XGBoost</strong>; improved early-detection <strong>AUC from 0.72 to 0.81</strong> and presented results to clinical stakeholders via dashboards.',
+      'Contributed to <strong>REST API</strong> integrations for model inference; collaborated with IT on deployment workflows, <strong>model versioning</strong>, and production readiness.',
     ],
   },
 ]
@@ -233,8 +233,8 @@ export default function AuthorLayout({ children, content }: Props) {
           <p className="mt-2 text-sm text-gray-900 dark:text-gray-400">{occupation}</p>
 
           {/* Section nav — desktop only */}
-          <nav className="mt-10 hidden lg:block w-full">
-            <ul className="mx-auto w-fit space-y-3">
+          <nav className="mt-10 hidden self-start lg:block">
+            <ul className="space-y-3">
               {navLinks.map(({ id, label }) => (
                 <li key={id}>
                   <a
@@ -314,10 +314,10 @@ export default function AuthorLayout({ children, content }: Props) {
                   {job.bullets.map((b, j) => (
                     <li
                       key={j}
-                      className="flex items-start gap-2 text-sm leading-relaxed text-gray-900 dark:text-gray-400"
+                      className="flex items-start gap-2 text-base leading-relaxed text-gray-900 dark:text-gray-400"
                     >
-                      <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-gray-400 dark:bg-gray-600" />
-                      {b}
+                      <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-gray-400 dark:bg-gray-600" />
+                      <span dangerouslySetInnerHTML={{ __html: b }} />
                     </li>
                   ))}
                 </ul>
