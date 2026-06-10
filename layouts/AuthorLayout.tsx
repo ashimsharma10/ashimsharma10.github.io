@@ -233,20 +233,20 @@ export default function AuthorLayout({ children, content }: Props) {
           <p className="mt-2 text-sm text-gray-900 dark:text-gray-400">{occupation}</p>
 
           {/* Section nav — desktop only */}
-          <nav className="mt-10 hidden lg:block">
-            <ul className="space-y-3">
+          <nav className="mt-10 hidden lg:block w-full">
+            <ul className="mx-auto w-fit space-y-3">
               {navLinks.map(({ id, label }) => (
                 <li key={id}>
                   <a
                     href={`#${id}`}
-                    className={`group flex items-center gap-3 text-xs font-semibold tracking-widest transition-all duration-200 ${
+                    className={`group flex items-center gap-2 text-xs font-semibold tracking-widest transition-all duration-200 ${
                       activeSection === id
                         ? 'text-gray-900 dark:text-gray-100'
                         : 'text-gray-400 hover:text-gray-900 dark:text-gray-500 dark:hover:text-gray-300'
                     }`}
                   >
                     <span
-                      className={`block h-px transition-all duration-200 ${
+                      className={`block h-px flex-shrink-0 transition-all duration-200 ${
                         activeSection === id
                           ? 'w-12 bg-gray-900 dark:bg-gray-100'
                           : 'w-6 bg-gray-300 group-hover:w-10 group-hover:bg-gray-900 dark:bg-gray-600 dark:group-hover:bg-gray-400'
