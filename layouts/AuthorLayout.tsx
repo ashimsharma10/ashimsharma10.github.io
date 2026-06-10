@@ -234,9 +234,9 @@ export default function AuthorLayout({ children, content }: Props) {
 
           {/* Section nav — desktop only */}
           <nav className="mt-10 hidden lg:block w-full">
-            <ul className="space-y-3">
+            <ul className="mx-auto w-fit space-y-3">
               {navLinks.map(({ id, label }) => (
-                <li key={id} className="flex justify-center">
+                <li key={id}>
                   <a
                     href={`#${id}`}
                     className={`group flex items-center gap-2 text-xs font-semibold tracking-widest transition-all duration-200 ${
