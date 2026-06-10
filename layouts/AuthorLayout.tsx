@@ -69,7 +69,7 @@ const education = [
 ]
 
 const skillGroups = [
-  { label: 'Languages', value: 'Python, C#, SQL, C++, TypeScript' },
+  { label: 'Languages', value: 'Python, SQL, C++, TypeScript' },
   { label: 'AI Frameworks', value: 'LangChain, PyTorch, TensorFlow, OpenAI, HuggingFace, LlamaIndex' },
   { label: 'Machine Learning', value: 'Natural Language Processing, Deep Learning, Pre-trained Models, Model Integration' },
   { label: 'Cloud Technologies', value: 'AWS, Azure, GCP, Databricks (Delta Lake, MLflow), Data Lakes' },
