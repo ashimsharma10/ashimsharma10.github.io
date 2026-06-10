@@ -3,7 +3,7 @@ const siteMetadata = {
   title: 'Ashim Sharma',
   author: 'Ashim Sharma',
   headerTitle: 'Ashim Sharma',
-  description: 'Software engineer — portfolio, projects, and writing.',
+  description: 'Software engineer sharing projects, notes, and guides on ML infrastructure.',
   language: 'en-us',
   theme: 'system', // system, dark or light
   siteUrl: 'https://ashimsharma10.github.io',
