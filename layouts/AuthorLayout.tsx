@@ -233,8 +233,8 @@ export default function AuthorLayout({ children, content }: Props) {
           <p className="mt-2 text-sm text-gray-900 dark:text-gray-400">{occupation}</p>
 
           {/* Section nav — desktop only */}
-          <nav className="mt-10 hidden self-start lg:block">
-            <ul className="space-y-3">
+          <nav className="mt-10 hidden lg:block w-full">
+            <ul className="mx-auto w-fit space-y-3">
               {navLinks.map(({ id, label }) => (
                 <li key={id}>
                   <a
