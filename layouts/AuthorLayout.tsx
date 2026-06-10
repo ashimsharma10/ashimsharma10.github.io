@@ -79,8 +79,11 @@ const skillGroups = [
 
 const publications = [
   {
-    citation:
-      'Gaire R.R., Subedi R., Sharma A., Subedi S., Ghimire S.K., Shakya S. (2022) GAN-Based Two-Step Pipeline for Real-World Image Super-Resolution.',
+    citationParts: [
+      { text: 'Gaire R.R., Subedi R., ', bold: false },
+      { text: 'Sharma A.', bold: true },
+      { text: ', Subedi S., Ghimire S.K., Shakya S. (2022) GAN-Based Two-Step Pipeline for Real-World Image Super-Resolution.', bold: false },
+    ],
     venue: 'ICT with Intelligent Applications. Smart Innovation, Systems and Technologies, vol 248. Springer, Singapore.',
     url: 'https://link.springer.com/chapter/10.1007%2F978-981-16-4177-0_75',
   },
@@ -388,7 +391,9 @@ export default function AuthorLayout({ children, content }: Props) {
                     rel="noopener noreferrer"
                     className="hover:underline"
                   >
-                    {pub.citation}
+                    {pub.citationParts.map((part, j) =>
+                      part.bold ? <strong key={j}>{part.text}</strong> : <span key={j}>{part.text}</span>
+                    )}
                   </a>{' '}
                   <span className="italic">{pub.venue}</span>
                 </p>
