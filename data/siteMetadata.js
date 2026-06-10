@@ -9,7 +9,7 @@ const siteMetadata = {
   siteUrl: 'https://ashimsharma10.github.io',
   siteRepo: 'https://github.com/ashimsharma10/ashimsharma10.github.io',
   siteLogo: `${process.env.BASE_PATH || ''}/static/images/logo.png`,
-  socialBanner: `${process.env.BASE_PATH || ''}/static/images/twitter-card.png`,
+  // socialBanner: `${process.env.BASE_PATH || ''}/static/images/twitter-card.png`,
   // mastodon: 'https://mastodon.social/@mastodonuser',
   email: 'sharmaashim00@gmail.com',
   github: 'https://github.com/ashimsharma10',
