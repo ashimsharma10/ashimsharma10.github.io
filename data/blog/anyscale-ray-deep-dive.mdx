@@ -55,11 +55,24 @@ Despite this heterogeneity, teams traditionally package the entire workload into
 
 **Monolithic container:** one container holds every stage, so the GPU is reserved for the whole lifecycle but only works during inference (pink = GPU sitting idle while CPUs grind):
 
-
+```mermaid
+flowchart LR
+    M1[Decode · CPU] --> M2[Resize · CPU] --> M3[Inference · GPU] --> M4[Format · CPU]
+    style M1 fill:#FDE8E8,stroke:#C0392B,color:#111
+    style M2 fill:#FDE8E8,stroke:#C0392B,color:#111
+    style M3 fill:#FFF4D6,stroke:#B7791F,color:#111
+    style M4 fill:#FDE8E8,stroke:#C0392B,color:#111
+```
 
 **Disaggregated + streaming (Ray Data):** same code, restructured. CPU stages run on an independently scaled CPU fleet, GPU stages on a GPU fleet, and blocks stream between them through the in-memory object store so the GPU stays saturated:
 
-
+```mermaid
+flowchart LR
+    C1[CPU fleet · decode & resize] ==> G1[GPU fleet · inference] ==> C2[CPU fleet · format & write]
+    style C1 fill:#D9F2EC,stroke:#1F7A66,color:#111
+    style G1 fill:#FFF4D6,stroke:#B7791F,color:#111
+    style C2 fill:#D9F2EC,stroke:#1F7A66,color:#111
+```
 
 Anyscale's engineering analysis (citing prior research on data stalls in DNN training) notes that CPU-bound preprocessing stages can consume the majority of total epoch time in multimodal workloads, leaving the most expensive hardware in the datacenter idle [[11]](#ref-11)[[13]](#ref-13).
 
@@ -151,7 +164,24 @@ The OSDI 2018 paper describes two layers [[1]](#ref-1):
 - **Distributed (bottom-up) scheduler:** tasks are first submitted to a *local* scheduler on each node; only if the node is overloaded or lacks resources does the task escalate to a global scheduler. This bottom-up design is what enables millions of fine-grained task scheduling decisions per second. A global-only scheduler would bottleneck [[1]](#ref-1).
 - **In-memory distributed object store:** each node runs a shared-memory object store; immutable objects are tracked via the GCS and fetched on demand by whichever node needs them.
 
-
+```mermaid
+flowchart TB
+    DR[Driver] -->|1 submit| LS1[Local scheduler]
+    LS1 -->|2 escalate if full| GS[Global scheduler]
+    GS -->|3 place| LS2[Local scheduler]
+    LS1 --> W1[Worker]
+    LS2 --> W2[Worker]
+    LS2 --> AC[Actor on GPU]
+    W1 --- OS1[(Object store)]
+    W2 --- OS2[(Object store)]
+    OS1 <-.fetch by ref.-> OS2
+    GCS[(GCS — metadata & lineage)] -.- LS1
+    GCS -.- GS
+    GCS -.- OS2
+    style GCS fill:#e8eefc,stroke:#2a5db0
+    style GS fill:#e8eefc,stroke:#2a5db0
+    style AC fill:#fff4d6,stroke:#b7791f
+```
 
 *How a task gets scheduled: the driver submits to its **local** scheduler first (1); only if that node is overloaded does the task escalate to the **global** scheduler (2), which places it on another node (3). Workers exchange large objects by reference through per-node shared-memory **object stores**, looking up locations in the **GCS**, the sharded key-value store holding all metadata and lineage. This bottom-up scheduling plus centralized metadata is what enables Ray's >1.8M scheduled tasks/sec while keeping every other component stateless and recoverable [[1]](#ref-1).*
 
@@ -169,7 +199,17 @@ A key result in the paper: a Ray implementation of an RL workload outperformed a
 
 Ray Core (tasks/actors/objects) is the foundation. On top of it sits a suite of purpose-built libraries, and this is what most people actually use day-to-day:
 
-
+```mermaid
+flowchart TB
+    DATA[Ray Data] --> CORE
+    TRAIN[Ray Train] --> CORE
+    TUNE[Ray Tune] --> CORE
+    SERVE[Ray Serve] --> CORE
+    RLLIB[RLlib] --> CORE
+    CORE[Ray Core — tasks · actors · objects] --> INFRA[Laptop · VMs · Kubernetes · Anyscale]
+    style CORE fill:#e8eefc,stroke:#2a5db0
+    style INFRA fill:#eef1f5,stroke:#6b7280
+```
 
 *The stack: five AI libraries (data processing, training, tuning, serving, RL) all compile down to Ray Core's task/actor/object primitives, and Ray Core runs on anything: your laptop, raw cloud VMs, Kubernetes via KubeRay, or Anyscale's managed platform.*
 
@@ -367,7 +407,20 @@ HF parquet (mp4 bytes)
 
 Videos stream directly from Hugging Face without local prefetch, and Ray Data executes each stage on its declared compute type, streams block-by-block, and applies backpressure automatically. Traditional staged pipelines would run one stage at a time, idling GPUs through every CPU stage; here CPU and GPU work overlap continuously [[6]](#ref-6)[[13]](#ref-13).
 
-
+```mermaid
+flowchart TB
+    SRC[(finevideo dataset)] --> FM[Split & filter clips]
+    FM --> VLM[VLM captioning — vLLM]
+    VLM --> FLT[Safety filter]
+    FLT --> EMB[CLIP embeddings]
+    EMB --> OUT[(write_parquet)]
+    style FM fill:#d9f2ec,stroke:#1f7a66
+    style FLT fill:#d9f2ec,stroke:#1f7a66
+    style EMB fill:#d9f2ec,stroke:#1f7a66
+    style VLM fill:#fff4d6,stroke:#b7791f
+    style SRC fill:#eef1f5,stroke:#6b7280
+    style OUT fill:#eef1f5,stroke:#6b7280
+```
 
 *Green = CPU stages, amber = GPU stage. Stage details: **Split & filter** = `flat_map` doing scene detection, quality filtering, and keyframe extraction (1 video → ~10 clips); **VLM captioning** = `vLLMEngineProcessor` running Qwen2.5-VL-3B (one replica per GPU) to attach category/safety/description; **Safety filter** = `filter(is_safe)`; **CLIP embeddings** = `map_batches` over a CPU actor pool producing 512-d vectors. All five stages run **concurrently**. Blocks stream between them through the object store with automatic backpressure, so the GPU never waits for an entire upstream stage to finish.*
 
@@ -516,7 +569,19 @@ Conceptually: DeepSpeed's ZeRO partitions training state across data-parallel wo
 
 ### 10.4 Picking a strategy
 
-
+```mermaid
+flowchart TD
+    Q1{Full replica fits<br/>on one GPU?} -->|yes| DDP[DDP]
+    Q1 -->|no| Q2{Single layers<br/>still fit?}
+    Q2 -->|no| MEG[Megatron tensor/<br/>pipeline parallel]
+    Q2 -->|yes| Q3{HF/DeepSpeed code<br/>or need offload configs?}
+    Q3 -->|yes| DS[DeepSpeed ZeRO]
+    Q3 -->|no| FSDP[FSDP2]
+    style DDP fill:#d9f2ec,stroke:#1f7a66
+    style FSDP fill:#e8eefc,stroke:#2a5db0
+    style DS fill:#e8eefc,stroke:#2a5db0
+    style MEG fill:#fff4d6,stroke:#b7791f
+```
 
 *"Full replica" means parameters + gradients + optimizer state together. DDP uses Ray Train's `prepare_model`/`prepare_data_loader`; FSDP2 means `fully_shard` with the levers from Section 10.2; DeepSpeed ZeRO escalates stage 1→2→3 plus CPU offload; Megatron-style parallelism is covered by the `megatron_training` example. All four launch through the same `TorchTrainer`.*
 
@@ -528,7 +593,20 @@ A compact decision rule: **DDP** while a full model replica fits per GPU (it's t
 
 **The dev→prod workflow on Anyscale**, end to end: develop interactively in a Workspace against a real multi-node cluster → codify the workload as `job.yaml` / `service.yaml` → `anyscale job submit` / `anyscale service deploy` from CI/CD → monitor via built-in dashboards, with budgets, quotas, and alerts governing the fleet [[9]](#ref-9)[[24]](#ref-24).
 
-
+```mermaid
+flowchart TB
+    DEV[Workspace — dev on a live cluster] --> YAML[job.yaml / service.yaml]
+    YAML --> CICD[CI/CD — anyscale CLI]
+    CICD --> JOB[Job — batch workloads]
+    CICD --> SVC[Service — online serving]
+    JOB --> OBS[Dashboards · budgets · RBAC]
+    SVC --> OBS
+    OBS -.iterate.-> DEV
+    style DEV fill:#e8eefc,stroke:#2a5db0
+    style JOB fill:#d9f2ec,stroke:#1f7a66
+    style SVC fill:#fff4d6,stroke:#b7791f
+    style OBS fill:#eef1f5,stroke:#6b7280
+```
 
 *Develop in a **Workspace** (VS Code/Jupyter on a real multi-node cluster, same image and dependencies as prod) → codify infrastructure as YAML → promote via `anyscale job submit` / `anyscale service deploy` from CI/CD. **Jobs** get fresh autoscaled clusters with retries, alerts, and logs; **Services** get Ray Serve endpoints with zero-downtime upgrades and head-node fault tolerance; governance (budgets, quotas, RBAC, audit logs) wraps the whole loop.*
 
