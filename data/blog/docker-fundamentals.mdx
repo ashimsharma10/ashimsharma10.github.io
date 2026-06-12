@@ -46,7 +46,7 @@ A container is **just a host process**, constrained in what it can *see* (namesp
 ### 🗺️ How it all fits together
 
 <style>{`.dk-card{display:block;text-decoration:none;color:inherit;background:#fff;border:1px solid #e0dfdb;border-radius:12px;transition:border-color 0.15s}.dk-card:hover{border-color:#1D9E75}`}</style>
-<div style={{fontFamily: "system-ui, -apple-system, sans-serif", maxWidth: "640px"}}>
+<div style={{fontFamily: "system-ui, -apple-system, sans-serif", maxWidth: "640px", margin: "0 auto"}}>
 <a href="#42-dockerfile" className="dk-card" style={{padding: "11px 16px"}}>
   <p style={{fontSize: "14px", fontWeight: "600", margin: "0 0 3px"}}>📄 Dockerfile</p>
   <p style={{fontSize: "12px", color: "#5f5e5a", margin: "0 0 7px", lineHeight: "1.5"}}>Declarative recipe — each instruction creates a layer or sets metadata. The <b>source code</b> of your image.</p>
@@ -113,7 +113,7 @@ Implications: bind mounts cross the VM boundary (slow — prefer volumes), use `
 
 ### 3.1 The Runtime Stack
 
-<div className="flex justify-center my-6"><img src="/static/images/docker-fundamentals/docker_runtime_stack.svg" alt="Docker Runtime Stack" style={{maxWidth: "100%"}} /></div>
+<div className="flex justify-center my-6"><img src="/static/images/docker-fundamentals/docker_runtime_stack.svg" alt="Docker Runtime Stack" style={{maxWidth: "72%", display: "block", margin: "0 auto"}} /></div>
 
 ### 3.2 Tracing `docker run nginx`
 
@@ -310,7 +310,7 @@ Docker Engine 29.0+ defaults to the **containerd image store** using snapshotter
 
 ### 6.1 Bridge Internals
 
-<div className="flex justify-center my-6"><img src="/static/images/docker-fundamentals/docker_bridge_networking.svg" alt="Docker Bridge Networking" style={{maxWidth: "100%"}} /></div>
+<div className="flex justify-center my-6"><img src="/static/images/docker-fundamentals/docker_bridge_networking.svg" alt="Docker Bridge Networking" style={{maxWidth: "72%", display: "block", margin: "0 auto"}} /></div>
 
 > ⚠️ Embedded DNS (name → IP) works **only on user-defined bridges**. The default bridge lacks it. Always create a user-defined network.
 
