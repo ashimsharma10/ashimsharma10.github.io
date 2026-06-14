@@ -55,10 +55,5 @@ export default function MermaidChart({ chart }: MermaidChartProps) {
     }
   }, [chart, resolvedTheme])
 
-  return (
-    <div
-      ref={containerRef}
-      className="mermaid my-6 flex justify-center overflow-x-auto"
-    />
-  )
+  return <div ref={containerRef} className="mermaid my-6 flex justify-center overflow-x-auto" />
 }
