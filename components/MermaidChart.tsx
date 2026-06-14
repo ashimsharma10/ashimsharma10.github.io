@@ -21,12 +21,26 @@ export default function MermaidChart({ chart }: MermaidChartProps) {
       const mermaid = (await import('mermaid')).default
       if (cancelled) return
 
+      const isDark = resolvedTheme === 'dark'
       mermaid.initialize({
         startOnLoad: false,
-        theme: resolvedTheme === 'dark' ? 'dark' : 'default',
+        theme: isDark ? 'dark' : 'default',
+        flowchart: { useMaxWidth: true, htmlLabels: true },
+        sequence: { useMaxWidth: true },
       })
 
-      el.textContent = chart
+      let processed = chart
+      if (isDark) {
+        processed = processed
+          .split('\n')
+          .filter((line) => {
+            const trimmed = line.trimStart()
+            return !trimmed.startsWith('classDef ') && !trimmed.startsWith('style ')
+          })
+          .join('\n')
+      }
+
+      el.textContent = processed
       el.removeAttribute('data-processed')
       await mermaid.run({ nodes: [el] })
     }
@@ -44,7 +58,7 @@ export default function MermaidChart({ chart }: MermaidChartProps) {
   return (
     <div
       ref={containerRef}
-      className="mermaid my-6 flex justify-center overflow-x-auto [&>svg]:max-w-full"
+      className="mermaid my-6 flex justify-center overflow-x-auto"
     />
   )
 }
