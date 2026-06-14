@@ -1,4 +1,10 @@
 {
+  "agents": 1,
+  "llm": 1,
+  "harness-engineering": 1,
+  "loop-engineering": 1,
+  "context-engineering": 1,
+  "ai": 1,
   "docker": 1,
   "containers": 1,
   "devops": 1,
