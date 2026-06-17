@@ -216,7 +216,7 @@ export default function AuthorLayout({ children, content }: Props) {
   return (
     <div className="lg:flex lg:gap-8 xl:gap-12">
       {/* Left sticky sidebar */}
-      <aside className="pt-8 pb-8 lg:sticky lg:top-8 lg:w-56 lg:flex-shrink-0 lg:self-start xl:w-64">
+      <aside className="pt-8 pb-8 lg:sticky lg:top-8 lg:w-56 lg:flex-shrink-0 lg:self-start xl:w-64 lg:-ml-6">
         <div className="flex flex-col items-center text-center">
           {avatar && (
             <Image
