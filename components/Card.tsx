@@ -14,7 +14,7 @@ const Card = ({ title, description, imgSrc, href }) => (
             <Image
               alt={title}
               src={imgSrc}
-              className="object-cover object-center md:h-36 lg:h-48"
+              className="object-cover object-center md:h-44 lg:h-56"
               width={544}
               height={306}
             />
@@ -23,13 +23,13 @@ const Card = ({ title, description, imgSrc, href }) => (
           <Image
             alt={title}
             src={imgSrc}
-            className="object-cover object-center md:h-36 lg:h-48"
+            className="object-cover object-center md:h-44 lg:h-56"
             width={544}
             height={306}
           />
         ))}
       <div className="p-6">
-        <h2 className="mb-3 text-2xl leading-8 font-bold tracking-tight">
+        <h2 className="mb-3 text-lg leading-6 font-bold tracking-tight">
           {href ? (
             <Link href={href} aria-label={`Link to ${title}`}>
               {title}
@@ -38,7 +38,7 @@ const Card = ({ title, description, imgSrc, href }) => (
             title
           )}
         </h2>
-        <p className="prose prose-lg dark:prose-invert mb-3 max-w-none text-gray-900 dark:text-gray-400">
+        <p className="prose prose-sm dark:prose-invert mb-3 max-w-none text-gray-900 dark:text-gray-400">
           {description}
         </p>
         {href && (
