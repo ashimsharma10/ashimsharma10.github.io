@@ -57,8 +57,8 @@ export default function GanSrPipelinePage() {
           <div className="not-prose my-4">
             <Image
               alt="Two-step pipeline for real-world image super-resolution"
-              src="/static/images/gan-sr-pipeline/pipeline-diagram.png"
-              width={840}
+              src="/static/images/gan-sr-pipeline/pipeline-diagram-v2.png"
+              width={785}
               height={650}
               className="mx-auto rounded-lg"
             />
