@@ -25,7 +25,14 @@ export default function GanSrPipelinePage() {
             <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-300">
               This page provides a high-level overview of the research. The full paper contains
               detailed formulations, complete experimental analysis, and additional results. Please
-              refer to the published paper for the complete work.
+              refer to the{' '}
+              <Link
+                href="https://link.springer.com/chapter/10.1007%2F978-981-16-4177-0_75"
+                className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400 underline"
+              >
+                published paper
+              </Link>{' '}
+              for the complete work.
             </p>
           </div>
 
@@ -52,12 +59,12 @@ export default function GanSrPipelinePage() {
             real-world degradation and standard super-resolution:
           </p>
 
-          <div className="not-prose my-4">
+          <div className="not-prose mt-2 mb-4">
             <Image
               alt="Two-step pipeline for real-world image super-resolution"
               src="/static/images/gan-sr-pipeline/pipeline-diagram-v2.png"
-              width={785}
-              height={650}
+              width={560}
+              height={464}
               className="mx-auto rounded-lg"
             />
             <p className="mt-2 text-center text-sm text-gray-500 dark:text-gray-400">
@@ -86,9 +93,12 @@ export default function GanSrPipelinePage() {
           <h2>Key Results</h2>
           <p>
             The pipeline was evaluated on RealSR, DIV2K HR validation, and DPED cellphones test sets
-            using PSNR, SSIM, and Perceptual Index (PI) metrics. The proposed approach achieved the
-            best PI scores across all benchmark datasets, indicating superior perceptual quality
-            compared to Bicubic interpolation, DPSR, RealSR, and RBSR methods.
+            using PSNR, SSIM, and Perceptual Index (PI) metrics.{' '}
+            <strong>
+              The proposed approach achieved the best PI scores across all benchmark datasets,
+              indicating superior perceptual quality compared to Bicubic interpolation, DPSR,
+              RealSR, and RBSR methods.
+            </strong>
           </p>
 
           <div className="not-prose my-8">
