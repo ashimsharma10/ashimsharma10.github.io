@@ -17,9 +17,7 @@ export default function GanSrPipelinePage() {
           <h1 className="text-2xl leading-8 font-bold tracking-tight text-gray-900 sm:text-3xl sm:leading-9 md:text-4xl md:leading-12 dark:text-gray-100">
             GAN-Based Two-Step Pipeline For Real-World Image Super-Resolution
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Published Research Paper
-          </p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Published Research Paper</p>
         </div>
 
         <div className="prose prose-lg dark:prose-invert max-w-none pt-4 pb-8">
@@ -34,15 +32,15 @@ export default function GanSrPipelinePage() {
           <h2>Abstract</h2>
           <p>
             Most prior approaches to image super-resolution rely on pairs of high-resolution images
-            and their bicubically downsampled low-resolution counterparts, achieving strong results on
-            synthetic benchmarks but struggling to generalize to real-world low-resolution images
+            and their bicubically downsampled low-resolution counterparts, achieving strong results
+            on synthetic benchmarks but struggling to generalize to real-world low-resolution images
             where degradation patterns are complex and varied.
           </p>
           <p>
             This work proposes a GAN-based two-step pipeline to address real-world image
-            super-resolution. The first stage trains a network to transform real-world low-resolution
-            images into a space of bicubic-like images of the same size. The second stage applies a
-            state-of-the-art super-resolution network (nESRGAN+) trained on bicubic
+            super-resolution. The first stage trains a network to transform real-world
+            low-resolution images into a space of bicubic-like images of the same size. The second
+            stage applies a state-of-the-art super-resolution network (nESRGAN+) trained on bicubic
             downsampled/high-resolution pairs to upscale the transformed output. The proposed method
             outperforms existing state-of-the-art approaches both qualitatively and quantitatively
             across multiple benchmark datasets.
@@ -71,18 +69,18 @@ export default function GanSrPipelinePage() {
           <h3>Stage 1: Real-to-Bicubic (R2B) Generator</h3>
           <p>
             A deep CNN with 8 residual blocks that transforms a real-world low-resolution image into
-            a bicubic-like image of the same size. The network is trained using a combination of pixel
-            loss (L1), VGG19-based perceptual loss, and adversarial loss with a Relativistic Average
-            Discriminator (RaD). Training uses 800 images from DIV2K Track 2 and RealSR datasets,
-            with bicubically downsampled HR images as ground truth.
+            a bicubic-like image of the same size. The network is trained using a combination of
+            pixel loss (L1), VGG19-based perceptual loss, and adversarial loss with a Relativistic
+            Average Discriminator (RaD). Training uses 800 images from DIV2K Track 2 and RealSR
+            datasets, with bicubically downsampled HR images as ground truth.
           </p>
 
           <h3>Stage 2: Super-Resolution</h3>
           <p>
             A pre-trained nESRGAN+ model, which uses Residual-in-Residual Dense Blocks (RRDB) and
-            noise inputs for stochastic variation, super-resolves the R2B output by a scale factor of
-            4x. By operating on bicubic-like images rather than raw real-world images, the SR network
-            can leverage its full capability on a well-understood degradation model.
+            noise inputs for stochastic variation, super-resolves the R2B output by a scale factor
+            of 4x. By operating on bicubic-like images rather than raw real-world images, the SR
+            network can leverage its full capability on a well-understood degradation model.
           </p>
 
           <h2>Key Results</h2>
@@ -111,10 +109,10 @@ export default function GanSrPipelinePage() {
           <p>
             The two-step approach effectively decomposes real-world super-resolution into two
             tractable sub-problems: domain translation (real-world to bicubic space) and standard
-            super-resolution. By leveraging the strong performance of existing SR networks on bicubic
-            degradation, the pipeline achieves state-of-the-art perceptual quality on real-world
-            images without requiring end-to-end training on real LR/HR pairs. The source code and
-            trained models have been made available for further research.
+            super-resolution. By leveraging the strong performance of existing SR networks on
+            bicubic degradation, the pipeline achieves state-of-the-art perceptual quality on
+            real-world images without requiring end-to-end training on real LR/HR pairs. The source
+            code and trained models have been made available for further research.
           </p>
 
           <h2>Index Terms</h2>
@@ -128,7 +126,7 @@ export default function GanSrPipelinePage() {
             ].map((tag) => (
               <span
                 key={tag}
-                className="rounded-full bg-primary-100 px-3 py-1 text-sm font-medium text-primary-800 dark:bg-primary-900/30 dark:text-primary-300"
+                className="bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-300 rounded-full px-3 py-1 text-sm font-medium"
               >
                 {tag}
               </span>
