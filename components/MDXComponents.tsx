@@ -6,11 +6,13 @@ import Image from './Image'
 import CustomLink from './Link'
 import TableWrapper from './TableWrapper'
 import MermaidChart from './MermaidChart'
+import LinuxFSHierarchy from './LinuxFSHierarchy'
 
 export const components: MDXComponents = {
   Image,
   TOCInline,
   MermaidChart,
+  LinuxFSHierarchy,
   a: CustomLink,
   pre: Pre,
   table: TableWrapper,
