@@ -40,7 +40,7 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
       <article>
         <div className="xl:divide-y xl:divide-gray-200 xl:dark:divide-gray-700">
           <header className="pt-6 xl:pb-6">
-            <div className="space-y-1 text-center">
+            <div className="space-y-1 text-left sm:text-center">
               <dl className="space-y-10">
                 <div>
                   <dt className="sr-only">Published on</dt>
@@ -54,7 +54,7 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
               <div>
                 <PageTitle>{title}</PageTitle>
               </div>
-              <div className="flex items-center justify-center gap-2 pt-2">
+              <div className="flex items-center justify-start gap-2 pt-2 sm:justify-center">
                 <CopyMarkdownButton slug={slug} />
                 <a
                   href={`/write-up/${slug}/index.md`}
