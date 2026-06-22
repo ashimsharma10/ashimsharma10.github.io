@@ -17,7 +17,7 @@ export default function Projects() {
           </p>
         </div>
         <div className="container pt-4 pb-12">
-          <div className="-m-4 flex flex-wrap">
+          <div className="flex flex-wrap gap-y-4">
             {projectsData.map((d) => (
               <Card
                 key={d.title}
@@ -25,6 +25,7 @@ export default function Projects() {
                 description={d.description}
                 imgSrc={d.imgSrc}
                 href={d.href}
+                imageContain={d.imageContain}
               />
             ))}
           </div>

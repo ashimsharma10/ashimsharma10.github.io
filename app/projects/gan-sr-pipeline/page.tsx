@@ -13,6 +13,14 @@ export default function GanSrPipelinePage() {
   return (
     <SectionContainer>
       <article>
+        <div className="pt-4 pb-2">
+          <Link
+            href="/projects"
+            className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400 text-sm"
+          >
+            &larr; Back
+          </Link>
+        </div>
         <div className="space-y-1 border-b border-gray-200 pb-4 text-center dark:border-gray-700">
           <h1 className="text-2xl leading-8 font-bold tracking-tight text-gray-900 sm:text-3xl sm:leading-9 md:text-4xl md:leading-12 dark:text-gray-100">
             GAN-Based Two-Step Pipeline For Real-World Image Super-Resolution

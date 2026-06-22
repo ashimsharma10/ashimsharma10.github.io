@@ -1,8 +1,8 @@
 import Image from './Image'
 import Link from './Link'
 
-const Card = ({ title, description, imgSrc, href }) => (
-  <div className="md max-w-[544px] p-4 md:w-1/2 xl:w-1/3">
+const Card = ({ title, description, imgSrc, href, imageContain = false }) => (
+  <div className="md max-w-[544px] p-0 md:w-1/2 xl:w-1/3">
     <div
       className={`${
         imgSrc && 'h-full'
@@ -10,11 +10,11 @@ const Card = ({ title, description, imgSrc, href }) => (
     >
       {imgSrc &&
         (href ? (
-          <Link href={href} aria-label={`Link to ${title}`}>
+          <Link href={href} aria-label={`Link to ${title}`} className="block">
             <Image
               alt={title}
               src={imgSrc}
-              className="object-cover object-center md:h-44 lg:h-56"
+              className={imageContain ? 'object-contain object-center h-32 md:h-36 p-6 w-full' : 'w-full h-auto'}
               width={544}
               height={306}
             />
@@ -23,7 +23,7 @@ const Card = ({ title, description, imgSrc, href }) => (
           <Image
             alt={title}
             src={imgSrc}
-            className="object-cover object-center md:h-44 lg:h-56"
+            className={imageContain ? 'object-contain object-center h-32 md:h-36 p-6 w-full' : 'w-full h-auto'}
             width={544}
             height={306}
           />
