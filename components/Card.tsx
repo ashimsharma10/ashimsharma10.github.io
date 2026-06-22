@@ -14,7 +14,11 @@ const Card = ({ title, description, imgSrc, href, imageContain = false }) => (
             <Image
               alt={title}
               src={imgSrc}
-              className={imageContain ? 'object-contain object-center h-32 md:h-36 p-6 w-full' : 'w-full h-auto'}
+              className={
+                imageContain
+                  ? 'h-32 w-full object-contain object-center p-6 md:h-36'
+                  : 'h-auto w-full'
+              }
               width={544}
               height={306}
             />
@@ -23,7 +27,11 @@ const Card = ({ title, description, imgSrc, href, imageContain = false }) => (
           <Image
             alt={title}
             src={imgSrc}
-            className={imageContain ? 'object-contain object-center h-32 md:h-36 p-6 w-full' : 'w-full h-auto'}
+            className={
+              imageContain
+                ? 'h-32 w-full object-contain object-center p-6 md:h-36'
+                : 'h-auto w-full'
+            }
             width={544}
             height={306}
           />
