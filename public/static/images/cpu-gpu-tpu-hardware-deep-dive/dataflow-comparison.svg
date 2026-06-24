@@ -1,0 +1,103 @@
+<svg width="100%" viewBox="0 0 1080 480" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" role="img" aria-label="Animated comparison of data flow: CPU processes items one at a time, GPU many in parallel lanes, TPU streams data through one reused grid; each shows input, compute, and collected output">
+  <rect x="0" y="0" width="1080" height="480" rx="16" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="28" y="36" font-size="20" font-weight="700" fill="#0f172a">Same work, three styles: data flows in, gets computed, then collected</text>
+  <text x="28" y="58" font-size="13" fill="#64748b">Blue = waiting data, green = computed result. Watch how much each chip collects at once.</text>
+
+  <!-- stage guide labels -->
+  <g font-size="10.5" font-weight="700" fill="#94a3b8" text-anchor="middle">
+    <text x="70" y="100">IN</text><text x="185" y="100">COMPUTE</text><text x="320" y="100">OUT</text>
+    <text x="425" y="100">IN</text><text x="540" y="100">COMPUTE</text><text x="675" y="100">OUT</text>
+    <text x="772" y="100">IN</text><text x="895" y="100">COMPUTE</text><text x="1018" y="100">OUT</text>
+  </g>
+
+  <!-- ============ CPU ============ -->
+  <rect x="16" y="110" width="338" height="330" rx="12" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+  <text x="185" y="138" font-size="16" font-weight="700" fill="#1e40af" text-anchor="middle">CPU, one at a time</text>
+
+  <!-- IN queue -->
+  <circle cx="60" cy="250" r="9" fill="#3b82f6"/>
+  <circle cx="60" cy="276" r="9" fill="#3b82f6"/>
+  <circle cx="60" cy="302" r="9" fill="#3b82f6"/>
+  <!-- core -->
+  <rect x="152" y="248" width="66" height="46" rx="8" fill="#dbeafe" stroke="#2563eb"/>
+  <text x="185" y="276" font-size="12" font-weight="700" fill="#1e40af" text-anchor="middle">core</text>
+  <!-- track -->
+  <line x1="80" y1="271" x2="300" y2="271" stroke="#dbeafe" stroke-width="2"/>
+  <!-- OUT bin -->
+  <rect x="300" y="226" width="40" height="90" rx="8" fill="#ffffff" stroke="#16a34a" stroke-width="1.5"/>
+  <circle cx="320" cy="300" r="7" fill="#22c55e"/>
+  <circle cx="320" cy="284" r="7" fill="#22c55e"/>
+  <!-- traveling dot -->
+  <circle r="9" cy="271" fill="#3b82f6">
+    <animate attributeName="cx" from="84" to="318" dur="3s" begin="0s" repeatCount="indefinite"/>
+    <animate attributeName="fill" values="#3b82f6;#3b82f6;#22c55e;#22c55e" keyTimes="0;0.44;0.5;1" dur="3s" begin="0s" repeatCount="indefinite"/>
+  </circle>
+  <text x="185" y="392" font-size="12.5" font-weight="600" fill="#1e40af" text-anchor="middle">slow, collects one result at a time</text>
+
+  <!-- ============ GPU ============ -->
+  <rect x="371" y="110" width="338" height="330" rx="12" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5"/>
+  <text x="540" y="138" font-size="16" font-weight="700" fill="#166534" text-anchor="middle">GPU, many at once</text>
+
+  <!-- IN dots, cores, tracks for 6 lanes -->
+  <g>
+    <!-- lane ys: 175,205,235,265,295,325 -->
+    <circle cx="415" cy="175" r="7" fill="#3b82f6"/><rect x="500" y="167" width="48" height="16" rx="5" fill="#dcfce7" stroke="#16a34a"/>
+    <circle cx="415" cy="205" r="7" fill="#3b82f6"/><rect x="500" y="197" width="48" height="16" rx="5" fill="#dcfce7" stroke="#16a34a"/>
+    <circle cx="415" cy="235" r="7" fill="#3b82f6"/><rect x="500" y="227" width="48" height="16" rx="5" fill="#dcfce7" stroke="#16a34a"/>
+    <circle cx="415" cy="265" r="7" fill="#3b82f6"/><rect x="500" y="257" width="48" height="16" rx="5" fill="#dcfce7" stroke="#16a34a"/>
+    <circle cx="415" cy="295" r="7" fill="#3b82f6"/><rect x="500" y="287" width="48" height="16" rx="5" fill="#dcfce7" stroke="#16a34a"/>
+    <circle cx="415" cy="325" r="7" fill="#3b82f6"/><rect x="500" y="317" width="48" height="16" rx="5" fill="#dcfce7" stroke="#16a34a"/>
+  </g>
+  <!-- OUT bin -->
+  <rect x="655" y="160" width="40" height="186" rx="8" fill="#ffffff" stroke="#16a34a" stroke-width="1.5"/>
+  <g fill="#22c55e">
+    <circle cx="675" cy="180" r="6.5"/><circle cx="675" cy="200" r="6.5"/><circle cx="675" cy="220" r="6.5"/>
+    <circle cx="675" cy="262" r="6.5"/><circle cx="675" cy="282" r="6.5"/><circle cx="675" cy="302" r="6.5"/>
+  </g>
+  <!-- traveling dots (parallel) -->
+  <g>
+    <circle r="7" cy="175" fill="#3b82f6"><animate attributeName="cx" from="430" to="672" dur="3s" begin="0s" repeatCount="indefinite"/><animate attributeName="fill" values="#3b82f6;#3b82f6;#22c55e;#22c55e" keyTimes="0;0.46;0.52;1" dur="3s" begin="0s" repeatCount="indefinite"/></circle>
+    <circle r="7" cy="205" fill="#3b82f6"><animate attributeName="cx" from="430" to="672" dur="3s" begin="0.1s" repeatCount="indefinite"/><animate attributeName="fill" values="#3b82f6;#3b82f6;#22c55e;#22c55e" keyTimes="0;0.46;0.52;1" dur="3s" begin="0.1s" repeatCount="indefinite"/></circle>
+    <circle r="7" cy="235" fill="#3b82f6"><animate attributeName="cx" from="430" to="672" dur="3s" begin="0.05s" repeatCount="indefinite"/><animate attributeName="fill" values="#3b82f6;#3b82f6;#22c55e;#22c55e" keyTimes="0;0.46;0.52;1" dur="3s" begin="0.05s" repeatCount="indefinite"/></circle>
+    <circle r="7" cy="265" fill="#3b82f6"><animate attributeName="cx" from="430" to="672" dur="3s" begin="0.15s" repeatCount="indefinite"/><animate attributeName="fill" values="#3b82f6;#3b82f6;#22c55e;#22c55e" keyTimes="0;0.46;0.52;1" dur="3s" begin="0.15s" repeatCount="indefinite"/></circle>
+    <circle r="7" cy="295" fill="#3b82f6"><animate attributeName="cx" from="430" to="672" dur="3s" begin="0.08s" repeatCount="indefinite"/><animate attributeName="fill" values="#3b82f6;#3b82f6;#22c55e;#22c55e" keyTimes="0;0.46;0.52;1" dur="3s" begin="0.08s" repeatCount="indefinite"/></circle>
+    <circle r="7" cy="325" fill="#3b82f6"><animate attributeName="cx" from="430" to="672" dur="3s" begin="0.18s" repeatCount="indefinite"/><animate attributeName="fill" values="#3b82f6;#3b82f6;#22c55e;#22c55e" keyTimes="0;0.46;0.52;1" dur="3s" begin="0.18s" repeatCount="indefinite"/></circle>
+  </g>
+  <text x="540" y="392" font-size="12.5" font-weight="600" fill="#166534" text-anchor="middle">fast, collects a whole batch at once</text>
+
+  <!-- ============ TPU ============ -->
+  <rect x="726" y="110" width="338" height="330" rx="12" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.5"/>
+  <text x="895" y="138" font-size="16" font-weight="700" fill="#5b21b6" text-anchor="middle">TPU, through one shared grid</text>
+
+  <!-- weights on top -->
+  <g font-size="10" font-weight="700" fill="#92400e" text-anchor="middle">
+    <rect x="841" y="188" width="28" height="14" rx="4" fill="#fef3c7" stroke="#d97706"/><text x="855" y="199">w</text>
+    <rect x="881" y="188" width="28" height="14" rx="4" fill="#fef3c7" stroke="#d97706"/><text x="895" y="199">w</text>
+    <rect x="921" y="188" width="28" height="14" rx="4" fill="#fef3c7" stroke="#d97706"/><text x="935" y="199">w</text>
+  </g>
+  <!-- 3x3 grid: cols 838,878,918 rows 210,250,290 cell 34 (centered under COMPUTE) -->
+  <g>
+    <rect x="838" y="210" width="34" height="34" rx="5" fill="#ddd6fe" stroke="#7c3aed"><animate attributeName="fill" values="#ddd6fe;#7c3aed;#ddd6fe" keyTimes="0;0.5;1" dur="3.2s" begin="0.6s" repeatCount="indefinite"/></rect>
+    <rect x="878" y="210" width="34" height="34" rx="5" fill="#ddd6fe" stroke="#7c3aed"><animate attributeName="fill" values="#ddd6fe;#7c3aed;#ddd6fe" keyTimes="0;0.5;1" dur="3.2s" begin="1.0s" repeatCount="indefinite"/></rect>
+    <rect x="918" y="210" width="34" height="34" rx="5" fill="#ddd6fe" stroke="#7c3aed"><animate attributeName="fill" values="#ddd6fe;#7c3aed;#ddd6fe" keyTimes="0;0.5;1" dur="3.2s" begin="1.4s" repeatCount="indefinite"/></rect>
+    <rect x="838" y="250" width="34" height="34" rx="5" fill="#ddd6fe" stroke="#7c3aed"><animate attributeName="fill" values="#ddd6fe;#7c3aed;#ddd6fe" keyTimes="0;0.5;1" dur="3.2s" begin="0.8s" repeatCount="indefinite"/></rect>
+    <rect x="878" y="250" width="34" height="34" rx="5" fill="#ddd6fe" stroke="#7c3aed"><animate attributeName="fill" values="#ddd6fe;#7c3aed;#ddd6fe" keyTimes="0;0.5;1" dur="3.2s" begin="1.2s" repeatCount="indefinite"/></rect>
+    <rect x="918" y="250" width="34" height="34" rx="5" fill="#ddd6fe" stroke="#7c3aed"><animate attributeName="fill" values="#ddd6fe;#7c3aed;#ddd6fe" keyTimes="0;0.5;1" dur="3.2s" begin="1.6s" repeatCount="indefinite"/></rect>
+    <rect x="838" y="290" width="34" height="34" rx="5" fill="#ddd6fe" stroke="#7c3aed"><animate attributeName="fill" values="#ddd6fe;#7c3aed;#ddd6fe" keyTimes="0;0.5;1" dur="3.2s" begin="1.0s" repeatCount="indefinite"/></rect>
+    <rect x="878" y="290" width="34" height="34" rx="5" fill="#ddd6fe" stroke="#7c3aed"><animate attributeName="fill" values="#ddd6fe;#7c3aed;#ddd6fe" keyTimes="0;0.5;1" dur="3.2s" begin="1.4s" repeatCount="indefinite"/></rect>
+    <rect x="918" y="290" width="34" height="34" rx="5" fill="#ddd6fe" stroke="#7c3aed"><animate attributeName="fill" values="#ddd6fe;#7c3aed;#ddd6fe" keyTimes="0;0.5;1" dur="3.2s" begin="1.8s" repeatCount="indefinite"/></rect>
+  </g>
+  <!-- IN dots flowing through the grid rows -->
+  <g>
+    <circle r="7" cy="227" fill="#3b82f6"><animate attributeName="cx" from="762" to="1000" dur="3.2s" begin="0s" repeatCount="indefinite"/><animate attributeName="fill" values="#3b82f6;#3b82f6;#22c55e;#22c55e" keyTimes="0;0.62;0.7;1" dur="3.2s" begin="0s" repeatCount="indefinite"/></circle>
+    <circle r="7" cy="267" fill="#3b82f6"><animate attributeName="cx" from="762" to="1000" dur="3.2s" begin="0.25s" repeatCount="indefinite"/><animate attributeName="fill" values="#3b82f6;#3b82f6;#22c55e;#22c55e" keyTimes="0;0.62;0.7;1" dur="3.2s" begin="0.25s" repeatCount="indefinite"/></circle>
+    <circle r="7" cy="307" fill="#3b82f6"><animate attributeName="cx" from="762" to="1000" dur="3.2s" begin="0.5s" repeatCount="indefinite"/><animate attributeName="fill" values="#3b82f6;#3b82f6;#22c55e;#22c55e" keyTimes="0;0.62;0.7;1" dur="3.2s" begin="0.5s" repeatCount="indefinite"/></circle>
+  </g>
+  <!-- OUT bin -->
+  <rect x="980" y="204" width="40" height="126" rx="8" fill="#ffffff" stroke="#16a34a" stroke-width="1.5"/>
+  <g fill="#22c55e"><circle cx="1000" cy="246" r="6.5"/><circle cx="1000" cy="266" r="6.5"/><circle cx="1000" cy="286" r="6.5"/></g>
+  <text x="895" y="392" font-size="12.5" font-weight="600" fill="#5b21b6" text-anchor="middle">data flows through, reused, most math per watt</text>
+
+  <!-- bottom explainer -->
+  <text x="540" y="424" font-size="12.5" font-style="italic" fill="#94a3b8" text-anchor="middle">CPU: separate cores, a few at a time. GPU: many independent lanes. TPU: one grid every value flows through and is reused.</text>
+</svg>
