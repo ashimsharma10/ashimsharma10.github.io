@@ -1,0 +1,78 @@
+<svg width="100%" viewBox="0 0 960 300" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" role="img" aria-label="One training step pipeline: CPU prepares data, PCIe transfer, GPU cores compute, tensor cores do matrix math, HBM stores results, fast links sync, then repeat">
+  <defs>
+    <marker id="tsArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="#94a3b8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="960" height="300" rx="16" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="28" y="40" font-size="20" font-weight="700" fill="#0f172a">One training step, and the hardware each phase uses</text>
+
+  <!-- 6 stage boxes -->
+  <!-- box geometry: w=138 h=112 y=70 ; x: 18,170,322,474,626,778 -->
+  <g>
+    <!-- 1 CPU -->
+    <rect x="18" y="70" width="138" height="112" rx="10" fill="#eff6ff" stroke="#2563eb" stroke-width="1.8"/>
+    <text x="87" y="96" font-size="15" font-weight="700" fill="#1e40af" text-anchor="middle">1 · Prepare</text>
+    <text x="87" y="120" font-size="12" fill="#334155" text-anchor="middle">load &amp; augment</text>
+    <text x="87" y="136" font-size="12" fill="#334155" text-anchor="middle">the batch</text>
+    <rect x="52" y="152" width="70" height="20" rx="6" fill="#dbeafe"/>
+    <text x="87" y="166" font-size="11" font-weight="700" fill="#1e40af" text-anchor="middle">CPU</text>
+
+    <!-- 2 transfer -->
+    <rect x="170" y="70" width="138" height="112" rx="10" fill="#f8fafc" stroke="#64748b" stroke-width="1.8"/>
+    <text x="239" y="96" font-size="15" font-weight="700" fill="#334155" text-anchor="middle">2 · Transfer</text>
+    <text x="239" y="120" font-size="12" fill="#334155" text-anchor="middle">copy batch</text>
+    <text x="239" y="136" font-size="12" fill="#334155" text-anchor="middle">to the GPU</text>
+    <rect x="200" y="152" width="78" height="20" rx="6" fill="#e2e8f0"/>
+    <text x="239" y="166" font-size="11" font-weight="700" fill="#334155" text-anchor="middle">PCIe link</text>
+
+    <!-- 3 compute -->
+    <rect x="322" y="70" width="138" height="112" rx="10" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.8"/>
+    <text x="391" y="96" font-size="15" font-weight="700" fill="#166534" text-anchor="middle">3 · Compute</text>
+    <text x="391" y="120" font-size="12" fill="#334155" text-anchor="middle">launch kernels</text>
+    <text x="391" y="136" font-size="12" fill="#334155" text-anchor="middle">across the cores</text>
+    <rect x="356" y="152" width="70" height="20" rx="6" fill="#dcfce7"/>
+    <text x="391" y="166" font-size="11" font-weight="700" fill="#166534" text-anchor="middle">GPU cores</text>
+
+    <!-- 4 matrix math -->
+    <rect x="474" y="70" width="138" height="112" rx="10" fill="#ecfdf5" stroke="#15803d" stroke-width="1.8"/>
+    <text x="543" y="96" font-size="15" font-weight="700" fill="#14532d" text-anchor="middle">4 · Matrix math</text>
+    <text x="543" y="120" font-size="12" fill="#334155" text-anchor="middle">the heavy</text>
+    <text x="543" y="136" font-size="12" fill="#334155" text-anchor="middle">multiplies</text>
+    <rect x="498" y="152" width="90" height="20" rx="6" fill="#bbf7d0"/>
+    <text x="543" y="166" font-size="11" font-weight="700" fill="#14532d" text-anchor="middle">tensor cores</text>
+
+    <!-- 5 store -->
+    <rect x="626" y="70" width="138" height="112" rx="10" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.8"/>
+    <text x="695" y="96" font-size="15" font-weight="700" fill="#5b21b6" text-anchor="middle">5 · Store</text>
+    <text x="695" y="120" font-size="12" fill="#334155" text-anchor="middle">keep results</text>
+    <text x="695" y="136" font-size="12" fill="#334155" text-anchor="middle">for the backward pass</text>
+    <rect x="660" y="152" width="70" height="20" rx="6" fill="#ede9fe"/>
+    <text x="695" y="166" font-size="11" font-weight="700" fill="#5b21b6" text-anchor="middle">HBM</text>
+
+    <!-- 6 sync -->
+    <rect x="778" y="70" width="138" height="112" rx="10" fill="#fffbeb" stroke="#d97706" stroke-width="1.8"/>
+    <text x="847" y="96" font-size="15" font-weight="700" fill="#92400e" text-anchor="middle">6 · Sync</text>
+    <text x="847" y="120" font-size="12" fill="#334155" text-anchor="middle">share updates</text>
+    <text x="847" y="136" font-size="12" fill="#334155" text-anchor="middle">across GPUs</text>
+    <rect x="804" y="152" width="86" height="20" rx="6" fill="#fef3c7"/>
+    <text x="847" y="166" font-size="11" font-weight="700" fill="#92400e" text-anchor="middle">fast links</text>
+  </g>
+
+  <!-- arrows between -->
+  <g>
+    <line x1="156" y1="126" x2="170" y2="126" stroke="#94a3b8" stroke-width="2" marker-end="url(#tsArrow)"/>
+    <line x1="308" y1="126" x2="322" y2="126" stroke="#94a3b8" stroke-width="2" marker-end="url(#tsArrow)"/>
+    <line x1="460" y1="126" x2="474" y2="126" stroke="#94a3b8" stroke-width="2" marker-end="url(#tsArrow)"/>
+    <line x1="612" y1="126" x2="626" y2="126" stroke="#94a3b8" stroke-width="2" marker-end="url(#tsArrow)"/>
+    <line x1="764" y1="126" x2="778" y2="126" stroke="#94a3b8" stroke-width="2" marker-end="url(#tsArrow)"/>
+  </g>
+
+  <!-- loop back -->
+  <path d="M847 182 L847 240 L87 240 L87 182" fill="none" stroke="#94a3b8" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#tsArrow)"/>
+  <rect x="392" y="228" width="176" height="24" rx="8" fill="#f1f5f9" stroke="#cbd5e1"/>
+  <text x="480" y="245" font-size="13" font-weight="700" fill="#475569" text-anchor="middle">update weights → repeat</text>
+
+  <text x="480" y="282" font-size="13" font-style="italic" fill="#94a3b8" text-anchor="middle">Whichever stage is slowest sets your speed, fix that one first.</text>
+</svg>

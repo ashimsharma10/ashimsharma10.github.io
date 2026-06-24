@@ -1,0 +1,105 @@
+<svg width="100%" viewBox="0 0 760 470" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" role="img" aria-label="GPU architecture: many streaming multiprocessors full of small cores, fed by HBM memory">
+  <defs>
+    <pattern id="cores" width="14" height="14" patternUnits="userSpaceOnUse">
+      <rect width="14" height="14" fill="#dcfce7"/>
+      <rect x="1.5" y="1.5" width="10" height="10" rx="2" fill="#86efac"/>
+    </pattern>
+    <marker id="gpuArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="#94a3b8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="760" height="470" rx="16" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="32" y="44" font-size="22" font-weight="700" fill="#0f172a">GPU, thousands of small cores</text>
+  <text x="32" y="70" font-size="14" fill="#64748b">Most of the chip is compute. Many threads hide memory waits → high throughput.</text>
+
+  <!-- HBM stacks -->
+  <rect x="28" y="150" width="92" height="210" rx="10" fill="#ede9fe" stroke="#7c3aed" stroke-width="2"/>
+  <text x="74" y="248" font-size="15" font-weight="700" fill="#5b21b6" text-anchor="middle">HBM</text>
+  <text x="74" y="268" font-size="11" fill="#6d28d9" text-anchor="middle">stacked</text>
+  <text x="74" y="282" font-size="11" fill="#6d28d9" text-anchor="middle">memory</text>
+
+  <rect x="640" y="150" width="92" height="210" rx="10" fill="#ede9fe" stroke="#7c3aed" stroke-width="2"/>
+  <text x="686" y="248" font-size="15" font-weight="700" fill="#5b21b6" text-anchor="middle">HBM</text>
+  <text x="686" y="268" font-size="11" fill="#6d28d9" text-anchor="middle">stacked</text>
+  <text x="686" y="282" font-size="11" fill="#6d28d9" text-anchor="middle">memory</text>
+
+  <!-- die -->
+  <rect x="138" y="92" width="484" height="320" rx="12" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+  <text x="158" y="116" font-size="13" font-weight="600" fill="#475569">GPU die</text>
+
+  <line x1="120" y1="250" x2="138" y2="250" stroke="#94a3b8" stroke-width="2.5" marker-end="url(#gpuArrow)" marker-start="url(#gpuArrow)"/>
+  <line x1="622" y1="250" x2="640" y2="250" stroke="#94a3b8" stroke-width="2.5" marker-end="url(#gpuArrow)" marker-start="url(#gpuArrow)"/>
+
+  <!-- 6 SMs: 3 cols x 2 rows -->
+  <!-- row 1 -->
+  <g>
+    <rect x="156" y="128" width="136" height="106" rx="8" fill="#eef2f7" stroke="#cbd5e1" stroke-width="1.5"/>
+    <text x="166" y="146" font-size="12" font-weight="700" fill="#166534">SM</text>
+    <rect x="166" y="152" width="80" height="48" rx="4" fill="url(#cores)" stroke="#16a34a"/>
+    <rect x="252" y="152" width="30" height="48" rx="5" fill="#fde68a" stroke="#d97706"/>
+    <text x="267" y="180" font-size="11" font-weight="700" fill="#92400e" text-anchor="middle">TC</text>
+    <rect x="166" y="206" width="116" height="20" rx="4" fill="#dbeafe" stroke="#2563eb"/>
+    <text x="224" y="220" font-size="11" font-weight="600" fill="#1e40af" text-anchor="middle">L1 / shared</text>
+  </g>
+  <g>
+    <rect x="304" y="128" width="136" height="106" rx="8" fill="#eef2f7" stroke="#cbd5e1" stroke-width="1.5"/>
+    <text x="314" y="146" font-size="12" font-weight="700" fill="#166534">SM</text>
+    <rect x="314" y="152" width="80" height="48" rx="4" fill="url(#cores)" stroke="#16a34a"/>
+    <rect x="400" y="152" width="30" height="48" rx="5" fill="#fde68a" stroke="#d97706"/>
+    <text x="415" y="180" font-size="11" font-weight="700" fill="#92400e" text-anchor="middle">TC</text>
+    <rect x="314" y="206" width="116" height="20" rx="4" fill="#dbeafe" stroke="#2563eb"/>
+    <text x="372" y="220" font-size="11" font-weight="600" fill="#1e40af" text-anchor="middle">L1 / shared</text>
+  </g>
+  <g>
+    <rect x="452" y="128" width="136" height="106" rx="8" fill="#eef2f7" stroke="#cbd5e1" stroke-width="1.5"/>
+    <text x="462" y="146" font-size="12" font-weight="700" fill="#166534">SM</text>
+    <rect x="462" y="152" width="80" height="48" rx="4" fill="url(#cores)" stroke="#16a34a"/>
+    <rect x="548" y="152" width="30" height="48" rx="5" fill="#fde68a" stroke="#d97706"/>
+    <text x="563" y="180" font-size="11" font-weight="700" fill="#92400e" text-anchor="middle">TC</text>
+    <rect x="462" y="206" width="116" height="20" rx="4" fill="#dbeafe" stroke="#2563eb"/>
+    <text x="520" y="220" font-size="11" font-weight="600" fill="#1e40af" text-anchor="middle">L1 / shared</text>
+  </g>
+  <!-- row 2 -->
+  <g>
+    <rect x="156" y="244" width="136" height="106" rx="8" fill="#eef2f7" stroke="#cbd5e1" stroke-width="1.5"/>
+    <text x="166" y="262" font-size="12" font-weight="700" fill="#166534">SM</text>
+    <rect x="166" y="268" width="80" height="48" rx="4" fill="url(#cores)" stroke="#16a34a"/>
+    <rect x="252" y="268" width="30" height="48" rx="5" fill="#fde68a" stroke="#d97706"/>
+    <text x="267" y="296" font-size="11" font-weight="700" fill="#92400e" text-anchor="middle">TC</text>
+    <rect x="166" y="322" width="116" height="20" rx="4" fill="#dbeafe" stroke="#2563eb"/>
+    <text x="224" y="336" font-size="11" font-weight="600" fill="#1e40af" text-anchor="middle">L1 / shared</text>
+  </g>
+  <g>
+    <rect x="304" y="244" width="136" height="106" rx="8" fill="#eef2f7" stroke="#cbd5e1" stroke-width="1.5"/>
+    <text x="314" y="262" font-size="12" font-weight="700" fill="#166534">SM</text>
+    <rect x="314" y="268" width="80" height="48" rx="4" fill="url(#cores)" stroke="#16a34a"/>
+    <rect x="400" y="268" width="30" height="48" rx="5" fill="#fde68a" stroke="#d97706"/>
+    <text x="415" y="296" font-size="11" font-weight="700" fill="#92400e" text-anchor="middle">TC</text>
+    <rect x="314" y="322" width="116" height="20" rx="4" fill="#dbeafe" stroke="#2563eb"/>
+    <text x="372" y="336" font-size="11" font-weight="600" fill="#1e40af" text-anchor="middle">L1 / shared</text>
+  </g>
+  <g>
+    <rect x="452" y="244" width="136" height="106" rx="8" fill="#eef2f7" stroke="#cbd5e1" stroke-width="1.5"/>
+    <text x="462" y="262" font-size="12" font-weight="700" fill="#166534">SM</text>
+    <rect x="462" y="268" width="80" height="48" rx="4" fill="url(#cores)" stroke="#16a34a"/>
+    <rect x="548" y="268" width="30" height="48" rx="5" fill="#fde68a" stroke="#d97706"/>
+    <text x="563" y="296" font-size="11" font-weight="700" fill="#92400e" text-anchor="middle">TC</text>
+    <rect x="462" y="322" width="116" height="20" rx="4" fill="#dbeafe" stroke="#2563eb"/>
+    <text x="520" y="336" font-size="11" font-weight="600" fill="#1e40af" text-anchor="middle">L1 / shared</text>
+  </g>
+
+  <text x="380" y="372" font-size="12" font-style="italic" fill="#94a3b8" text-anchor="middle">…dozens of SMs, each with many cores + a tensor core</text>
+
+  <!-- L2 -->
+  <rect x="156" y="382" width="432" height="22" rx="6" fill="#bfdbfe" stroke="#2563eb"/>
+  <text x="372" y="397" font-size="12" font-weight="700" fill="#1e3a8a" text-anchor="middle">Shared L2 cache</text>
+
+  <!-- legend -->
+  <g font-size="11" fill="#475569">
+    <rect x="628" y="382" width="14" height="12" rx="3" fill="#86efac" stroke="#16a34a"/>
+    <text x="648" y="392">cores</text>
+    <rect x="690" y="382" width="14" height="12" rx="3" fill="#fde68a" stroke="#d97706"/>
+    <text x="710" y="392">tensor</text>
+  </g>
+</svg>
