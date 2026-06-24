@@ -11,8 +11,9 @@ The same matrix multiply runs 100× faster on one chip than another. This is why
 <style>{`
 .hw-fig{margin:22px 0}
 .hw-fig img{width:100%;max-width:760px;display:block;margin:0 auto}
-.hw-fig.hw-wide{width:calc(100% + 180px);max-width:94vw;margin-left:50%;transform:translateX(-50%)}
+.hw-fig.hw-wide{width:calc(100% + 60px);max-width:94vw;margin-left:50%;transform:translateX(-50%)}
 .hw-fig.hw-wide img{max-width:100%}
+.hw-fig.hw-xl img{max-width:900px}
 .hw-cap{font-size:12.5px;color:#94a3b8;text-align:center;margin-top:6px;font-style:italic}
 .hw-grid{display:grid;gap:10px;margin:18px 0}
 .hw-3{grid-template-columns:1fr 1fr 1fr}
@@ -268,7 +269,7 @@ A single chip is never the whole story in real training. Data has to reach the G
 
 The three communication patterns that matter in ML, side by side:
 
-<div className="hw-fig">
+<div className="hw-fig hw-xl">
   <img
     src="/static/images/cpu-gpu-tpu-hardware-deep-dive/communication.svg"
     alt="Three communication patterns: CPU to GPU over PCIe, GPU to GPU over NVLink with all-reduce, and TPU to TPU over an ICI mesh"
