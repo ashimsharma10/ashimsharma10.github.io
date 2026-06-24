@@ -1,0 +1,43 @@
+<svg width="100%" viewBox="0 0 720 440" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" role="img" aria-label="Roofline model: performance rises with arithmetic intensity until it hits the compute roof; left of the ridge is memory-bound, right is compute-bound">
+  <rect x="0" y="0" width="720" height="440" rx="16" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="32" y="42" font-size="21" font-weight="700" fill="#0f172a">Memory-bound vs compute-bound</text>
+  <text x="32" y="66" font-size="14" fill="#64748b">Below the corner the chip is starved for data. Above it, the chip is fully used.</text>
+
+  <!-- plot regions -->
+  <rect x="90" y="150" width="250" height="200" fill="#fef2f2"/>
+  <rect x="340" y="150" width="320" height="200" fill="#f0fdf4"/>
+
+  <!-- axes -->
+  <line x1="90" y1="100" x2="90" y2="350" stroke="#334155" stroke-width="2"/>
+  <line x1="90" y1="350" x2="668" y2="350" stroke="#334155" stroke-width="2"/>
+
+  <!-- roofline -->
+  <line x1="90" y1="350" x2="340" y2="150" stroke="#dc2626" stroke-width="3.5" stroke-linecap="round"/>
+  <line x1="340" y1="150" x2="660" y2="150" stroke="#16a34a" stroke-width="3.5" stroke-linecap="round"/>
+
+  <!-- ridge point -->
+  <circle cx="340" cy="150" r="6" fill="#0f172a"/>
+  <line x1="340" y1="150" x2="340" y2="350" stroke="#94a3b8" stroke-width="1.4" stroke-dasharray="5 5"/>
+  <text x="340" y="138" font-size="12" font-weight="700" fill="#0f172a" text-anchor="middle">ridge point</text>
+
+  <!-- region labels -->
+  <text x="200" y="206" font-size="13" font-weight="700" fill="#b91c1c" text-anchor="middle">MEMORY-BOUND</text>
+  <text x="200" y="226" font-size="11" fill="#dc2626" text-anchor="middle">limited by bandwidth</text>
+  <text x="500" y="130" font-size="13" font-weight="700" fill="#15803d" text-anchor="middle">COMPUTE-BOUND</text>
+  <text x="500" y="186" font-size="11" fill="#16a34a" text-anchor="middle">limited by peak FLOPs (the roof)</text>
+
+  <!-- example dots -->
+  <circle cx="195" cy="270" r="7" fill="#dc2626" stroke="#ffffff" stroke-width="1.5"/>
+  <text x="210" y="266" font-size="12" font-weight="600" fill="#7f1d1d">element-wise ops,</text>
+  <text x="210" y="282" font-size="12" font-weight="600" fill="#7f1d1d">LLM decode (1 token)</text>
+
+  <circle cx="520" cy="150" r="7" fill="#16a34a" stroke="#ffffff" stroke-width="1.5"/>
+  <text x="520" y="232" font-size="12" font-weight="600" fill="#14532d" text-anchor="middle">big matrix multiply,</text>
+  <text x="520" y="248" font-size="12" font-weight="600" fill="#14532d" text-anchor="middle">LLM prefill (long prompt)</text>
+
+  <!-- axis titles -->
+  <text x="380" y="388" font-size="13" font-weight="600" fill="#334155" text-anchor="middle">Arithmetic intensity  (useful work per byte of memory)  →</text>
+  <text x="58" y="225" font-size="13" font-weight="600" fill="#334155" transform="rotate(-90 58 225)" text-anchor="middle">Performance →</text>
+
+  <text x="380" y="418" font-size="12" font-style="italic" fill="#94a3b8" text-anchor="middle">Fixes like fusion and FlashAttention push work rightward, from memory-bound to compute-bound.</text>
+</svg>
