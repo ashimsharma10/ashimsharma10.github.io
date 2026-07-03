@@ -12,6 +12,13 @@ summary: 'A conceptual guide to MLOps tooling: how MLflow experiment tracking, m
 
 > **The 30-second version.** Production ML is a loop, not a pipeline. MLflow records what you trained (tracking), stores it so it can be reloaded anywhere (artifacts), and tracks which version is live (registry). Data-versioning tools like DVC cover what MLflow doesn't. Once deployed, models drift, so you watch inputs, not just accuracy, and feed problems back into retraining.
 
+<style>{`
+.logo-row{display:flex;flex-wrap:wrap;gap:22px 34px;align-items:flex-end;justify-content:center;margin:26px 0 10px}
+.logo-cell{display:flex;flex-direction:column;align-items:center;gap:10px}
+.logo-cell img{height:44px;width:auto;display:block}
+.logo-cell span{font-size:13px;font-weight:600;opacity:.7}
+`}</style>
+
 &nbsp;
 
 **Table of Contents**
@@ -111,11 +118,11 @@ Because every run shares the same schema, the UI presents them all as one **sear
 Tracking answers *"what have we run?"* The registry answers *"which model is official, and where is it in its lifecycle?"*
 
 - **Register** a promising model → it gets a **named entry** and a **sequential version** (v1, v2, …), each permanently linked to the run that made it. From any live model you can trace back to its exact params, metrics, and commit.
-- **Stages** layer on top: `Staging` → `Production` → `Archived`. Promotion is a *metadata move*, not a file copy.
-- Serving references models **by stage** ("serve whatever is in Production"), so deploying = one transition, and **rollback = moving the old version back**.
-- The registry becomes the home for governance: approvals, descriptions, and an audit trail of who promoted what, when.
+- **Aliases and tags** mark which version is which. An alias is a movable pointer like `champion`, `challenger`, or `eu-prod` attached to a specific version; serving references the *alias*, never a hardcoded path.
+- Promotion is a **metadata move** (repoint `champion` from v3 to v4), so deploying is one operation and **rollback is just repointing back**.
+- The registry is also the home for governance: approvals, descriptions, and an audit trail of who promoted what, when.
 
-> **Note:** MLflow 2.9+ adds an **aliases** system alongside fixed stages — arbitrary named pointers like `champion` or `eu-region` attached to specific versions, for flexible routing when you serve several variants at once.
+> **Note:** Older MLflow used fixed **stages** (`Staging` / `Production` / `Archived`). Those are now deprecated in favor of aliases and tags, which are far more flexible once you serve several variants — regions, cohorts, champion/challenger — at once. New systems should use aliases.
 
 ### 2.4 Artifact Store
 
@@ -148,6 +155,8 @@ An artifact is **any file needed to reproduce a result or serve a prediction.** 
 | Evaluation outputs | Metrics, confusion matrices | The audit trail justifying release |
 
 **The rule:** if changing a file would change predictions, or you'd need it to rebuild the model exactly, it's an artifact and it needs a version.
+
+> **Feature stores** (Feast, Tecton, Databricks) exist for the hardest artifact of all: the features themselves. They hold one definition of each feature and serve it *identically* offline for training and online for inference — the cleanest structural fix for the train/serve skew flagged above.
 
 ### 3.2 Versioning Strategies
 
@@ -193,6 +202,8 @@ Make **every input explicit and recorded** — the job of MLflow "Projects." A p
 
 The behavioral difference is what matters: running a project doesn't just execute a script in whatever environment happens to be around. It **materializes the declared environment first** (fresh conda env or container), injects the parameters, runs the code, and auto-logs to tracking. Launch it from a laptop, a CI server, or a git URL and you get the same result. Reproducibility stops being discipline and becomes a property of *how the run is launched*.
 
+> **In practice at scale:** MLflow Projects is lightweight and rarely the orchestrator in a large lab. Pipelines usually run on a dedicated orchestrator — Airflow, Kubeflow Pipelines, Metaflow, Argo, Dagster, or Prefect — with MLflow handling tracking and the registry *inside* each step. The principle is identical; only the runner changes.
+
 ### 4.3 An End-to-End Pipeline
 
 A production pipeline is a chain of stages, each consuming the last one's output and recording what it did and produced:
@@ -220,11 +231,19 @@ Each stage is a nested run under one parent, so the whole lineage — raw-data f
 
 > **Warning:** The #1 cause of "it worked last month" is loose dependency pinning. A version *range* lets a background upgrade silently change results. Pin everything exactly — framework, numerical backend, and the CUDA/accelerator toolkit.
 
+> **Reality check:** bit-for-bit reproducibility on GPUs is often impractical anyway — nondeterministic kernels, atomic adds, and driver differences make exact reruns rare. The achievable goal is *provenance* (knowing exactly what produced a model) plus *close* reproduction, not identical bits.
+
 ---
 
 ## 5. Framework Integration: PyTorch, TensorFlow, HuggingFace
 
 A tracker is only useful if capturing data is nearly free. MLflow does this with **autologging** — hook into training, record params/metrics/model automatically, no manual instrumentation. *How much* it can grab depends on how much the framework standardizes its training loop:
+
+<div className="logo-row">
+  <div className="logo-cell"><img src="/static/images/mlops-tooling-from-experiment-tracking-to-production/pytorch.svg" alt="PyTorch logo" /><span>PyTorch</span></div>
+  <div className="logo-cell"><img src="/static/images/mlops-tooling-from-experiment-tracking-to-production/tensorflow.svg" alt="TensorFlow logo" /><span>TensorFlow / Keras</span></div>
+  <div className="logo-cell"><img src="/static/images/mlops-tooling-from-experiment-tracking-to-production/huggingface.svg" alt="Hugging Face logo" /><span>HuggingFace</span></div>
+</div>
 
 | Framework | Training loop | Autolog captures | You still control |
 |---|---|---|---|
@@ -236,13 +255,20 @@ A tracker is only useful if capturing data is nearly free. MLflow does this with
 - **Keras** runs through one framework-owned `fit()` with a rich callback system. Autologging plugs straight in and captures nearly everything without touching your code.
 - **HuggingFace** integrates through `Trainer`'s callback interface (MLflow is a built-in reporter). Especially valuable because transformer training has *so many* interacting hyperparameters — capturing them all kills the "which config made this checkpoint?" confusion. The saved artifact bundles **model + tokenizer**, so it's a complete, loadable unit.
 
-**The through-line:** the more a framework owns its training loop, the more can be captured for free. PyTorch trades automation for control; Keras trades control for automation; HuggingFace lands in the middle.
+**The through-line:** the more a framework owns its training loop, the more can be captured for free. PyTorch trades automation for control; Keras trades control for automation; HuggingFace lands in the middle. One caveat at scale — autologging is greedy, capturing every metric and large artifacts on every run, so on big sweeps teams narrow it down and log deliberately to keep the tracking store fast and cheap.
 
 ---
 
 ## 6. Alternatives: W&B, DVC, Neptune
 
 MLflow is the most-deployed open-source option, but the alternatives are interesting because they make *different architectural bets*.
+
+<div className="logo-row">
+  <div className="logo-cell"><img src="/static/images/mlops-tooling-from-experiment-tracking-to-production/mlflow.svg" alt="MLflow logo" /><span>MLflow</span></div>
+  <div className="logo-cell"><img src="/static/images/mlops-tooling-from-experiment-tracking-to-production/wandb.svg" alt="Weights & Biases logo" /><span>Weights & Biases</span></div>
+  <div className="logo-cell"><img src="/static/images/mlops-tooling-from-experiment-tracking-to-production/dvc.svg" alt="DVC logo" /><span>DVC</span></div>
+  <div className="logo-cell"><img src="/static/images/mlops-tooling-from-experiment-tracking-to-production/neptune.svg" alt="Neptune logo" /><span>Neptune</span></div>
+</div>
 
 - **Weights & Biases** — *hosted-first, UX-first.* A polished real-time dashboard as a managed service, plus shareable reports and managed hyperparameter **sweeps**. Downside: by default your data lives on W&B's servers — frictionless for most, a non-starter in regulated environments. Self-hosting is an enterprise feature.
 - **DVC** — *git for data, not a tracking server.* Stores tiny pointer files in git, pushes the real bytes to a remote. Check out an old commit, sync, and you get the exact code *and* data from that moment. No live dashboard — which is why it's usually paired *with* MLflow, not instead of it.
@@ -274,7 +300,9 @@ Because a logged model is a **self-describing bundle** (weights + flavor + signa
 - **Container image** — bake the bundle in; runs identically anywhere containers run.
 - **Managed cloud** — SageMaker, Azure ML, or KServe/Seldon on Kubernetes, adding autoscaling, health checks, and load balancing.
 
-The crucial property in all three: **the environment travels with the model**, so the serving container is built from the same environment it trained in — closing the train/serve gap. In a mature setup, CI/CD sits between registry and production and rolls out *gradually*:
+The crucial property in all three: **the environment travels with the model**, so the serving container is built from the same environment it trained in — closing the train/serve gap.
+
+Not everything is a live endpoint, either. A large share of production inference is **batch** (score a table on a schedule) or **streaming** (score events off a queue); the same bundle drops into all three. Match the serving mode to the latency the product actually needs — always-on GPU endpoints are the most expensive option, and many use cases don't need one. In a mature setup, CI/CD sits between registry and production and rolls out *gradually*:
 
 ```mermaid
 flowchart TD
@@ -311,20 +339,21 @@ An accurate model can silently degrade in production because the world changed w
 3. **Performance degradation** *(latest, most definitive)* — real accuracy/F1/AUC drop, but only measurable once **ground-truth labels arrive**, often days or weeks later.
 
 ```mermaid
-flowchart LR
-    PM["Production Model"] --> PRED["Predictions"]
-    PRED --> MON["Monitoring<br/>(drift, latency, errors)"]
-    MON -->|threshold breached| RETRAIN["Retrain Pipeline"]
-    RETRAIN --> REG["Model Registry"]
-    REG -->|promote| PM
-    PRED --> LABELS["Delayed Ground Truth"]
-    LABELS --> MON
-    style PM fill:#DBEAFE,stroke:#2563EB,color:#111
-    style PRED fill:#D9F2EC,stroke:#1F7A66,color:#111
-    style MON fill:#FDE8E8,stroke:#C0392B,color:#111
-    style RETRAIN fill:#FFF4D6,stroke:#B7791F,color:#111
-    style REG fill:#DBEAFE,stroke:#2563EB,color:#111
-    style LABELS fill:#D9F2EC,stroke:#1F7A66,color:#111
+flowchart TD
+    PM["Production Model<br/>serving live traffic"] --> PRED["Predictions"]
+    PRED -->|"labels arrive days to weeks later"| LAB["Ground-Truth Labels"]
+    PRED --> MON{"Monitoring<br/>drift · latency · errors"}
+    LAB --> MON
+    MON -->|"healthy"| PM
+    MON -->|"threshold breached"| RT["Retrain Pipeline"]
+    RT --> REG["Model Registry<br/>new version"]
+    REG -->|"promote"| PM
+    style PM fill:#DBEAFE,stroke:#2563EB,color:#111,font-size:15px
+    style PRED fill:#D9F2EC,stroke:#1F7A66,color:#111,font-size:15px
+    style LAB fill:#D9F2EC,stroke:#1F7A66,color:#111,font-size:15px
+    style MON fill:#FDE8E8,stroke:#C0392B,color:#111,font-size:15px
+    style RT fill:#FFF4D6,stroke:#B7791F,color:#111,font-size:15px
+    style REG fill:#DBEAFE,stroke:#2563EB,color:#111,font-size:15px
 ```
 
 > **Warning:** Data drift *leads*; performance degradation *lags*. Wait for accuracy to drop and the model has already served bad predictions for as long as labels take to arrive. Alert on input drift *before* you have ground truth — exactly what tools like Evidently and WhyLabs are built for.
