@@ -87,11 +87,11 @@ export default function ListLayoutWithTags({
           <div className="hidden h-full max-h-screen max-w-[200px] min-w-[200px] flex-col items-start overflow-auto rounded-sm bg-gray-50 pt-5 shadow-md sm:flex dark:bg-gray-900/70 dark:shadow-gray-800/40">
             <div className="px-6 py-4">
               {pathname.startsWith('/write-up') ? (
-                <h3 className="text-primary-500 font-bold uppercase">All Write-ups</h3>
+                <h3 className="font-bold text-[#047857] uppercase dark:text-[#34D399]">All Write-ups</h3>
               ) : (
                 <Link
                   href={`/write-up`}
-                  className="hover:text-primary-500 dark:hover:text-primary-500 font-bold text-gray-700 uppercase dark:text-gray-300"
+                  className="font-bold text-gray-700 uppercase hover:text-[#047857] dark:text-gray-300 dark:hover:text-[#34D399]"
                 >
                   All Write-ups
                 </Link>
@@ -101,13 +101,13 @@ export default function ListLayoutWithTags({
                   return (
                     <li key={t} className="my-3">
                       {decodeURI(pathname.split('/tags/')[1])?.replace(/\/$/, '') === slug(t) ? (
-                        <h3 className="text-primary-500 inline py-2 text-sm font-bold uppercase">
+                        <h3 className="inline py-2 text-sm font-bold text-[#047857] uppercase dark:text-[#34D399]">
                           {`${t} (${tagCounts[t]})`}
                         </h3>
                       ) : (
                         <Link
                           href={`/tags/${slug(t)}`}
-                          className="hover:text-primary-500 dark:hover:text-primary-500 py-2 text-sm font-medium text-gray-900 uppercase dark:text-gray-300"
+                          className="py-2 text-sm font-medium text-gray-900 uppercase hover:text-[#047857] dark:text-gray-300 dark:hover:text-[#34D399]"
                           aria-label={`View posts tagged ${t}`}
                         >
                           {`${t} (${tagCounts[t]})`}
