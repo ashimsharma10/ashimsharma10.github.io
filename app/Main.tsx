@@ -56,7 +56,7 @@ export default function Home({ posts }) {
                       <div className="text-xs leading-5 font-medium">
                         <Link
                           href={`/write-up/${slug}`}
-                          className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
+                          className="text-[#047857] hover:text-[#065f46] dark:text-[#34D399] dark:hover:text-[#6ee7b7]"
                           aria-label={`Read more: "${title}"`}
                         >
                           Read more &rarr;
@@ -74,7 +74,7 @@ export default function Home({ posts }) {
         <div className="flex justify-end text-sm leading-6 font-medium">
           <Link
             href="/write-up"
-            className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
+            className="text-[#047857] hover:text-[#065f46] dark:text-[#34D399] dark:hover:text-[#6ee7b7]"
             aria-label="All write-ups"
           >
             All Write-ups &rarr;

@@ -16,7 +16,7 @@ export default function GanSrPipelinePage() {
         <div className="pt-4 pb-2">
           <Link
             href="/projects"
-            className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400 text-sm"
+            className="text-[#047857] hover:text-[#065f46] dark:text-[#34D399] dark:hover:text-[#6ee7b7] text-sm"
           >
             &larr; Back
           </Link>
@@ -36,7 +36,7 @@ export default function GanSrPipelinePage() {
               refer to the{' '}
               <Link
                 href="https://link.springer.com/chapter/10.1007%2F978-981-16-4177-0_75"
-                className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400 underline"
+                className="text-[#047857] hover:text-[#065f46] dark:text-[#34D399] dark:hover:text-[#6ee7b7] underline"
               >
                 published paper
               </Link>{' '}
@@ -144,7 +144,7 @@ export default function GanSrPipelinePage() {
             ].map((tag) => (
               <span
                 key={tag}
-                className="bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-300 rounded-full px-3 py-1 text-sm font-medium"
+                className="rounded-full bg-[#d1fae5] px-3 py-1 text-sm font-medium text-[#065f46] dark:bg-[#064e3b]/30 dark:text-[#6ee7b7]"
               >
                 {tag}
               </span>
@@ -155,7 +155,7 @@ export default function GanSrPipelinePage() {
         <footer className="pt-4 pb-8">
           <Link
             href="/projects"
-            className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
+            className="text-[#047857] hover:text-[#065f46] dark:text-[#34D399] dark:hover:text-[#6ee7b7]"
           >
             &larr; Back to Projects
           </Link>
