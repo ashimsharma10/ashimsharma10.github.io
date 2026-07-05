@@ -123,6 +123,14 @@ const certifications = [
     logoUrl: '/static/images/logos/mit.svg',
     url: '',
   },
+  {
+    title: 'MCP · Claude Code · Claude API · Agent Skills · Subagents · Amazon Bedrock',
+    issuer: 'Anthropic',
+    logoInitial: 'A',
+    logoBg: 'bg-gray-900',
+    logoUrl: '/static/images/logos/anthropic.svg',
+    url: '',
+  },
 ]
 
 const conferences = [
