@@ -87,7 +87,9 @@ export default function ListLayoutWithTags({
           <div className="hidden h-full max-h-screen max-w-[200px] min-w-[200px] flex-col items-start overflow-auto rounded-sm bg-gray-50 pt-5 shadow-md sm:flex dark:bg-gray-900/70 dark:shadow-gray-800/40">
             <div className="px-6 py-4">
               {pathname.startsWith('/write-up') ? (
-                <h3 className="font-bold text-[#047857] uppercase dark:text-[#34D399]">All Write-ups</h3>
+                <h3 className="font-bold text-[#047857] uppercase dark:text-[#34D399]">
+                  All Write-ups
+                </h3>
               ) : (
                 <Link
                   href={`/write-up`}

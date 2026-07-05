@@ -16,7 +16,7 @@ export default function GanSrPipelinePage() {
         <div className="pt-4 pb-2">
           <Link
             href="/projects"
-            className="text-[#047857] hover:text-[#065f46] dark:text-[#34D399] dark:hover:text-[#6ee7b7] text-sm"
+            className="text-sm text-[#047857] hover:text-[#065f46] dark:text-[#34D399] dark:hover:text-[#6ee7b7]"
           >
             &larr; Back
           </Link>
@@ -36,7 +36,7 @@ export default function GanSrPipelinePage() {
               refer to the{' '}
               <Link
                 href="https://link.springer.com/chapter/10.1007%2F978-981-16-4177-0_75"
-                className="text-[#047857] hover:text-[#065f46] dark:text-[#34D399] dark:hover:text-[#6ee7b7] underline"
+                className="text-[#047857] underline hover:text-[#065f46] dark:text-[#34D399] dark:hover:text-[#6ee7b7]"
               >
                 published paper
               </Link>{' '}
