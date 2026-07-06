@@ -27,6 +27,7 @@ export interface Env {
   // Optional Langfuse tracing (leave unset to disable).
   LANGFUSE_PUBLIC_KEY: string
   LANGFUSE_SECRET_KEY: string
+  LANGFUSE_BASE_URL: string
   LANGFUSE_HOST: string
 }
 
@@ -624,7 +625,7 @@ function logTrace(env: Env, ctx: ExecutionContext, t: TraceInput): void {
 /** Send a trace with per-component generations to Langfuse (no-op without keys). */
 async function sendToLangfuse(env: Env, traceId: string, ts: number, t: TraceInput): Promise<void> {
   if (!env.LANGFUSE_PUBLIC_KEY || !env.LANGFUSE_SECRET_KEY) return
-  const host = env.LANGFUSE_HOST || 'https://cloud.langfuse.com'
+  const host = env.LANGFUSE_BASE_URL || env.LANGFUSE_HOST || 'https://cloud.langfuse.com'
   const auth = btoa(`${env.LANGFUSE_PUBLIC_KEY}:${env.LANGFUSE_SECRET_KEY}`)
   const iso = new Date(ts).toISOString()
   const ev = (type: string, bodyPart: Record<string, unknown>) => ({

@@ -89,10 +89,15 @@ npx wrangler secret put LANGFUSE_SECRET_KEY   # sk-lf-...
 ```
 
 Each request sends a trace with child generations (decision, rerank, generation)
-and a retrieval span (hit counts, similarity). Host defaults to
-`https://cloud.langfuse.com` (override with `LANGFUSE_HOST`). Leave the keys
-unset to disable — the code no-ops. Live logs are also available via
-`npx wrangler tail`.
+and a retrieval span (hit counts, similarity), posted directly to the Langfuse
+ingestion API and flushed via `ctx.waitUntil()` — the Workers-recommended
+approach (the OpenTelemetry SDK is not Workers-compatible). Set the region host
+with `LANGFUSE_BASE_URL` in `wrangler.toml` (`https://us.cloud.langfuse.com` for
+US, `https://cloud.langfuse.com` for EU). Leave the keys unset to disable — the
+code no-ops. Live logs are also available via `npx wrangler tail`.
+
+View traces in Langfuse → **Tracing → Traces**. Verified format: a `chat` trace
+with `decision`, `rerank`, and `generation` generations plus a `retrieval` span.
 
 ## Local development
 

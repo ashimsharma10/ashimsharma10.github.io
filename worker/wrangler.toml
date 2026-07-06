@@ -35,7 +35,8 @@ RERANK_MODEL = "claude-haiku-4-5-20251001"
 # Set to "false" to skip the rerank step (pure semantic order).
 ENABLE_RERANK = "true"
 # Optional: Langfuse host (only used if the LANGFUSE_* secrets below are set).
-LANGFUSE_HOST = "https://cloud.langfuse.com"
+# US region: https://us.cloud.langfuse.com  ·  EU region: https://cloud.langfuse.com
+LANGFUSE_BASE_URL = "https://us.cloud.langfuse.com"
 
 # Secrets (DO NOT put values here). Set them with:
 #   npx wrangler secret put ANTHROPIC_API_KEY
