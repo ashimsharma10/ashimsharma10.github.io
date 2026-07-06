@@ -14,6 +14,15 @@ binding = "AI"
 binding = "VECTORIZE"
 index_name = "ashim-knowledge"
 
+# D1 — keyword (BM25/FTS5) search source of truth + observability traces.
+# Create it once, then apply schema.sql (see README), and paste the id here:
+#   npx wrangler d1 create ashim-chatbot
+#   npx wrangler d1 execute ashim-chatbot --file=./schema.sql --remote
+[[d1_databases]]
+binding = "DB"
+database_name = "ashim-chatbot"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+
 # Public vars (non-secret). Override per-environment as needed.
 [vars]
 # Origin allowed to call this Worker (CORS). Set to your site origin in prod,
@@ -29,3 +38,4 @@ ENABLE_RERANK = "true"
 # Secrets (DO NOT put values here). Set them with:
 #   npx wrangler secret put ANTHROPIC_API_KEY
 #   npx wrangler secret put INGEST_SECRET
+#   npx wrangler secret put OPS_TOKEN        # gates the /ops dashboard
