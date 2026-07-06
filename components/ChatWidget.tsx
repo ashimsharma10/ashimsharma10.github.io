@@ -6,19 +6,6 @@ import { useEffect, useRef, useState } from 'react'
 const AVATAR_SRC = '/static/images/avatar.png'
 const API_URL = process.env.NEXT_PUBLIC_CHAT_API_URL
 
-// Minimal Web Speech API shape (avoids depending on lib.dom's experimental types).
-interface SpeechRecognitionEventLike {
-  results: { [i: number]: { [j: number]: { transcript: string } } }
-}
-interface SpeechRecognitionLike {
-  lang: string
-  interimResults: boolean
-  onresult: (e: SpeechRecognitionEventLike) => void
-  onend: () => void
-  start: () => void
-  stop: () => void
-}
-
 interface Source {
   title: string
   url: string
@@ -103,45 +90,13 @@ export default function ChatWidget() {
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(false)
-  const [listening, setListening] = useState(false)
-  const [micSupported, setMicSupported] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
-  const recognitionRef = useRef<SpeechRecognitionLike | null>(null)
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages, loading])
 
-  // Optional voice-to-text via the Web Speech API (Chrome/Safari). Degrades away.
-  useEffect(() => {
-    const w = window as unknown as {
-      SpeechRecognition?: new () => SpeechRecognitionLike
-      webkitSpeechRecognition?: new () => SpeechRecognitionLike
-    }
-    const SR = w.SpeechRecognition || w.webkitSpeechRecognition
-    if (!SR) return
-    const rec = new SR()
-    rec.lang = 'en-US'
-    rec.interimResults = false
-    rec.onresult = (e: SpeechRecognitionEventLike) => setInput(e.results[0][0].transcript)
-    rec.onend = () => setListening(false)
-    recognitionRef.current = rec
-    setMicSupported(true)
-  }, [])
-
   if (!API_URL) return null
-
-  function toggleMic() {
-    const rec = recognitionRef.current
-    if (!rec) return
-    if (listening) {
-      rec.stop()
-      setListening(false)
-    } else {
-      setListening(true)
-      rec.start()
-    }
-  }
 
   async function send(text: string) {
     const question = text.trim()
@@ -336,41 +291,6 @@ export default function ChatWidget() {
               placeholder="Type your question…"
               className="w-0 min-w-0 flex-1 rounded-full border border-gray-300 bg-transparent px-4 py-2 text-sm text-gray-900 focus:border-[#047857] focus:outline-none dark:border-gray-600 dark:text-gray-100"
             />
-            {micSupported && (
-              <button
-                type="button"
-                onClick={toggleMic}
-                aria-label="Voice input"
-                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${
-                  listening
-                    ? 'border-[#047857] bg-[#047857] text-white dark:border-[#34D399] dark:bg-[#34D399] dark:text-gray-900'
-                    : 'border-gray-300 text-gray-500 hover:text-[#047857] dark:border-gray-600 dark:text-gray-400 dark:hover:text-[#34D399]'
-                }`}
-              >
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={1.8}
-                >
-                  <rect
-                    x="9"
-                    y="3"
-                    width="6"
-                    height="11"
-                    rx="3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M5 11a7 7 0 0 0 14 0M12 18v3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
-            )}
             <button
               type="submit"
               disabled={loading || !input.trim()}

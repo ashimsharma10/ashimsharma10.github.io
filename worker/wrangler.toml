@@ -28,9 +28,10 @@ database_id = "REPLACE_WITH_D1_DATABASE_ID"
 # Origin allowed to call this Worker (CORS). Set to your site origin in prod,
 # e.g. "https://ashimsharma10.github.io". Use "*" only for local testing.
 ALLOWED_ORIGIN = "*"
-# Generation model. Swap to "claude-sonnet-5" for higher quality at more cost.
-CHAT_MODEL = "claude-haiku-4-5-20251001"
-# Reranker model (scores retrieved chunks before generation).
+# Generation model. Sonnet gives noticeably better answer quality; switch to
+# "claude-haiku-4-5-20251001" if you want lower cost/latency.
+CHAT_MODEL = "claude-sonnet-5"
+# Reranker model — cheap Haiku is plenty for scoring retrieved chunks.
 RERANK_MODEL = "claude-haiku-4-5-20251001"
 # Set to "false" to skip the rerank step (pure semantic order).
 ENABLE_RERANK = "true"
