@@ -2,6 +2,9 @@
 
 import { useEffect, useRef, useState } from 'react'
 
+// Static user-site (served at root), so the public path resolves directly.
+const AVATAR_SRC = '/static/images/avatar.png'
+
 interface Source {
   title: string
   url: string
@@ -107,30 +110,36 @@ export default function ChatWidget() {
 
   return (
     <>
-      {/* Launcher button */}
+      {/* Launcher button — avatar when closed, X when open */}
       <button
         aria-label={open ? 'Close chat' : 'Ask about Ashim'}
         onClick={() => setOpen((o) => !o)}
-        className="fixed right-5 bottom-5 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#047857] text-white shadow-lg transition-transform hover:scale-105 hover:bg-[#065f46] dark:bg-[#34D399] dark:text-gray-900 dark:hover:bg-[#6ee7b7]"
+        className="fixed right-5 bottom-5 z-50 h-14 w-14 rounded-full shadow-lg transition-transform hover:scale-105 hover:shadow-xl"
       >
         {open ? (
-          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
+          <span className="flex h-full w-full items-center justify-center rounded-full bg-[#047857] text-white dark:bg-[#34D399] dark:text-gray-900">
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </span>
         ) : (
-          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.9 9.9 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+          <span className="relative block h-full w-full">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={AVATAR_SRC}
+              alt="Chat with Ashim"
+              width={56}
+              height={56}
+              className="h-full w-full rounded-full object-cover ring-2 ring-[#047857] dark:ring-[#34D399]"
             />
-          </svg>
+            {/* online dot */}
+            <span className="absolute right-0.5 bottom-0.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-emerald-500 dark:border-gray-900" />
+          </span>
         )}
       </button>
 
