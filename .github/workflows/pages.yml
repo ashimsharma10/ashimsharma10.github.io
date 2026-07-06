@@ -39,6 +39,9 @@ jobs:
           EXPORT: 1
           UNOPTIMIZED: 1
           BASE_PATH: ${{ steps.configurepages.outputs.base_path }}
+          # URL of the deployed Cloudflare Worker chatbot backend.
+          # Set this as a GitHub repo variable (Settings → Secrets and variables → Actions → Variables).
+          NEXT_PUBLIC_CHAT_API_URL: ${{ vars.NEXT_PUBLIC_CHAT_API_URL }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: ./out

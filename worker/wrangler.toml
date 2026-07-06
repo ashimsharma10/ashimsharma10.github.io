@@ -1,0 +1,31 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "ashim-chatbot"
+main = "src/index.ts"
+compatibility_date = "2024-11-01"
+
+# Workers AI — used to embed queries/chunks with @cf/baai/bge-base-en-v1.5
+[ai]
+binding = "AI"
+
+# Vectorize — native vector database holding the knowledge base
+# Create the index once with:
+#   npx wrangler vectorize create ashim-knowledge --dimensions=768 --metric=cosine
+[[vectorize]]
+binding = "VECTORIZE"
+index_name = "ashim-knowledge"
+
+# Public vars (non-secret). Override per-environment as needed.
+[vars]
+# Origin allowed to call this Worker (CORS). Set to your site origin in prod,
+# e.g. "https://ashimsharma10.github.io". Use "*" only for local testing.
+ALLOWED_ORIGIN = "*"
+# Generation model. Swap to "claude-sonnet-5" for higher quality at more cost.
+CHAT_MODEL = "claude-haiku-4-5-20251001"
+# Reranker model (scores retrieved chunks before generation).
+RERANK_MODEL = "claude-haiku-4-5-20251001"
+# Set to "false" to skip the rerank step (pure semantic order).
+ENABLE_RERANK = "true"
+
+# Secrets (DO NOT put values here). Set them with:
+#   npx wrangler secret put ANTHROPIC_API_KEY
+#   npx wrangler secret put INGEST_SECRET
