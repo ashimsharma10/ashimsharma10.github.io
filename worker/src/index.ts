@@ -1,15 +1,14 @@
 /**
  * Ashim's personal-site chatbot backend (Cloudflare Worker).
  *
- * Pipeline (agentic RAG, santifer-style, adapted to Cloudflare):
- *   /chat   -> Claude decides via TOOL USE whether it needs to search. If so,
- *              we run HYBRID retrieval (Vectorize semantic + D1 FTS5/BM25 keyword,
- *              fused with RRF), Haiku-rerank the candidates, feed them back as a
- *              tool_result, and stream Claude's grounded answer as SSE.
- *              Every request is traced to D1 (tokens, cost, latency).
- *   /ingest -> Auth'd. Embeds chunks (Workers AI) + upserts them into BOTH
- *              Vectorize (vectors) and D1 (keyword search source of truth).
- *   /ops/stats -> Auth'd. Aggregates + recent traces for the /ops dashboard.
+ * Agentic RAG (santifer-style, on Cloudflare):
+ *   /chat   -> Claude decides via TOOL USE whether to search. If so, HYBRID
+ *              retrieval (Vectorize semantic + D1 FTS5/BM25 keyword, fused with
+ *              RRF) -> Haiku rerank -> stream a grounded answer as SSE.
+ *              Every request is traced to D1 AND (optionally) to Langfuse, with
+ *              per-component tokens/cost and retrieval-quality metrics.
+ *   /ingest -> Auth'd. Embeds chunks -> Vectorize + D1.
+ *   /ops/stats -> Auth'd. Aggregations (overview, costs, rag) + recent traces.
  *
  * The Anthropic API key lives only here (as a Worker secret).
  */
@@ -25,13 +24,17 @@ export interface Env {
   CHAT_MODEL: string
   RERANK_MODEL: string
   ENABLE_RERANK: string
+  // Optional Langfuse tracing (leave unset to disable).
+  LANGFUSE_PUBLIC_KEY: string
+  LANGFUSE_SECRET_KEY: string
+  LANGFUSE_HOST: string
 }
 
 const EMBEDDING_MODEL = '@cf/baai/bge-base-en-v1.5' // 768-dim
-const CANDIDATE_K = 12 // per-retriever candidate pool
-const CONTEXT_K = 6 // chunks fed to generation
+const CANDIDATE_K = 12
+const CONTEXT_K = 6
 const MAX_TOKENS = 800
-const RRF_K = 60 // reciprocal-rank-fusion constant
+const RRF_K = 60
 
 // Rough $/million-token estimates — update to match current Anthropic pricing.
 const PRICING: Record<string, { in: number; out: number }> = {
@@ -59,11 +62,13 @@ interface Chunk {
   url: string
   type: string
   text: string
+  score?: number
 }
 interface Usage {
   input: number
   output: number
 }
+const zero = (): Usage => ({ input: 0, output: 0 })
 
 // ---- Soft per-IP rate limit (best-effort) ----
 const RATE_LIMIT = { windowMs: 60_000, max: 15 }
@@ -142,7 +147,6 @@ async function handleIngest(request: Request, env: Env): Promise<Response> {
     return json({ error: 'Expected a non-empty array of items' }, 400, env)
   }
 
-  // Vectors -> Vectorize
   const vectors = await embed(
     env,
     items.map((i) => i.text)
@@ -154,7 +158,6 @@ async function handleIngest(request: Request, env: Env): Promise<Response> {
   }))
   await env.VECTORIZE.upsert(records)
 
-  // Keyword source of truth -> D1 (triggers keep the FTS index in sync)
   const stmt = env.DB.prepare(
     'INSERT OR REPLACE INTO chunks (id, title, url, type, text) VALUES (?, ?, ?, ?, ?)'
   )
@@ -179,12 +182,12 @@ async function vectorSearch(env: Env, query: string): Promise<Chunk[]> {
       url: md.url ?? '',
       type: md.type ?? '',
       text: md.text ?? '',
+      score: m.score,
     }
   })
 }
 
 async function keywordSearch(env: Env, query: string): Promise<Chunk[]> {
-  // Build a safe FTS5 MATCH expression: quote each term, OR them together.
   const terms = query
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, ' ')
@@ -203,17 +206,17 @@ async function keywordSearch(env: Env, query: string): Promise<Chunk[]> {
       .all<Chunk>()
     return rs.results ?? []
   } catch {
-    return [] // FTS not provisioned yet, or query error -> semantic-only
+    return []
   }
 }
 
-/** Reciprocal Rank Fusion of the two ranked lists. */
+/** Reciprocal Rank Fusion of two ranked lists (keeps the best score per id). */
 function fuse(vector: Chunk[], keyword: Chunk[]): Chunk[] {
   const scores = new Map<string, number>()
   const byId = new Map<string, Chunk>()
   const add = (list: Chunk[]) =>
     list.forEach((c, rank) => {
-      byId.set(c.id, c)
+      byId.set(c.id, { ...byId.get(c.id), ...c })
       scores.set(c.id, (scores.get(c.id) ?? 0) + 1 / (RRF_K + rank))
     })
   add(vector)
@@ -224,7 +227,7 @@ function fuse(vector: Chunk[], keyword: Chunk[]): Chunk[] {
     .slice(0, CANDIDATE_K)
 }
 
-/** Rerank fused candidates with Haiku; falls back to fusion order on error. */
+/** Rerank with Haiku; falls back to fusion order on error. Records its own usage. */
 async function rerank(
   env: Env,
   query: string,
@@ -310,9 +313,13 @@ async function handleChat(request: Request, env: Env, ctx: ExecutionContext): Pr
 
   const t0 = Date.now()
   const model = env.CHAT_MODEL || 'claude-haiku-4-5-20251001'
-  const usage: Usage = { input: 0, output: 0 }
+  const rerankModel = env.RERANK_MODEL || 'claude-haiku-4-5-20251001'
+  const decisionUsage = zero()
+  const rerankUsage = zero()
+  const genUsage = zero()
+  let embedCalls = 0
 
-  // 1) Tool-use decision: let Claude decide whether it needs to search.
+  // 1) Tool-use decision.
   const decision = await anthropic(env, {
     model,
     max_tokens: MAX_TOKENS,
@@ -335,12 +342,11 @@ async function handleChat(request: Request, env: Env, ctx: ExecutionContext): Pr
     }[]
     usage?: { input_tokens: number; output_tokens: number }
   }
-  usage.input += dData.usage?.input_tokens ?? 0
-  usage.output += dData.usage?.output_tokens ?? 0
-
+  decisionUsage.input += dData.usage?.input_tokens ?? 0
+  decisionUsage.output += dData.usage?.output_tokens ?? 0
   const toolUse = dData.content.find((c) => c.type === 'tool_use')
 
-  // --- No search needed: stream the direct answer we already have. ---
+  // --- No search: the decision call already answered. Attribute it to generation. ---
   if (dData.stop_reason !== 'tool_use' || !toolUse) {
     const answer =
       dData.content
@@ -349,13 +355,18 @@ async function handleChat(request: Request, env: Env, ctx: ExecutionContext): Pr
         .join('') || 'Happy to help! Ask me about Ashim, his projects, or his writing.'
     logTrace(env, ctx, {
       question: lastUser.content,
+      answer,
       usedSearch: false,
-      candidates: 0,
-      used: 0,
+      model,
+      rerankModel,
+      decisionUsage: zero(),
+      rerankUsage,
+      genUsage: decisionUsage, // single call did the answering
+      embedCalls,
       retrieveMs: 0,
       totalMs: Date.now() - t0,
-      usage,
-      model,
+      rag: { vectorHits: 0, keywordHits: 0, fused: 0, used: 0, overlap: 0, avgScore: 0 },
+      sources: [],
     })
     return sseFromText(answer, [], env)
   }
@@ -364,9 +375,18 @@ async function handleChat(request: Request, env: Env, ctx: ExecutionContext): Pr
   const query = toolUse.input?.query || lastUser.content
   const tR = Date.now()
   const [vec, kw] = await Promise.all([vectorSearch(env, query), keywordSearch(env, query)])
+  embedCalls += 1
   const fused = fuse(vec, kw)
-  const chunks = await rerank(env, query, fused, usage)
+  const chunks = await rerank(env, query, fused, rerankUsage)
   const retrieveMs = Date.now() - tR
+
+  const vecIds = new Set(vec.map((c) => c.id))
+  const kwIds = new Set(kw.map((c) => c.id))
+  const overlap = [...vecIds].filter((id) => kwIds.has(id)).length
+  const scored = chunks.filter((c) => typeof c.score === 'number')
+  const avgScore = scored.length
+    ? scored.reduce((s, c) => s + (c.score ?? 0), 0) / scored.length
+    : 0
 
   const context = chunks.map((c, i) => `[${i + 1}] (${c.title})\n${c.text}`).join('\n\n---\n\n')
   const sources = dedupeSources(chunks)
@@ -393,18 +413,30 @@ async function handleChat(request: Request, env: Env, ctx: ExecutionContext): Pr
     return json({ error: 'Upstream model error', detail: detail.slice(0, 500) }, 502, env)
   }
 
-  const stream = relaySSE(finalRes.body, sources, (streamUsage) => {
-    usage.input += streamUsage.input
-    usage.output += streamUsage.output
+  const stream = relaySSE(finalRes.body, sources, (streamUsage, answer) => {
+    genUsage.input += streamUsage.input
+    genUsage.output += streamUsage.output
     logTrace(env, ctx, {
       question: lastUser.content,
+      answer,
       usedSearch: true,
-      candidates: fused.length,
-      used: chunks.length,
+      model,
+      rerankModel,
+      decisionUsage,
+      rerankUsage,
+      genUsage,
+      embedCalls,
       retrieveMs,
       totalMs: Date.now() - t0,
-      usage,
-      model,
+      rag: {
+        vectorHits: vec.length,
+        keywordHits: kw.length,
+        fused: fused.length,
+        used: chunks.length,
+        overlap,
+        avgScore,
+      },
+      sources,
     })
   })
   return new Response(stream, {
@@ -427,7 +459,6 @@ function dedupeSources(chunks: Chunk[]): { title: string; url: string }[] {
   return out
 }
 
-/** Emit a plain (non-streamed) answer as our SSE shape, chunked for a typed feel. */
 function sseFromText(text: string, sources: { title: string; url: string }[], env: Env): Response {
   const encoder = new TextEncoder()
   const words = text.split(' ')
@@ -450,17 +481,18 @@ function sseFromText(text: string, sources: { title: string; url: string }[], en
   })
 }
 
-/** Relay Anthropic SSE -> our SSE, capturing token usage for tracing. */
+/** Relay Anthropic SSE -> our SSE, capturing token usage + the full answer. */
 function relaySSE(
   upstream: ReadableStream<Uint8Array>,
   sources: { title: string; url: string }[],
-  onDone: (usage: Usage) => void
+  onDone: (usage: Usage, answer: string) => void
 ): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder()
   const decoder = new TextDecoder()
   const reader = upstream.getReader()
   let buffer = ''
-  const usage: Usage = { input: 0, output: 0 }
+  let answer = ''
+  const usage = zero()
 
   return new ReadableStream<Uint8Array>({
     async pull(controller) {
@@ -470,7 +502,7 @@ function relaySSE(
         controller.enqueue(encoder.encode('data: [DONE]\n\n'))
         controller.close()
         try {
-          onDone(usage)
+          onDone(usage, answer)
         } catch {
           /* tracing must never break the response */
         }
@@ -489,6 +521,7 @@ function relaySSE(
           if (evt.type === 'message_start') usage.input += evt.message?.usage?.input_tokens ?? 0
           else if (evt.type === 'message_delta') usage.output += evt.usage?.output_tokens ?? 0
           else if (evt.type === 'content_block_delta' && evt.delta?.type === 'text_delta') {
+            answer += evt.delta.text
             controller.enqueue(
               encoder.encode(`data: ${JSON.stringify({ text: evt.delta.text })}\n\n`)
             )
@@ -505,37 +538,142 @@ function relaySSE(
 }
 
 // ---------------------------------------------------------------------------
-// Observability: write a trace row, and serve aggregates for the /ops dashboard
+// Observability: D1 traces + Langfuse, and /ops aggregations
 // ---------------------------------------------------------------------------
+interface RagMetrics {
+  vectorHits: number
+  keywordHits: number
+  fused: number
+  used: number
+  overlap: number
+  avgScore: number
+}
 interface TraceInput {
   question: string
+  answer: string
   usedSearch: boolean
-  candidates: number
-  used: number
+  model: string
+  rerankModel: string
+  decisionUsage: Usage
+  rerankUsage: Usage
+  genUsage: Usage
+  embedCalls: number
   retrieveMs: number
   totalMs: number
-  usage: Usage
-  model: string
+  rag: RagMetrics
+  sources: { title: string; url: string }[]
 }
+
 function logTrace(env: Env, ctx: ExecutionContext, t: TraceInput): void {
-  const row = env.DB.prepare(
-    `INSERT INTO traces (id, ts, question, used_search, candidates, used, retrieve_ms, total_ms, input_tokens, output_tokens, cost_usd, model)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`
+  const decisionCost = costUsd(t.model, t.decisionUsage.input, t.decisionUsage.output)
+  const rerankCost = costUsd(t.rerankModel, t.rerankUsage.input, t.rerankUsage.output)
+  const genCost = costUsd(t.model, t.genUsage.input, t.genUsage.output)
+  const inTok = t.decisionUsage.input + t.rerankUsage.input + t.genUsage.input
+  const outTok = t.decisionUsage.output + t.rerankUsage.output + t.genUsage.output
+  const id = crypto.randomUUID()
+  const ts = Date.now()
+
+  const insertTrace = env.DB.prepare(
+    `INSERT INTO traces (
+       id, ts, question, used_search, candidates, used, retrieve_ms, total_ms,
+       input_tokens, output_tokens, cost_usd, model,
+       decision_in, decision_out, rerank_in, rerank_out, gen_in, gen_out,
+       decision_cost, rerank_cost, gen_cost, embed_calls,
+       vector_hits, keyword_hits, fused_candidates, overlap, avg_score
+     ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
   ).bind(
-    crypto.randomUUID(),
-    Date.now(),
+    id,
+    ts,
     t.question.slice(0, 500),
     t.usedSearch ? 1 : 0,
-    t.candidates,
-    t.used,
+    t.rag.fused,
+    t.rag.used,
     t.retrieveMs,
     t.totalMs,
-    t.usage.input,
-    t.usage.output,
-    costUsd(t.model, t.usage.input, t.usage.output),
-    t.model
+    inTok,
+    outTok,
+    decisionCost + rerankCost + genCost,
+    t.model,
+    t.decisionUsage.input,
+    t.decisionUsage.output,
+    t.rerankUsage.input,
+    t.rerankUsage.output,
+    t.genUsage.input,
+    t.genUsage.output,
+    decisionCost,
+    rerankCost,
+    genCost,
+    t.embedCalls,
+    t.rag.vectorHits,
+    t.rag.keywordHits,
+    t.rag.fused,
+    t.rag.overlap,
+    t.rag.avgScore
   )
-  ctx.waitUntil(row.run().catch(() => {}))
+
+  const statements = [insertTrace]
+  const srcStmt = env.DB.prepare(
+    'INSERT INTO trace_sources (trace_id, url, title) VALUES (?, ?, ?)'
+  )
+  for (const s of t.sources) statements.push(srcStmt.bind(id, s.url, s.title))
+
+  ctx.waitUntil(env.DB.batch(statements).catch(() => {}))
+  ctx.waitUntil(sendToLangfuse(env, id, ts, t).catch(() => {}))
+}
+
+/** Send a trace with per-component generations to Langfuse (no-op without keys). */
+async function sendToLangfuse(env: Env, traceId: string, ts: number, t: TraceInput): Promise<void> {
+  if (!env.LANGFUSE_PUBLIC_KEY || !env.LANGFUSE_SECRET_KEY) return
+  const host = env.LANGFUSE_HOST || 'https://cloud.langfuse.com'
+  const auth = btoa(`${env.LANGFUSE_PUBLIC_KEY}:${env.LANGFUSE_SECRET_KEY}`)
+  const iso = new Date(ts).toISOString()
+  const ev = (type: string, bodyPart: Record<string, unknown>) => ({
+    id: crypto.randomUUID(),
+    type,
+    timestamp: iso,
+    body: bodyPart,
+  })
+  const gen = (name: string, model: string, u: Usage) =>
+    ev('generation-create', {
+      id: crypto.randomUUID(),
+      traceId,
+      name,
+      model,
+      usage: { input: u.input, output: u.output, unit: 'TOKENS' },
+    })
+
+  const batch: unknown[] = [
+    ev('trace-create', {
+      id: traceId,
+      name: 'chat',
+      input: t.question,
+      output: t.answer,
+      metadata: { usedSearch: t.usedSearch, model: t.model, ...t.rag },
+    }),
+    gen(
+      t.usedSearch ? 'decision' : 'generation',
+      t.model,
+      t.usedSearch ? t.decisionUsage : t.genUsage
+    ),
+  ]
+  if (t.usedSearch) {
+    batch.push(
+      ev('span-create', {
+        id: crypto.randomUUID(),
+        traceId,
+        name: 'retrieval',
+        metadata: { ...t.rag, retrieveMs: t.retrieveMs },
+      })
+    )
+    batch.push(gen('rerank', t.rerankModel, t.rerankUsage))
+    batch.push(gen('generation', t.model, t.genUsage))
+  }
+
+  await fetch(`${host}/api/public/ingestion`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Basic ${auth}` },
+    body: JSON.stringify({ batch }),
+  })
 }
 
 async function handleOpsStats(request: Request, env: Env): Promise<Response> {
@@ -549,11 +687,51 @@ async function handleOpsStats(request: Request, env: Env): Promise<Response> {
               COALESCE(AVG(total_ms),0) AS avg_latency_ms, COALESCE(AVG(used_search),0) AS search_rate
        FROM traces`
     ).first()
+
+    // Costs tab
+    const byComponent = await env.DB.prepare(
+      `SELECT COALESCE(SUM(decision_cost),0) AS decision, COALESCE(SUM(rerank_cost),0) AS rerank,
+              COALESCE(SUM(gen_cost),0) AS generation FROM traces`
+    ).first()
+    const byModel = await env.DB.prepare(
+      `SELECT model, COALESCE(SUM(cost_usd),0) AS cost, COUNT(*) AS messages
+       FROM traces GROUP BY model ORDER BY cost DESC`
+    ).all()
+    const daily = await env.DB.prepare(
+      `SELECT date(ts/1000,'unixepoch') AS day, COALESCE(SUM(cost_usd),0) AS cost, COUNT(*) AS messages
+       FROM traces GROUP BY day ORDER BY day DESC LIMIT 14`
+    ).all()
+
+    // RAG tab
+    const ragAverages = await env.DB.prepare(
+      `SELECT COALESCE(AVG(vector_hits),0) AS vector_hits, COALESCE(AVG(keyword_hits),0) AS keyword_hits,
+              COALESCE(AVG(fused_candidates),0) AS fused, COALESCE(AVG(used),0) AS used,
+              COALESCE(AVG(overlap),0) AS overlap, COALESCE(AVG(avg_score),0) AS avg_score
+       FROM traces WHERE used_search = 1`
+    ).first()
+    const topSources = await env.DB.prepare(
+      `SELECT title, url, COUNT(*) AS uses FROM trace_sources GROUP BY url ORDER BY uses DESC LIMIT 10`
+    ).all()
+
     const recent = await env.DB.prepare(
       `SELECT id, ts, question, used_search, total_ms, input_tokens, output_tokens, cost_usd, model
        FROM traces ORDER BY ts DESC LIMIT 50`
     ).all()
-    return json({ totals, recent: recent.results ?? [] }, 200, env)
+
+    return json(
+      {
+        totals,
+        costs: {
+          byComponent,
+          byModel: byModel.results ?? [],
+          daily: (daily.results ?? []).reverse(),
+        },
+        rag: { averages: ragAverages, topSources: topSources.results ?? [] },
+        recent: recent.results ?? [],
+      },
+      200,
+      env
+    )
   } catch (e) {
     return json({ error: 'Stats unavailable', detail: String(e).slice(0, 200) }, 500, env)
   }

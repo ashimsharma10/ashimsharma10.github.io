@@ -34,8 +34,13 @@ CHAT_MODEL = "claude-haiku-4-5-20251001"
 RERANK_MODEL = "claude-haiku-4-5-20251001"
 # Set to "false" to skip the rerank step (pure semantic order).
 ENABLE_RERANK = "true"
+# Optional: Langfuse host (only used if the LANGFUSE_* secrets below are set).
+LANGFUSE_HOST = "https://cloud.langfuse.com"
 
 # Secrets (DO NOT put values here). Set them with:
 #   npx wrangler secret put ANTHROPIC_API_KEY
 #   npx wrangler secret put INGEST_SECRET
 #   npx wrangler secret put OPS_TOKEN        # gates the /ops dashboard
+# Optional Langfuse tracing (set both to enable; leave unset to disable):
+#   npx wrangler secret put LANGFUSE_PUBLIC_KEY
+#   npx wrangler secret put LANGFUSE_SECRET_KEY

@@ -28,17 +28,42 @@ END;
 
 -- One row per /chat request for the /ops dashboard.
 CREATE TABLE IF NOT EXISTS traces (
-  id            TEXT PRIMARY KEY,
-  ts            INTEGER,
-  question      TEXT,
-  used_search   INTEGER,
-  candidates    INTEGER,
-  used          INTEGER,
-  retrieve_ms   INTEGER,
-  total_ms      INTEGER,
-  input_tokens  INTEGER,
-  output_tokens INTEGER,
-  cost_usd      REAL,
-  model         TEXT
+  id              TEXT PRIMARY KEY,
+  ts              INTEGER,
+  question        TEXT,
+  used_search     INTEGER,
+  candidates      INTEGER,
+  used            INTEGER,
+  retrieve_ms     INTEGER,
+  total_ms        INTEGER,
+  input_tokens    INTEGER,
+  output_tokens   INTEGER,
+  cost_usd        REAL,
+  model           TEXT,
+  -- per-component tokens + cost (for the Costs tab)
+  decision_in     INTEGER,
+  decision_out    INTEGER,
+  rerank_in       INTEGER,
+  rerank_out      INTEGER,
+  gen_in          INTEGER,
+  gen_out         INTEGER,
+  decision_cost   REAL,
+  rerank_cost     REAL,
+  gen_cost        REAL,
+  embed_calls     INTEGER,
+  -- retrieval-quality metrics (for the RAG tab)
+  vector_hits     INTEGER,
+  keyword_hits    INTEGER,
+  fused_candidates INTEGER,
+  overlap         INTEGER,
+  avg_score       REAL
 );
 CREATE INDEX IF NOT EXISTS traces_ts ON traces (ts DESC);
+
+-- Sources cited per request (for the RAG tab "top sources").
+CREATE TABLE IF NOT EXISTS trace_sources (
+  trace_id TEXT,
+  url      TEXT,
+  title    TEXT
+);
+CREATE INDEX IF NOT EXISTS trace_sources_url ON trace_sources (url);

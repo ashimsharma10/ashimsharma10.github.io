@@ -25,15 +25,34 @@ interface Trace {
 }
 interface Stats {
   totals: Totals
+  costs: {
+    byComponent: { decision: number; rerank: number; generation: number }
+    byModel: { model: string; cost: number; messages: number }[]
+    daily: { day: string; cost: number; messages: number }[]
+  }
+  rag: {
+    averages: {
+      vector_hits: number
+      keyword_hits: number
+      fused: number
+      used: number
+      overlap: number
+      avg_score: number
+    }
+    topSources: { title: string; url: string; uses: number }[]
+  }
   recent: Trace[]
 }
+
+type Tab = 'overview' | 'costs' | 'rag' | 'traces'
+const usd = (n: number) => `$${(n ?? 0).toFixed(4)}`
 
 export default function OpsPage() {
   const [token, setToken] = useState('')
   const [stats, setStats] = useState<Stats | null>(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [tab, setTab] = useState<'overview' | 'traces'>('overview')
+  const [tab, setTab] = useState<Tab>('overview')
 
   useEffect(() => {
     const saved = localStorage.getItem('ops_token')
@@ -51,9 +70,7 @@ export default function OpsPage() {
     setLoading(true)
     setError('')
     try {
-      const res = await fetch(`${API_URL}/ops/stats`, {
-        headers: { Authorization: `Bearer ${t}` },
-      })
+      const res = await fetch(`${API_URL}/ops/stats`, { headers: { Authorization: `Bearer ${t}` } })
       if (res.status === 401) throw new Error('Invalid token.')
       if (!res.ok) throw new Error(`Request failed (${res.status})`)
       const data = (await res.json()) as Stats
@@ -73,10 +90,9 @@ export default function OpsPage() {
     <div className="mx-auto max-w-4xl py-8">
       <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Chatbot Ops</h1>
       <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-        Usage, cost, and traces for the site assistant.
+        Usage, cost, and retrieval metrics for the site assistant.
       </p>
 
-      {/* Token gate */}
       <form
         onSubmit={(e) => {
           e.preventDefault()
@@ -103,13 +119,12 @@ export default function OpsPage() {
 
       {stats && t && (
         <>
-          {/* Tabs */}
           <div className="mt-8 flex gap-1 border-b border-gray-200 dark:border-gray-700">
-            {(['overview', 'traces'] as const).map((name) => (
+            {(['overview', 'costs', 'rag', 'traces'] as const).map((name) => (
               <button
                 key={name}
                 onClick={() => setTab(name)}
-                className={`-mb-px border-b-2 px-4 py-2 text-sm font-medium capitalize ${
+                className={`-mb-px border-b-2 px-4 py-2 text-sm font-medium uppercase ${
                   tab === name
                     ? 'border-[#047857] text-[#047857] dark:border-[#34D399] dark:text-[#34D399]'
                     : 'border-transparent text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
@@ -123,13 +138,16 @@ export default function OpsPage() {
           {tab === 'overview' && (
             <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
               <Stat label="Messages" value={t.messages.toLocaleString()} />
-              <Stat label="Est. cost" value={`$${t.cost_usd.toFixed(4)}`} />
+              <Stat label="Est. cost" value={usd(t.cost_usd)} />
               <Stat label="Avg latency" value={`${Math.round(t.avg_latency_ms)} ms`} />
               <Stat label="Input tokens" value={t.input_tokens.toLocaleString()} />
               <Stat label="Output tokens" value={t.output_tokens.toLocaleString()} />
               <Stat label="Search rate" value={`${Math.round(t.search_rate * 100)}%`} />
             </div>
           )}
+
+          {tab === 'costs' && <CostsTab costs={stats.costs} />}
+          {tab === 'rag' && <RagTab rag={stats.rag} />}
 
           {tab === 'traces' && (
             <div className="mt-6 overflow-x-auto">
@@ -174,6 +192,134 @@ export default function OpsPage() {
           )}
         </>
       )}
+    </div>
+  )
+}
+
+function CostsTab({ costs }: { costs: Stats['costs'] }) {
+  const comp = [
+    { label: 'Tool decision', value: costs.byComponent.decision },
+    { label: 'Reranking', value: costs.byComponent.rerank },
+    { label: 'Generation', value: costs.byComponent.generation },
+  ]
+  const compMax = Math.max(...comp.map((c) => c.value), 1e-9)
+  const dayMax = Math.max(...costs.daily.map((d) => d.cost), 1e-9)
+
+  return (
+    <div className="mt-6 space-y-8">
+      <section>
+        <h2 className="mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100">
+          Cost by component
+        </h2>
+        <div className="space-y-2">
+          {comp.map((c) => (
+            <div key={c.label} className="flex items-center gap-3">
+              <span className="w-28 shrink-0 text-xs text-gray-500 dark:text-gray-400">
+                {c.label}
+              </span>
+              <div className="h-3 flex-1 rounded-full bg-gray-100 dark:bg-gray-800">
+                <div
+                  className="h-3 rounded-full bg-[#047857] dark:bg-[#34D399]"
+                  style={{ width: `${(c.value / compMax) * 100}%` }}
+                />
+              </div>
+              <span className="w-20 shrink-0 text-right text-xs text-gray-700 tabular-nums dark:text-gray-300">
+                {usd(c.value)}
+              </span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section>
+        <h2 className="mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100">
+          Cost by model
+        </h2>
+        <table className="w-full text-left text-sm">
+          <thead className="text-xs text-gray-500 dark:text-gray-400">
+            <tr className="border-b border-gray-200 dark:border-gray-700">
+              <th className="py-2 pr-3">Model</th>
+              <th className="py-2 pr-3">Messages</th>
+              <th className="py-2 pr-3">Cost</th>
+            </tr>
+          </thead>
+          <tbody className="text-gray-800 dark:text-gray-200">
+            {costs.byModel.map((m) => (
+              <tr key={m.model} className="border-b border-gray-100 dark:border-gray-800">
+                <td className="py-2 pr-3 font-mono text-xs">{m.model}</td>
+                <td className="py-2 pr-3">{m.messages}</td>
+                <td className="py-2 pr-3">{usd(m.cost)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2 className="mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100">
+          Daily cost (last 14 days)
+        </h2>
+        <div className="flex h-32 items-end gap-1">
+          {costs.daily.map((d) => (
+            <div
+              key={d.day}
+              className="flex flex-1 flex-col items-center gap-1"
+              title={`${d.day}: ${usd(d.cost)}`}
+            >
+              <div
+                className="w-full rounded-t bg-[#047857] dark:bg-[#34D399]"
+                style={{ height: `${Math.max((d.cost / dayMax) * 100, 2)}%` }}
+              />
+              <span className="text-[9px] text-gray-400">{d.day.slice(5)}</span>
+            </div>
+          ))}
+          {costs.daily.length === 0 && (
+            <p className="text-sm text-gray-500 dark:text-gray-400">No data yet.</p>
+          )}
+        </div>
+      </section>
+    </div>
+  )
+}
+
+function RagTab({ rag }: { rag: Stats['rag'] }) {
+  const a = rag.averages
+  return (
+    <div className="mt-6 space-y-8">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+        <Stat label="Avg vector hits" value={a.vector_hits.toFixed(1)} />
+        <Stat label="Avg keyword hits" value={a.keyword_hits.toFixed(1)} />
+        <Stat label="Avg fused" value={a.fused.toFixed(1)} />
+        <Stat label="Avg chunks used" value={a.used.toFixed(1)} />
+        <Stat label="Avg overlap" value={a.overlap.toFixed(1)} />
+        <Stat label="Avg similarity" value={a.avg_score.toFixed(3)} />
+      </div>
+
+      <section>
+        <h2 className="mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100">
+          Most-cited sources
+        </h2>
+        <div className="space-y-2">
+          {rag.topSources.map((s) => (
+            <div key={s.url} className="flex items-center justify-between gap-3 text-sm">
+              <a
+                href={s.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="truncate text-[#047857] hover:underline dark:text-[#34D399]"
+              >
+                {s.title}
+              </a>
+              <span className="shrink-0 text-xs text-gray-500 dark:text-gray-400">
+                {s.uses} uses
+              </span>
+            </div>
+          ))}
+          {rag.topSources.length === 0 && (
+            <p className="text-sm text-gray-500 dark:text-gray-400">No sources cited yet.</p>
+          )}
+        </div>
+      </section>
     </div>
   )
 }

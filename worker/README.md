@@ -60,16 +60,39 @@ npx wrangler vectorize info ashim-knowledge
 npx wrangler d1 execute ashim-chatbot --remote --command "SELECT COUNT(*) FROM chunks;"
 ```
 
-## Observability — the /ops dashboard
+## Observability
 
-Visit `https://<your-site>/ops`, enter the `OPS_TOKEN` value, and you'll see:
+Two layers, both fed on every `/chat`:
 
-- **Overview**: total messages, tokens, estimated cost, avg latency, search rate.
+### 1. On-site `/ops` dashboard (D1-backed)
+
+Visit `https://<your-site>/ops`, enter the `OPS_TOKEN` value. Tabs:
+
+- **Overview**: messages, tokens, estimated cost, avg latency, search rate.
+- **Costs**: cost by component (tool-decision / rerank / generation), by model,
+  and daily for the last 14 days.
+- **RAG**: retrieval quality — avg vector vs keyword hits, fusion, chunks used,
+  overlap, similarity score, and the most-cited sources.
 - **Traces**: recent requests with per-request latency, tokens, and cost.
 
-Data comes from the D1 `traces` table (written on every `/chat`). Live logs are
-also available with `npx wrangler tail`. Cost is estimated from the `PRICING`
-table in `src/index.ts` — update it to match current Anthropic pricing.
+Data comes from the D1 `traces` / `trace_sources` tables. Cost is estimated from
+the `PRICING` table in `src/index.ts` — update it to match current pricing.
+
+### 2. Langfuse tracing (optional, off-site)
+
+For deep per-request traces (waterfall spans, filtering) like santifer's setup,
+set two secrets and traffic flows to Langfuse automatically:
+
+```bash
+npx wrangler secret put LANGFUSE_PUBLIC_KEY   # pk-lf-...
+npx wrangler secret put LANGFUSE_SECRET_KEY   # sk-lf-...
+```
+
+Each request sends a trace with child generations (decision, rerank, generation)
+and a retrieval span (hit counts, similarity). Host defaults to
+`https://cloud.langfuse.com` (override with `LANGFUSE_HOST`). Leave the keys
+unset to disable — the code no-ops. Live logs are also available via
+`npx wrangler tail`.
 
 ## Local development
 
