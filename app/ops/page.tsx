@@ -3,6 +3,14 @@
 import { useEffect, useState } from 'react'
 
 const API_URL = process.env.NEXT_PUBLIC_CHAT_API_URL
+// Deep links to the external observability tools the Worker reports into.
+// Langfuse: your project's traces dashboard. Cloudflare: the Worker's
+// observability/analytics view. Both fall back to the vendor's top-level
+// console if the specific project URL isn't configured for this build.
+const LANGFUSE_URL = process.env.NEXT_PUBLIC_LANGFUSE_URL || 'https://us.cloud.langfuse.com'
+const CLOUDFLARE_URL =
+  process.env.NEXT_PUBLIC_CLOUDFLARE_DASH_URL ||
+  'https://dash.cloudflare.com/?to=/:account/workers/services/view/ashim-chatbot/production/observability'
 
 interface Totals {
   messages: number
@@ -44,7 +52,7 @@ interface Stats {
   recent: Trace[]
 }
 
-type Tab = 'overview' | 'costs' | 'rag' | 'traces'
+type Tab = 'overview' | 'costs' | 'rag' | 'traces' | 'observability'
 const usd = (n: number) => `$${(n ?? 0).toFixed(4)}`
 
 export default function OpsPage() {
@@ -120,7 +128,7 @@ export default function OpsPage() {
       {stats && t && (
         <>
           <div className="mt-8 flex gap-1 border-b border-gray-200 dark:border-gray-700">
-            {(['overview', 'costs', 'rag', 'traces'] as const).map((name) => (
+            {(['overview', 'costs', 'rag', 'traces', 'observability'] as const).map((name) => (
               <button
                 key={name}
                 onClick={() => setTab(name)}
@@ -148,6 +156,7 @@ export default function OpsPage() {
 
           {tab === 'costs' && <CostsTab costs={stats.costs} />}
           {tab === 'rag' && <RagTab rag={stats.rag} />}
+          {tab === 'observability' && <ObservabilityTab />}
 
           {tab === 'traces' && (
             <div className="mt-6 overflow-x-auto">
@@ -192,6 +201,48 @@ export default function OpsPage() {
           )}
         </>
       )}
+    </div>
+  )
+}
+
+function ObservabilityTab() {
+  const tools = [
+    {
+      name: 'Langfuse',
+      desc: 'Full request traces with per-component generations (decision, rerank, generation), token usage, cost, and retrieval spans.',
+      href: LANGFUSE_URL,
+      cta: 'Open Langfuse',
+    },
+    {
+      name: 'Cloudflare',
+      desc: 'Worker observability: invocations, CPU time, errors, and live logs for the ashim-chatbot Worker.',
+      href: CLOUDFLARE_URL,
+      cta: 'Open Cloudflare',
+    },
+  ]
+  return (
+    <div className="mt-6 space-y-4">
+      <p className="text-sm text-gray-500 dark:text-gray-400">
+        The dashboard above is a lightweight view over D1. For deep traces and infrastructure
+        metrics, jump into the tools the Worker reports into:
+      </p>
+      <div className="grid gap-4 sm:grid-cols-2">
+        {tools.map((tool) => (
+          <a
+            key={tool.name}
+            href={tool.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group flex flex-col rounded-xl border border-gray-200 p-5 transition-colors hover:border-[#047857] dark:border-gray-700 dark:hover:border-[#34D399]"
+          >
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{tool.name}</h3>
+            <p className="mt-1 flex-1 text-sm text-gray-500 dark:text-gray-400">{tool.desc}</p>
+            <span className="mt-4 text-sm font-medium text-[#047857] group-hover:underline dark:text-[#34D399]">
+              {tool.cta} →
+            </span>
+          </a>
+        ))}
+      </div>
     </div>
   )
 }
