@@ -733,11 +733,27 @@ async function sendToLangfuse(env: Env, traceId: string, ts: number, t: TraceInp
     batch.push(gen('generation', t.model, t.genUsage))
   }
 
-  await fetch(`${host}/api/public/ingestion`, {
+  const res = await fetch(`${host}/api/public/ingestion`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Basic ${auth}` },
     body: JSON.stringify({ batch }),
   })
+  // Langfuse returns 207 on success; anything else (401 auth/region, 400 payload,
+  // 429 rate limit) plus per-event errors in the body must be surfaced, since
+  // fetch only rejects on a network failure — a rejected batch looks fine otherwise.
+  const text = await res.text()
+  if (!res.ok) {
+    console.error(`[langfuse] host=${host} status=${res.status} body=${text.slice(0, 500)}`)
+  } else {
+    let errCount = 0
+    try {
+      errCount = (JSON.parse(text).errors || []).length
+    } catch {
+      /* non-JSON body — leave errCount at 0 */
+    }
+    console.log(`[langfuse] host=${host} status=${res.status} events=${batch.length} errors=${errCount}`)
+    if (errCount) console.error(`[langfuse] per-event errors: ${text.slice(0, 500)}`)
+  }
 }
 
 async function handleOpsStats(request: Request, env: Env): Promise<Response> {
