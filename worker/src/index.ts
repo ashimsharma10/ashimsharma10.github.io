@@ -82,12 +82,29 @@ function rateLimited(ip: string): boolean {
   return arr.length > RATE_LIMIT.max
 }
 
+// ALLOWED_ORIGIN is a comma-separated allowlist (e.g.
+// "https://ashimsharma10.github.io,http://localhost:3000"). Resolve the concrete
+// origin to echo back for a given request: if the request Origin is on the list
+// we reflect it, otherwise we fall back to the first configured origin. "*"
+// disables the allowlist and permits any origin.
+function resolveOrigin(env: Env, requestOrigin: string | null): string {
+  const raw = (env.ALLOWED_ORIGIN || '*').trim()
+  if (raw === '*') return '*'
+  const allowed = raw
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean)
+  if (requestOrigin && allowed.includes(requestOrigin)) return requestOrigin
+  return allowed[0] || '*'
+}
+
 function corsHeaders(env: Env): Record<string, string> {
   return {
     'Access-Control-Allow-Origin': env.ALLOWED_ORIGIN || '*',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Max-Age': '86400',
+    Vary: 'Origin',
   }
 }
 function json(data: unknown, status: number, env: Env): Response {
@@ -115,8 +132,15 @@ async function anthropic(env: Env, body: Record<string, unknown>): Promise<Respo
 }
 
 export default {
-  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+  async fetch(request: Request, baseEnv: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url)
+    // Resolve the concrete CORS origin for this request once, then thread a
+    // per-request copy of env so every downstream corsHeaders/json call reflects
+    // the right Access-Control-Allow-Origin without extra plumbing.
+    const env: Env = {
+      ...baseEnv,
+      ALLOWED_ORIGIN: resolveOrigin(baseEnv, request.headers.get('Origin')),
+    }
     if (request.method === 'OPTIONS') {
       return new Response(null, { status: 204, headers: corsHeaders(env) })
     }
