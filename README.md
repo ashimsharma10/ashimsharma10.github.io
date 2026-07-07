@@ -14,15 +14,7 @@ Built with Next.js, Tailwind CSS, and Contentlayer. Live at [ashimsharma10.githu
 
 Agentic hybrid RAG, fully on Cloudflare.
 
-<img src="public/static/images/readme/chatbot-pipeline.svg" width="560" alt="question → Claude decides to search or answer directly → (if search) Vectorize + D1 FTS5 in parallel → RRF fuse and Haiku rerank → grounded answer, streamed" />
-
-| Layer | Tech |
-|---|---|
-| Embeddings | `bge-base-en-v1.5` (768-dim, Workers AI) |
-| Vector DB | Cloudflare Vectorize (cosine) |
-| Keyword search | D1 (SQLite) + FTS5/BM25 |
-| Generation / rerank | Claude Haiku / Sonnet |
-| Tracing | D1 + optional Langfuse |
+<img src="public/static/images/readme/chatbot-pipeline.svg" width="800" alt="question → Claude decides to search or answer directly → (if search) Vectorize + D1 FTS5 in parallel → RRF fuse and Haiku rerank → grounded answer, streamed. Stack: bge-base-en-v1.5 embeddings, Vectorize, D1 + FTS5, Claude Haiku/Sonnet, D1 + Langfuse tracing." />
 
 Knowledge base = bio, projects, and blog posts, chunked and embedded via `npm run ingest`. Setup in [worker/README.md](worker/README.md), live metrics at `/ops`.
 
