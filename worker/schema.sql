@@ -27,10 +27,13 @@ CREATE TRIGGER IF NOT EXISTS chunks_au AFTER UPDATE ON chunks BEGIN
 END;
 
 -- One row per /chat request for the /ops dashboard.
+-- NOTE: if upgrading an existing database that predates the `answer` column,
+-- run:  ALTER TABLE traces ADD COLUMN answer TEXT;
 CREATE TABLE IF NOT EXISTS traces (
   id              TEXT PRIMARY KEY,
   ts              INTEGER,
   question        TEXT,
+  answer          TEXT,
   used_search     INTEGER,
   candidates      INTEGER,
   used            INTEGER,
