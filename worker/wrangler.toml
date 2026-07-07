@@ -21,7 +21,7 @@ index_name = "ashim-knowledge"
 [[d1_databases]]
 binding = "DB"
 database_name = "ashim-chatbot"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "6f13f858-3534-4ee1-b40f-e999024590a2"
 
 # Public vars (non-secret). Override per-environment as needed.
 [vars]

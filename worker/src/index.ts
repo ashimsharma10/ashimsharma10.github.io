@@ -352,35 +352,39 @@ async function handleChat(request: Request, env: Env, ctx: ExecutionContext): Pr
   }
   decisionUsage.input += dData.usage?.input_tokens ?? 0
   decisionUsage.output += dData.usage?.output_tokens ?? 0
-  const toolUse = dData.content.find((c) => c.type === 'tool_use')
+  // Claude may emit several parallel tool_use blocks — every one needs a tool_result.
+  const toolUses = dData.content.filter((c) => c.type === 'tool_use')
 
   // --- No search: the decision call already answered. Attribute it to generation. ---
-  if (dData.stop_reason !== 'tool_use' || !toolUse) {
+  if (dData.stop_reason !== 'tool_use' || toolUses.length === 0) {
     const answer =
       dData.content
         .filter((c) => c.type === 'text')
         .map((c) => c.text)
         .join('') || 'Happy to help! Ask me about Ashim, his projects, or his writing.'
-    logTrace(env, ctx, {
-      question: lastUser.content,
-      answer,
-      usedSearch: false,
-      model,
-      rerankModel,
-      decisionUsage: zero(),
-      rerankUsage,
-      genUsage: decisionUsage, // single call did the answering
-      embedCalls,
-      retrieveMs: 0,
-      totalMs: Date.now() - t0,
-      rag: { vectorHits: 0, keywordHits: 0, fused: 0, used: 0, overlap: 0, avgScore: 0 },
-      sources: [],
-    })
+    ctx.waitUntil(
+      logTrace(env, {
+        question: lastUser.content,
+        answer,
+        usedSearch: false,
+        model,
+        rerankModel,
+        decisionUsage: zero(),
+        rerankUsage,
+        genUsage: decisionUsage, // single call did the answering
+        embedCalls,
+        retrieveMs: 0,
+        totalMs: Date.now() - t0,
+        rag: { vectorHits: 0, keywordHits: 0, fused: 0, used: 0, overlap: 0, avgScore: 0 },
+        sources: [],
+      })
+    )
     return sseFromText(answer, [], env)
   }
 
   // --- Search path: hybrid retrieve -> rerank -> grounded streaming answer. ---
-  const query = toolUse.input?.query || lastUser.content
+  const queries = toolUses.map((t) => t.input?.query).filter((q): q is string => !!q)
+  const query = [...new Set(queries)].join(' ') || lastUser.content
   const tR = Date.now()
   const [vec, kw] = await Promise.all([vectorSearch(env, query), keywordSearch(env, query)])
   embedCalls += 1
@@ -410,9 +414,11 @@ async function handleChat(request: Request, env: Env, ctx: ExecutionContext): Pr
       { role: 'assistant', content: dData.content },
       {
         role: 'user',
-        content: [
-          { type: 'tool_result', tool_use_id: toolUse.id, content: context || 'No results found.' },
-        ],
+        content: toolUses.map((t) => ({
+          type: 'tool_result',
+          tool_use_id: t.id,
+          content: context || 'No results found.',
+        })),
       },
     ],
   })
@@ -421,10 +427,10 @@ async function handleChat(request: Request, env: Env, ctx: ExecutionContext): Pr
     return json({ error: 'Upstream model error', detail: detail.slice(0, 500) }, 502, env)
   }
 
-  const stream = relaySSE(finalRes.body, sources, (streamUsage, answer) => {
+  return sseResponse(env, ctx, finalRes.body, sources, async (streamUsage, answer) => {
     genUsage.input += streamUsage.input
     genUsage.output += streamUsage.output
-    logTrace(env, ctx, {
+    await logTrace(env, {
       question: lastUser.content,
       answer,
       usedSearch: true,
@@ -446,13 +452,6 @@ async function handleChat(request: Request, env: Env, ctx: ExecutionContext): Pr
       },
       sources,
     })
-  })
-  return new Response(stream, {
-    headers: {
-      'Content-Type': 'text/event-stream; charset=utf-8',
-      'Cache-Control': 'no-cache',
-      ...corsHeaders(env),
-    },
   })
 }
 
@@ -489,58 +488,80 @@ function sseFromText(text: string, sources: { title: string; url: string }[], en
   })
 }
 
-/** Relay Anthropic SSE -> our SSE, capturing token usage + the full answer. */
-function relaySSE(
+/**
+ * Relay Anthropic SSE -> our SSE. The whole pump (stream + trace write) runs
+ * inside ctx.waitUntil, so the Worker stays alive through streaming AND the
+ * post-stream logging — the reliable Cloudflare pattern (awaiting a subrequest
+ * inside a ReadableStream `pull` hangs the runtime).
+ */
+function sseResponse(
+  env: Env,
+  ctx: ExecutionContext,
   upstream: ReadableStream<Uint8Array>,
   sources: { title: string; url: string }[],
-  onDone: (usage: Usage, answer: string) => void
-): ReadableStream<Uint8Array> {
+  finish: (usage: Usage, answer: string) => Promise<void>
+): Response {
+  const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>()
   const encoder = new TextEncoder()
   const decoder = new TextDecoder()
-  const reader = upstream.getReader()
-  let buffer = ''
-  let answer = ''
-  const usage = zero()
 
-  return new ReadableStream<Uint8Array>({
-    async pull(controller) {
-      const { done, value } = await reader.read()
-      if (done) {
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ sources })}\n\n`))
-        controller.enqueue(encoder.encode('data: [DONE]\n\n'))
-        controller.close()
-        try {
-          onDone(usage, answer)
-        } catch {
-          /* tracing must never break the response */
-        }
-        return
-      }
-      buffer += decoder.decode(value, { stream: true })
-      const lines = buffer.split('\n')
-      buffer = lines.pop() ?? ''
-      for (const line of lines) {
-        const trimmed = line.trim()
-        if (!trimmed.startsWith('data:')) continue
-        const payload = trimmed.slice(5).trim()
-        if (!payload || payload === '[DONE]') continue
-        try {
-          const evt = JSON.parse(payload)
-          if (evt.type === 'message_start') usage.input += evt.message?.usage?.input_tokens ?? 0
-          else if (evt.type === 'message_delta') usage.output += evt.usage?.output_tokens ?? 0
-          else if (evt.type === 'content_block_delta' && evt.delta?.type === 'text_delta') {
-            answer += evt.delta.text
-            controller.enqueue(
-              encoder.encode(`data: ${JSON.stringify({ text: evt.delta.text })}\n\n`)
-            )
+  ctx.waitUntil(
+    (async () => {
+      const writer = writable.getWriter()
+      const reader = upstream.getReader()
+      let buffer = ''
+      let answer = ''
+      const usage = zero()
+      try {
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          buffer += decoder.decode(value, { stream: true })
+          const lines = buffer.split('\n')
+          buffer = lines.pop() ?? ''
+          for (const line of lines) {
+            const trimmed = line.trim()
+            if (!trimmed.startsWith('data:')) continue
+            const payload = trimmed.slice(5).trim()
+            if (!payload || payload === '[DONE]') continue
+            try {
+              const evt = JSON.parse(payload)
+              if (evt.type === 'message_start') usage.input += evt.message?.usage?.input_tokens ?? 0
+              else if (evt.type === 'message_delta') usage.output += evt.usage?.output_tokens ?? 0
+              else if (evt.type === 'content_block_delta' && evt.delta?.type === 'text_delta') {
+                answer += evt.delta.text
+                await writer.write(
+                  encoder.encode(`data: ${JSON.stringify({ text: evt.delta.text })}\n\n`)
+                )
+              }
+            } catch {
+              /* ignore keep-alives */
+            }
           }
-        } catch {
-          /* ignore keep-alives */
         }
+        await writer.write(encoder.encode(`data: ${JSON.stringify({ sources })}\n\n`))
+        await writer.write(encoder.encode('data: [DONE]\n\n'))
+      } catch {
+        /* upstream read error — end the stream gracefully */
       }
-    },
-    cancel() {
-      reader.cancel()
+      try {
+        await writer.close()
+      } catch {
+        /* already closed */
+      }
+      try {
+        await finish(usage, answer)
+      } catch {
+        /* tracing must never break the response */
+      }
+    })()
+  )
+
+  return new Response(readable, {
+    headers: {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache',
+      ...corsHeaders(env),
     },
   })
 }
@@ -572,7 +593,7 @@ interface TraceInput {
   sources: { title: string; url: string }[]
 }
 
-function logTrace(env: Env, ctx: ExecutionContext, t: TraceInput): void {
+async function logTrace(env: Env, t: TraceInput): Promise<void> {
   const decisionCost = costUsd(t.model, t.decisionUsage.input, t.decisionUsage.output)
   const rerankCost = costUsd(t.rerankModel, t.rerankUsage.input, t.rerankUsage.output)
   const genCost = costUsd(t.model, t.genUsage.input, t.genUsage.output)
@@ -625,8 +646,12 @@ function logTrace(env: Env, ctx: ExecutionContext, t: TraceInput): void {
   )
   for (const s of t.sources) statements.push(srcStmt.bind(id, s.url, s.title))
 
-  ctx.waitUntil(env.DB.batch(statements).catch(() => {}))
-  ctx.waitUntil(sendToLangfuse(env, id, ts, t).catch(() => {}))
+  // Awaited by the caller (inside the live stream / via waitUntil) so the write
+  // actually completes before the Worker is torn down.
+  await Promise.all([
+    env.DB.batch(statements).catch(() => {}),
+    sendToLangfuse(env, id, ts, t).catch(() => {}),
+  ])
 }
 
 /** Send a trace with per-component generations to Langfuse (no-op without keys). */
