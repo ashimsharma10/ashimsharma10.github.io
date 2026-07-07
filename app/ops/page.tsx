@@ -318,13 +318,7 @@ function LineChart({
   )
 }
 
-function ObservabilityTab({
-  totals,
-  daily,
-}: {
-  totals: Totals
-  daily: Stats['costs']['daily']
-}) {
+function ObservabilityTab({ totals, daily }: { totals: Totals; daily: Stats['costs']['daily'] }) {
   const labels = daily.map((d) => d.day.slice(5))
   const line = 'text-[#047857] dark:text-[#34D399]'
   const tools = [
