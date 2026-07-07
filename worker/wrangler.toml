@@ -26,10 +26,12 @@ database_id = "6f13f858-3534-4ee1-b40f-e999024590a2"
 # Public vars (non-secret). Override per-environment as needed.
 [vars]
 # Origins allowed to call this Worker (CORS). Comma-separated allowlist; the
-# request's Origin is reflected when it matches. First entry is the fallback.
-# localhost:3000 is kept so the site can be tested locally against this Worker.
-# Use "*" only for throwaway local testing.
-ALLOWED_ORIGIN = "https://ashimsharma10.github.io,http://localhost:3000"
+# request's Origin is reflected when it matches, else the first entry is the
+# fallback. This is the PRODUCTION default — keep it to the live site origin only.
+# For local development, override it (e.g. add http://localhost:3000) via
+# worker/.dev.vars — see .dev.vars.example — which `wrangler dev` loads and which
+# is gitignored, so the dev origin never ships to production.
+ALLOWED_ORIGIN = "https://ashimsharma10.github.io"
 # Generation model. Sonnet gives noticeably better answer quality; switch to
 # "claude-haiku-4-5-20251001" if you want lower cost/latency.
 CHAT_MODEL = "claude-sonnet-5"

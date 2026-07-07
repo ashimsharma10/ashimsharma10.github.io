@@ -1,0 +1,6 @@
+# Local development overrides for `wrangler dev`. Copy to `.dev.vars` (gitignored)
+# and fill in as needed. These override the [vars] in wrangler.toml locally only.
+
+# Allow the local Next.js site (http://localhost:3000) to call the Worker during
+# local development without shipping that origin in the production allowlist.
+ALLOWED_ORIGIN = "https://ashimsharma10.github.io,http://localhost:3000"

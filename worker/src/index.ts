@@ -99,8 +99,13 @@ function resolveOrigin(env: Env, requestOrigin: string | null): string {
 }
 
 function corsHeaders(env: Env): Record<string, string> {
+  // env.ALLOWED_ORIGIN is normally the single origin already resolved per-request
+  // in fetch(). Guard defensively: if a caller ever passes the raw config (a
+  // comma-separated allowlist), take the first entry rather than emit an invalid
+  // multi-value Access-Control-Allow-Origin header.
+  const origin = (env.ALLOWED_ORIGIN || '*').split(',')[0].trim() || '*'
   return {
-    'Access-Control-Allow-Origin': env.ALLOWED_ORIGIN || '*',
+    'Access-Control-Allow-Origin': origin,
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Max-Age': '86400',
@@ -427,11 +432,13 @@ async function handleChat(request: Request, env: Env, ctx: ExecutionContext): Pr
   const context = chunks.map((c, i) => `[${i + 1}] (${c.title})\n${c.text}`).join('\n\n---\n\n')
   const sources = dedupeSources(chunks)
 
+  // No `tools` here on purpose: the model already has its search results, so it
+  // must answer with text. Re-offering the tool would let it emit another
+  // tool_use mid-stream, which the SSE relay can't render (empty answer).
   const finalRes = await anthropic(env, {
     model,
     max_tokens: MAX_TOKENS,
     system: PERSONA,
-    tools: [SEARCH_TOOL],
     stream: true,
     messages: [
       ...messages,
@@ -738,42 +745,44 @@ async function handleOpsStats(request: Request, env: Env): Promise<Response> {
     return json({ error: 'Unauthorized' }, 401, env)
   }
   try {
-    const totals = await env.DB.prepare(
-      `SELECT COUNT(*) AS messages, COALESCE(SUM(input_tokens),0) AS input_tokens,
-              COALESCE(SUM(output_tokens),0) AS output_tokens, COALESCE(SUM(cost_usd),0) AS cost_usd,
-              COALESCE(AVG(total_ms),0) AS avg_latency_ms, COALESCE(AVG(used_search),0) AS search_rate
-       FROM traces`
-    ).first()
-
-    // Costs tab
-    const byComponent = await env.DB.prepare(
-      `SELECT COALESCE(SUM(decision_cost),0) AS decision, COALESCE(SUM(rerank_cost),0) AS rerank,
-              COALESCE(SUM(gen_cost),0) AS generation FROM traces`
-    ).first()
-    const byModel = await env.DB.prepare(
-      `SELECT model, COALESCE(SUM(cost_usd),0) AS cost, COUNT(*) AS messages
-       FROM traces GROUP BY model ORDER BY cost DESC`
-    ).all()
-    const daily = await env.DB.prepare(
-      `SELECT date(ts/1000,'unixepoch') AS day, COALESCE(SUM(cost_usd),0) AS cost, COUNT(*) AS messages
-       FROM traces GROUP BY day ORDER BY day DESC LIMIT 14`
-    ).all()
-
-    // RAG tab
-    const ragAverages = await env.DB.prepare(
-      `SELECT COALESCE(AVG(vector_hits),0) AS vector_hits, COALESCE(AVG(keyword_hits),0) AS keyword_hits,
-              COALESCE(AVG(fused_candidates),0) AS fused, COALESCE(AVG(used),0) AS used,
-              COALESCE(AVG(overlap),0) AS overlap, COALESCE(AVG(avg_score),0) AS avg_score
-       FROM traces WHERE used_search = 1`
-    ).first()
-    const topSources = await env.DB.prepare(
-      `SELECT title, url, COUNT(*) AS uses FROM trace_sources GROUP BY url ORDER BY uses DESC LIMIT 10`
-    ).all()
-
-    const recent = await env.DB.prepare(
-      `SELECT id, ts, question, used_search, total_ms, input_tokens, output_tokens, cost_usd, model
-       FROM traces ORDER BY ts DESC LIMIT 50`
-    ).all()
+    // All seven aggregations are independent reads over the same tables, so run
+    // them in one round-trip instead of seven sequential awaits.
+    const [totals, byComponent, byModel, daily, ragAverages, topSources, recent] =
+      await Promise.all([
+        env.DB.prepare(
+          `SELECT COUNT(*) AS messages, COALESCE(SUM(input_tokens),0) AS input_tokens,
+                  COALESCE(SUM(output_tokens),0) AS output_tokens, COALESCE(SUM(cost_usd),0) AS cost_usd,
+                  COALESCE(AVG(total_ms),0) AS avg_latency_ms, COALESCE(AVG(used_search),0) AS search_rate
+           FROM traces`
+        ).first(),
+        // Costs tab
+        env.DB.prepare(
+          `SELECT COALESCE(SUM(decision_cost),0) AS decision, COALESCE(SUM(rerank_cost),0) AS rerank,
+                  COALESCE(SUM(gen_cost),0) AS generation FROM traces`
+        ).first(),
+        env.DB.prepare(
+          `SELECT model, COALESCE(SUM(cost_usd),0) AS cost, COUNT(*) AS messages
+           FROM traces GROUP BY model ORDER BY cost DESC`
+        ).all(),
+        env.DB.prepare(
+          `SELECT date(ts/1000,'unixepoch') AS day, COALESCE(SUM(cost_usd),0) AS cost, COUNT(*) AS messages
+           FROM traces GROUP BY day ORDER BY day DESC LIMIT 14`
+        ).all(),
+        // RAG tab
+        env.DB.prepare(
+          `SELECT COALESCE(AVG(vector_hits),0) AS vector_hits, COALESCE(AVG(keyword_hits),0) AS keyword_hits,
+                  COALESCE(AVG(fused_candidates),0) AS fused, COALESCE(AVG(used),0) AS used,
+                  COALESCE(AVG(overlap),0) AS overlap, COALESCE(AVG(avg_score),0) AS avg_score
+           FROM traces WHERE used_search = 1`
+        ).first(),
+        env.DB.prepare(
+          `SELECT title, url, COUNT(*) AS uses FROM trace_sources GROUP BY url ORDER BY uses DESC LIMIT 10`
+        ).all(),
+        env.DB.prepare(
+          `SELECT id, ts, question, used_search, total_ms, input_tokens, output_tokens, cost_usd, model
+           FROM traces ORDER BY ts DESC LIMIT 50`
+        ).all(),
+      ])
 
     return json(
       {
