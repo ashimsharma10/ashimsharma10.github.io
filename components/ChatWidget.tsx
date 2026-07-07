@@ -169,36 +169,23 @@ export default function ChatWidget() {
 
   return (
     <>
-      {/* Launcher — avatar when closed, X when open */}
+      {/* Launcher — avatar; closing is handled by the X in the panel header */}
       <button
         aria-label={open ? 'Close chat' : 'Ask about Ashim'}
         onClick={() => setOpen((o) => !o)}
         className="fixed right-5 bottom-5 z-50 h-14 w-14 rounded-full shadow-lg transition-transform hover:scale-105 hover:shadow-xl"
       >
-        {open ? (
-          <span className="flex h-full w-full items-center justify-center rounded-full bg-[#047857] text-white dark:bg-[#34D399] dark:text-gray-900">
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </span>
-        ) : (
-          <span className="relative block h-full w-full">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={AVATAR_SRC}
-              alt="Chat with Ashim"
-              width={56}
-              height={56}
-              className="h-full w-full rounded-full object-cover ring-2 ring-[#047857] dark:ring-[#34D399]"
-            />
-            <span className="absolute right-0.5 bottom-0.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-emerald-500 dark:border-gray-900" />
-          </span>
-        )}
+        <span className="relative block h-full w-full">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={AVATAR_SRC}
+            alt="Chat with Ashim"
+            width={56}
+            height={56}
+            className="h-full w-full rounded-full object-cover ring-2 ring-[#047857] dark:ring-[#34D399]"
+          />
+          <span className="absolute right-0.5 bottom-0.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-emerald-500 dark:border-gray-900" />
+        </span>
       </button>
 
       {/* Panel */}
@@ -221,6 +208,20 @@ export default function ChatWidget() {
               <p className="font-semibold text-gray-900 dark:text-gray-100">Ashim Sharma</p>
               <p className="text-xs text-gray-500 dark:text-gray-400">Ask me about my experience</p>
             </div>
+            <button
+              aria-label="Close chat"
+              onClick={() => setOpen(false)}
+              className="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
           </div>
 
           {/* Messages */}
