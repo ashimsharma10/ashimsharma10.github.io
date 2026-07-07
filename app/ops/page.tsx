@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 
 const API_URL = process.env.NEXT_PUBLIC_CHAT_API_URL
 // Deep links to the external observability tools the Worker reports into.
@@ -24,6 +24,7 @@ interface Trace {
   id: string
   ts: number
   question: string
+  answer: string | null
   used_search: number
   total_ms: number
   input_tokens: number
@@ -36,7 +37,7 @@ interface Stats {
   costs: {
     byComponent: { decision: number; rerank: number; generation: number }
     byModel: { model: string; cost: number; messages: number }[]
-    daily: { day: string; cost: number; messages: number }[]
+    daily: { day: string; cost: number; messages: number; avg_ms: number; searches: number }[]
   }
   rag: {
     averages: {
@@ -156,56 +157,176 @@ export default function OpsPage() {
 
           {tab === 'costs' && <CostsTab costs={stats.costs} />}
           {tab === 'rag' && <RagTab rag={stats.rag} />}
-          {tab === 'observability' && <ObservabilityTab />}
-
-          {tab === 'traces' && (
-            <div className="mt-6 overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="text-xs text-gray-500 dark:text-gray-400">
-                  <tr className="border-b border-gray-200 dark:border-gray-700">
-                    <th className="py-2 pr-3">Time</th>
-                    <th className="py-2 pr-3">Question</th>
-                    <th className="py-2 pr-3">Search</th>
-                    <th className="py-2 pr-3">Latency</th>
-                    <th className="py-2 pr-3">Tokens</th>
-                    <th className="py-2 pr-3">Cost</th>
-                  </tr>
-                </thead>
-                <tbody className="text-gray-800 dark:text-gray-200">
-                  {stats.recent.map((r) => (
-                    <tr key={r.id} className="border-b border-gray-100 dark:border-gray-800">
-                      <td className="py-2 pr-3 whitespace-nowrap text-gray-500 dark:text-gray-400">
-                        {new Date(r.ts).toLocaleString()}
-                      </td>
-                      <td className="max-w-xs truncate py-2 pr-3" title={r.question}>
-                        {r.question}
-                      </td>
-                      <td className="py-2 pr-3">{r.used_search ? '✓' : '—'}</td>
-                      <td className="py-2 pr-3 whitespace-nowrap">{r.total_ms} ms</td>
-                      <td className="py-2 pr-3 whitespace-nowrap">
-                        {(r.input_tokens + r.output_tokens).toLocaleString()}
-                      </td>
-                      <td className="py-2 pr-3 whitespace-nowrap">${r.cost_usd.toFixed(5)}</td>
-                    </tr>
-                  ))}
-                  {stats.recent.length === 0 && (
-                    <tr>
-                      <td colSpan={6} className="py-6 text-center text-gray-500 dark:text-gray-400">
-                        No traces yet.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
+          {tab === 'observability' && <ObservabilityTab totals={t} daily={stats.costs.daily} />}
+          {tab === 'traces' && <TracesTab recent={stats.recent} />}
         </>
       )}
     </div>
   )
 }
 
-function ObservabilityTab() {
+function TracesTab({ recent }: { recent: Trace[] }) {
+  const [open, setOpen] = useState<string | null>(null)
+  return (
+    <div className="mt-6 overflow-x-auto">
+      <table className="w-full text-left text-sm">
+        <thead className="text-xs text-gray-500 dark:text-gray-400">
+          <tr className="border-b border-gray-200 dark:border-gray-700">
+            <th className="py-2 pr-3">Time</th>
+            <th className="py-2 pr-3">Question</th>
+            <th className="py-2 pr-3">Search</th>
+            <th className="py-2 pr-3">Latency</th>
+            <th className="py-2 pr-3">Tokens</th>
+            <th className="py-2 pr-3">Cost</th>
+            <th className="py-2 pr-3">Model</th>
+          </tr>
+        </thead>
+        <tbody className="text-gray-800 dark:text-gray-200">
+          {recent.map((r) => {
+            const isOpen = open === r.id
+            return (
+              <Fragment key={r.id}>
+                <tr
+                  onClick={() => setOpen(isOpen ? null : r.id)}
+                  className="cursor-pointer border-b border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800/40"
+                >
+                  <td className="py-2 pr-3 whitespace-nowrap text-gray-500 dark:text-gray-400">
+                    <span className="mr-1 inline-block text-gray-400">{isOpen ? '▾' : '▸'}</span>
+                    {new Date(r.ts).toLocaleString()}
+                  </td>
+                  <td className="max-w-xs truncate py-2 pr-3" title={r.question}>
+                    {r.question}
+                  </td>
+                  <td className="py-2 pr-3">{r.used_search ? '✓' : '—'}</td>
+                  <td className="py-2 pr-3 whitespace-nowrap">{r.total_ms} ms</td>
+                  <td className="py-2 pr-3 whitespace-nowrap">
+                    {(r.input_tokens + r.output_tokens).toLocaleString()}
+                  </td>
+                  <td className="py-2 pr-3 whitespace-nowrap">${r.cost_usd.toFixed(5)}</td>
+                  <td className="py-2 pr-3 font-mono text-xs whitespace-nowrap">{r.model}</td>
+                </tr>
+                {isOpen && (
+                  <tr className="border-b border-gray-100 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/40">
+                    <td colSpan={7} className="px-3 py-4">
+                      <div className="space-y-3">
+                        <div>
+                          <p className="mb-1 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
+                            Question
+                          </p>
+                          <p className="text-sm whitespace-pre-wrap text-gray-800 dark:text-gray-200">
+                            {r.question}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="mb-1 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
+                            Generated answer
+                          </p>
+                          <p className="text-sm whitespace-pre-wrap text-gray-800 dark:text-gray-200">
+                            {r.answer || (
+                              <span className="text-gray-400 italic dark:text-gray-500">
+                                Not recorded for this trace.
+                              </span>
+                            )}
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
+                          <span>
+                            Model: <span className="font-mono">{r.model}</span>
+                          </span>
+                          <span>Search: {r.used_search ? 'yes' : 'no'}</span>
+                          <span>Latency: {r.total_ms} ms</span>
+                          <span>
+                            Tokens: {r.input_tokens.toLocaleString()} in /{' '}
+                            {r.output_tokens.toLocaleString()} out
+                          </span>
+                          <span>Cost: ${r.cost_usd.toFixed(5)}</span>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
+            )
+          })}
+          {recent.length === 0 && (
+            <tr>
+              <td colSpan={7} className="py-6 text-center text-gray-500 dark:text-gray-400">
+                No traces yet.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+/**
+ * Minimal responsive SVG line chart. The viewBox is stretched to the container
+ * width (preserveAspectRatio="none"); strokes stay crisp via non-scaling-stroke,
+ * and each series colours itself through `currentColor` so dark mode just works.
+ */
+function LineChart({
+  labels,
+  series,
+}: {
+  labels: string[]
+  series: { values: number[]; className: string; dashed?: boolean; fill?: boolean }[]
+}) {
+  if (labels.length === 0) {
+    return <p className="text-sm text-gray-500 dark:text-gray-400">No data yet.</p>
+  }
+  const W = 600
+  const H = 128
+  const padTop = 10
+  const padBottom = 6
+  const n = labels.length
+  const max = Math.max(...series.flatMap((s) => s.values), 1)
+  const cx = (i: number) => ((i + 0.5) / n) * W
+  const cy = (v: number) => padTop + (1 - v / max) * (H - padTop - padBottom)
+  const linePath = (vals: number[]) =>
+    vals.map((v, i) => `${i === 0 ? 'M' : 'L'} ${cx(i).toFixed(1)} ${cy(v).toFixed(1)}`).join(' ')
+  const areaPath = (vals: number[]) =>
+    `${linePath(vals)} L ${cx(n - 1).toFixed(1)} ${H - padBottom} L ${cx(0).toFixed(1)} ${H - padBottom} Z`
+  return (
+    <div>
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="h-32 w-full">
+        {series.map((s, si) => (
+          <g key={si} className={s.className}>
+            {s.fill && <path d={areaPath(s.values)} fill="currentColor" opacity={0.1} />}
+            <path
+              d={linePath(s.values)}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              strokeDasharray={s.dashed ? '5 4' : undefined}
+              strokeLinejoin="round"
+              strokeLinecap="round"
+              vectorEffect="non-scaling-stroke"
+            />
+          </g>
+        ))}
+      </svg>
+      <div className="mt-1 flex">
+        {labels.map((l, i) => (
+          <span key={i} className="flex-1 text-center text-[9px] text-gray-400">
+            {l}
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function ObservabilityTab({
+  totals,
+  daily,
+}: {
+  totals: Totals
+  daily: Stats['costs']['daily']
+}) {
+  const labels = daily.map((d) => d.day.slice(5))
+  const line = 'text-[#047857] dark:text-[#34D399]'
   const tools = [
     {
       name: 'Langfuse',
@@ -221,28 +342,68 @@ function ObservabilityTab() {
     },
   ]
   return (
-    <div className="mt-6 space-y-4">
-      <p className="text-sm text-gray-500 dark:text-gray-400">
-        The dashboard above is a lightweight view over D1. For deep traces and infrastructure
-        metrics, jump into the tools the Worker reports into:
-      </p>
-      <div className="grid gap-4 sm:grid-cols-2">
-        {tools.map((tool) => (
-          <a
-            key={tool.name}
-            href={tool.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group flex flex-col rounded-xl border border-gray-200 p-5 transition-colors hover:border-[#047857] dark:border-gray-700 dark:hover:border-[#34D399]"
-          >
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{tool.name}</h3>
-            <p className="mt-1 flex-1 text-sm text-gray-500 dark:text-gray-400">{tool.desc}</p>
-            <span className="mt-4 text-sm font-medium text-[#047857] group-hover:underline dark:text-[#34D399]">
-              {tool.cta} →
-            </span>
-          </a>
-        ))}
+    <div className="mt-6 space-y-8">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <Stat label="Total invocations" value={totals.messages.toLocaleString()} />
+        <Stat label="Avg latency" value={`${Math.round(totals.avg_latency_ms)} ms`} />
+        <Stat label="Search rate" value={`${Math.round(totals.search_rate * 100)}%`} />
+        <Stat label="Est. total cost" value={usd(totals.cost_usd)} />
       </div>
+
+      <section>
+        <h2 className="mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100">
+          Invocations (last 14 days)
+        </h2>
+        <LineChart
+          labels={labels}
+          series={[
+            { values: daily.map((d) => d.messages), className: line, fill: true },
+            { values: daily.map((d) => d.searches ?? 0), className: line, dashed: true },
+          ]}
+        />
+        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+          <span className="mr-1 inline-block h-0.5 w-4 bg-[#047857] align-middle dark:bg-[#34D399]" />
+          invocations
+          <span className="mr-1 ml-4 inline-block w-4 border-t-2 border-dashed border-[#047857] align-middle dark:border-[#34D399]" />
+          with search
+        </p>
+      </section>
+
+      <section>
+        <h2 className="mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100">
+          Avg latency (last 14 days)
+        </h2>
+        <LineChart
+          labels={labels}
+          series={[{ values: daily.map((d) => d.avg_ms ?? 0), className: line, fill: true }]}
+        />
+      </section>
+
+      <section className="space-y-4">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          For deep per-request traces and infrastructure metrics, jump into the tools the Worker
+          reports into:
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {tools.map((tool) => (
+            <a
+              key={tool.name}
+              href={tool.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group flex flex-col rounded-xl border border-gray-200 p-5 transition-colors hover:border-[#047857] dark:border-gray-700 dark:hover:border-[#34D399]"
+            >
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                {tool.name}
+              </h3>
+              <p className="mt-1 flex-1 text-sm text-gray-500 dark:text-gray-400">{tool.desc}</p>
+              <span className="mt-4 text-sm font-medium text-[#047857] group-hover:underline dark:text-[#34D399]">
+                {tool.cta} →
+              </span>
+            </a>
+          ))}
+        </div>
+      </section>
     </div>
   )
 }
@@ -314,7 +475,7 @@ function CostsTab({ costs }: { costs: Stats['costs'] }) {
           {costs.daily.map((d) => (
             <div
               key={d.day}
-              className="flex flex-1 flex-col items-center gap-1"
+              className="flex h-full flex-1 flex-col items-center justify-end gap-1"
               title={`${d.day}: ${usd(d.cost)}`}
             >
               <div

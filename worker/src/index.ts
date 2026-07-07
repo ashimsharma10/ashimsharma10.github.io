@@ -635,16 +635,17 @@ async function logTrace(env: Env, t: TraceInput): Promise<void> {
 
   const insertTrace = env.DB.prepare(
     `INSERT INTO traces (
-       id, ts, question, used_search, candidates, used, retrieve_ms, total_ms,
+       id, ts, question, answer, used_search, candidates, used, retrieve_ms, total_ms,
        input_tokens, output_tokens, cost_usd, model,
        decision_in, decision_out, rerank_in, rerank_out, gen_in, gen_out,
        decision_cost, rerank_cost, gen_cost, embed_calls,
        vector_hits, keyword_hits, fused_candidates, overlap, avg_score
-     ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+     ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
   ).bind(
     id,
     ts,
     t.question.slice(0, 500),
+    t.answer.slice(0, 4000),
     t.usedSearch ? 1 : 0,
     t.rag.fused,
     t.rag.used,
@@ -781,7 +782,8 @@ async function handleOpsStats(request: Request, env: Env): Promise<Response> {
            FROM traces GROUP BY model ORDER BY cost DESC`
         ).all(),
         env.DB.prepare(
-          `SELECT date(ts/1000,'unixepoch') AS day, COALESCE(SUM(cost_usd),0) AS cost, COUNT(*) AS messages
+          `SELECT date(ts/1000,'unixepoch') AS day, COALESCE(SUM(cost_usd),0) AS cost, COUNT(*) AS messages,
+                  COALESCE(AVG(total_ms),0) AS avg_ms, COALESCE(SUM(used_search),0) AS searches
            FROM traces GROUP BY day ORDER BY day DESC LIMIT 14`
         ).all(),
         // RAG tab
@@ -795,7 +797,7 @@ async function handleOpsStats(request: Request, env: Env): Promise<Response> {
           `SELECT title, url, COUNT(*) AS uses FROM trace_sources GROUP BY url ORDER BY uses DESC LIMIT 10`
         ).all(),
         env.DB.prepare(
-          `SELECT id, ts, question, used_search, total_ms, input_tokens, output_tokens, cost_usd, model
+          `SELECT id, ts, question, answer, used_search, total_ms, input_tokens, output_tokens, cost_usd, model
            FROM traces ORDER BY ts DESC LIMIT 50`
         ).all(),
       ])
