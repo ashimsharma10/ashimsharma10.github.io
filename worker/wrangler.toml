@@ -1,0 +1,52 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "ashim-chatbot"
+main = "src/index.ts"
+compatibility_date = "2024-11-01"
+
+# Workers AI — used to embed queries/chunks with @cf/baai/bge-base-en-v1.5
+[ai]
+binding = "AI"
+
+# Vectorize — native vector database holding the knowledge base
+# Create the index once with:
+#   npx wrangler vectorize create ashim-knowledge --dimensions=768 --metric=cosine
+[[vectorize]]
+binding = "VECTORIZE"
+index_name = "ashim-knowledge"
+
+# D1 — keyword (BM25/FTS5) search source of truth + observability traces.
+# Create it once, then apply schema.sql (see README), and paste the id here:
+#   npx wrangler d1 create ashim-chatbot
+#   npx wrangler d1 execute ashim-chatbot --file=./schema.sql --remote
+[[d1_databases]]
+binding = "DB"
+database_name = "ashim-chatbot"
+database_id = "6f13f858-3534-4ee1-b40f-e999024590a2"
+
+# Public vars (non-secret). Override per-environment as needed.
+[vars]
+# Origins allowed to call this Worker (CORS). Comma-separated allowlist; the
+# request's Origin is reflected when it matches, else the first entry is the
+# fallback. This is the PRODUCTION default — keep it to the live site origin only.
+# For local development, override it (e.g. add http://localhost:3000) via
+# worker/.dev.vars — see .dev.vars.example — which `wrangler dev` loads and which
+# is gitignored, so the dev origin never ships to production.
+ALLOWED_ORIGIN = "https://ashimsharma10.github.io"
+# Generation model. Sonnet gives noticeably better answer quality; switch to
+# "claude-haiku-4-5-20251001" if you want lower cost/latency.
+CHAT_MODEL = "claude-sonnet-5"
+# Reranker model — cheap Haiku is plenty for scoring retrieved chunks.
+RERANK_MODEL = "claude-haiku-4-5-20251001"
+# Set to "false" to skip the rerank step (pure semantic order).
+ENABLE_RERANK = "true"
+# Optional: Langfuse host (only used if the LANGFUSE_* secrets below are set).
+# US region: https://us.cloud.langfuse.com  ·  EU region: https://cloud.langfuse.com
+LANGFUSE_BASE_URL = "https://us.cloud.langfuse.com"
+
+# Secrets (DO NOT put values here). Set them with:
+#   npx wrangler secret put ANTHROPIC_API_KEY
+#   npx wrangler secret put INGEST_SECRET
+#   npx wrangler secret put OPS_TOKEN        # gates the /ops dashboard
+# Optional Langfuse tracing (set both to enable; leave unset to disable):
+#   npx wrangler secret put LANGFUSE_PUBLIC_KEY
+#   npx wrangler secret put LANGFUSE_SECRET_KEY
