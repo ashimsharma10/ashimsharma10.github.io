@@ -14,16 +14,7 @@ Built with Next.js, Tailwind CSS, and Contentlayer. Live at [ashimsharma10.githu
 
 Agentic hybrid RAG, fully on Cloudflare.
 
-```mermaid
-flowchart TD
-    Q[question] --> D{Claude decides:<br/>search or answer directly}
-    D -->|search| V[Vectorize<br/>semantic]
-    D -->|search| K[D1 FTS5<br/>keyword]
-    V --> F[RRF fuse → Haiku rerank<br/>top 6 chunks]
-    K --> F
-    F --> A[grounded answer<br/>streamed]
-    D -->|no search| A
-```
+<img src="public/static/images/readme/chatbot-pipeline.svg" width="560" alt="question → Claude decides to search or answer directly → (if search) Vectorize + D1 FTS5 in parallel → RRF fuse and Haiku rerank → grounded answer, streamed" />
 
 | Layer | Tech |
 |---|---|
