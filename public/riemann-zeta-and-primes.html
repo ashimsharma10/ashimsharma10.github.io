@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The Riemann Zeta Function &amp; the Riemann Hypothesis</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Source+Code+Pro:wght@400;600&display=swap');
 
@@ -48,13 +49,10 @@
   strong { color: #111; font-weight: 600; }
   em { color: #2e2d29; }
 
-  .math {
-    font-family: 'Source Code Pro', ui-monospace, monospace; font-size: 0.9em;
-    color: var(--c-gold-tx); background: var(--c-gold-bg);
-    padding: 0.05em 0.4em; border-radius: 4px; white-space: nowrap;
-  }
-  p.eq { text-align: center; margin: 1.3em 0; }
-  p.eq .math { font-size: 1.02em; padding: 0.35em 0.9em; white-space: normal; line-height: 1.9; }
+  .katex { font-size: 1.04em; }
+  p.eq { text-align: center; margin: 1.5em 0; overflow-x: auto; padding: 0.2em 0; }
+  p.eq .katex { font-size: 1.22em; }
+  .katex .mathdefault, .katex .mathnormal { color: inherit; }
 
   blockquote {
     border-left: 4px solid var(--c-purple); background: var(--bg-card);
@@ -67,7 +65,6 @@
   .callout.insight { background: var(--c-orange-bg); color: var(--c-orange-tx); }
   .callout.note    { background: var(--c-blue-bg);   color: var(--c-blue-tx); }
   .callout b { font-weight: 700; }
-  .callout .math { background: rgba(0,0,0,0.05); }
 
   /* ζ-value table */
   table.zt { border-collapse: collapse; width: 100%; margin: 1.2em 0; font-size: 0.92em; }
@@ -148,7 +145,7 @@
 
 <p class="tagline"><em>What the zeta function actually is, why its zeros secretly govern the prime numbers, and what the Riemann Hypothesis really claims — built from scratch, with live graphs you can zoom, drag, and animate.</em></p>
 
-<blockquote class="tldr"><strong>The 30-second version.</strong> The primes look random, yet a single function <span class="math">&zeta;(s)</span> encodes their exact distribution. Extend <span class="math">&zeta;</span> to the complex plane and it sprouts special inputs — its <em>zeros</em> — that behave like tuning frequencies for the primes. The <strong>Riemann Hypothesis</strong> says every one of those zeros lands on a single vertical line, <span class="math">Re(s) = &frac12;</span>. If true, the primes are spread as evenly as mathematics allows. It has stood open for 167 years and carries a $1,000,000 prize.</blockquote>
+<blockquote class="tldr"><strong>The 30-second version.</strong> The primes look random, yet a single function \(\zeta(s)\) encodes their exact distribution. Extend \(\zeta\) to the complex plane and it sprouts special inputs — its <em>zeros</em> — that behave like tuning frequencies for the primes. The <strong>Riemann Hypothesis</strong> says every one of those zeros lands on a single vertical line, \(\operatorname{Re}(s) = \tfrac12\). If true, the primes are spread as evenly as mathematics allows. It has stood open for 167 years and carries a $1,000,000 prize.</blockquote>
 
 <h2 style="margin-top:0">A City Made of Numbers</h2>
 
@@ -494,9 +491,9 @@
 </div>
 </div>
 
-<p>Every building from 2 onward is either prime, or a stack of primes multiplied together — and that stack is <strong>unique</strong>. Building 12 is always two of building&nbsp;2's plan and one of building&nbsp;3's (<span class="math">12 = 2&times;2&times;3</span>), and nothing else. This is the <strong>Fundamental Theorem of Arithmetic</strong>: the primes are the atoms, and every number has exactly one atomic recipe. It is the single fact this whole page rests on.</p>
+<p>Every building from 2 onward is either prime, or a stack of primes multiplied together — and that stack is <strong>unique</strong>. Building 12 is always two of building&nbsp;2's plan and one of building&nbsp;3's (\(12 = 2\times2\times3\)), and nothing else. This is the <strong>Fundamental Theorem of Arithmetic</strong>: the primes are the atoms, and every number has exactly one atomic recipe. It is the single fact this whole page rests on.</p>
 
-<p>The question that runs through everything below: as the city stretches to infinity, <strong>where are the one-storey buildings?</strong> They thin out — but never on a schedule. 2, 3, 5, 7, 11, 13, 17, 19… sometimes neighbours, sometimes far apart, never repeating. The tool that turns that chaos into a precise, testable law is a strange function called <span class="math">&zeta;(s)</span>, and the deepest unsolved question about it is the <strong>Riemann Hypothesis</strong> — the destination of this page.</p>
+<p>The question that runs through everything below: as the city stretches to infinity, <strong>where are the one-storey buildings?</strong> They thin out — but never on a schedule. 2, 3, 5, 7, 11, 13, 17, 19… sometimes neighbours, sometimes far apart, never repeating. The tool that turns that chaos into a precise, testable law is a strange function called \(\zeta(s)\), and the deepest unsolved question about it is the <strong>Riemann Hypothesis</strong> — the destination of this page.</p>
 
 <div class="callout note">
   <b>How to read the graphs.</b> Every plot below is live. <strong>Scroll</strong> to zoom, <strong>drag</strong> to pan, <strong>double&#8209;click</strong> to reset. Some have sliders or a <em>Play</em> button — move them and watch the mathematics respond.
@@ -521,58 +518,58 @@
 <!-- ======== SECTION 1 ======== -->
 <h2 id="sec1">1. What the Zeta Function Is</h2>
 
-<p>Take a number <span class="math">s</span>, and add up the reciprocals of every whole number raised to the power <span class="math">s</span>. That infinite sum <em>is</em> the zeta function:</p>
+<p>Take a number \(s\), and add up the reciprocals of every whole number raised to the power \(s\). That infinite sum <em>is</em> the zeta function:</p>
 
-<p class="eq"><span class="math">&zeta;(s) = &sum;<sub>n=1</sub><sup>&infin;</sup> 1/n<sup>s</sup> = 1 + 1/2<sup>s</sup> + 1/3<sup>s</sup> + 1/4<sup>s</sup> + &hellip;</span></p>
+<p class="eq">\[ \zeta(s) = \sum_{n=1}^{\infty}\frac{1}{n^s} = 1+\frac{1}{2^s}+\frac{1}{3^s}+\frac{1}{4^s}+\cdots \]</p>
 
-<p>Think of it as a machine: feed in <span class="math">s</span>, and it returns the total of that sum. Whether the machine gives a sensible answer depends entirely on <span class="math">s</span>:</p>
+<p>Think of it as a machine: feed in \(s\), and it returns the total of that sum. Whether the machine gives a sensible answer depends entirely on \(s\):</p>
 
 <ul class="plainlist">
-  <li>If <span class="math">s &gt; 1</span>, the terms shrink fast enough that the sum <strong>converges</strong> to a finite number. <span class="math">&zeta;(2) = 1 + 1/4 + 1/9 + &hellip; = &pi;&sup2;/6 &approx; 1.645</span> (Euler's Basel Problem, 1734).</li>
-  <li>At <span class="math">s = 1</span> we get the harmonic series <span class="math">1 + 1/2 + 1/3 + &hellip;</span>, which <strong>diverges</strong> to infinity. This point is a <strong>pole</strong> — the function blows up there.</li>
-  <li>If <span class="math">s &lt; 1</span>, the raw sum diverges too. So how can <span class="math">&zeta;(&minus;1)</span> possibly equal a number? That's the story of Section&nbsp;5.</li>
+  <li>If \(s > 1\), the terms shrink fast enough that the sum <strong>converges</strong> to a finite number. \(\zeta(2) = 1+\tfrac14+\tfrac19+\cdots = \tfrac{\pi^2}{6} \approx 1.645\) (Euler's Basel Problem, 1734).</li>
+  <li>At \(s = 1\) we get the harmonic series \(1 + \tfrac12 + \tfrac13 + \cdots\), which <strong>diverges</strong> to infinity. This point is a <strong>pole</strong> — the function blows up there.</li>
+  <li>If \(s < 1\), the raw sum diverges too. So how can \(\zeta(-1)\) possibly equal a number? That's the story of Section&nbsp;5.</li>
 </ul>
 
 <table class="zt">
-  <tr><th>s</th><th>&zeta;(s)</th><th>what it is</th></tr>
-  <tr><td>2</td><td>&pi;&sup2;/6 &approx; 1.6449</td><td>the Basel Problem</td></tr>
-  <tr><td>4</td><td>&pi;&#8308;/90 &approx; 1.0823</td><td>converges quickly</td></tr>
-  <tr><td>1</td><td>&infin; (pole)</td><td>harmonic series diverges</td></tr>
-  <tr><td>0</td><td>&minus;1/2</td><td>only via continuation</td></tr>
-  <tr><td>&minus;1</td><td>&minus;1/12</td><td>the famous "1+2+3+…" value</td></tr>
-  <tr><td>&minus;2, &minus;4, &minus;6, …</td><td>0</td><td>the <em>trivial zeros</em></td></tr>
+  <tr><th>\(s\)</th><th>\(\zeta(s)\)</th><th>what it is</th></tr>
+  <tr><td>\(2\)</td><td>\(\pi^2/6 \approx 1.6449\)</td><td>the Basel Problem</td></tr>
+  <tr><td>\(4\)</td><td>\(\pi^4/90 \approx 1.0823\)</td><td>converges quickly</td></tr>
+  <tr><td>\(1\)</td><td>\(\infty\) (pole)</td><td>harmonic series diverges</td></tr>
+  <tr><td>\(0\)</td><td>\(-1/2\)</td><td>only via continuation</td></tr>
+  <tr><td>\(-1\)</td><td>\(-1/12\)</td><td>the famous &ldquo;1+2+3+&hellip;&rdquo; value</td></tr>
+  <tr><td>\(-2,-4,-6,\dots\)</td><td>\(0\)</td><td>the <em>trivial zeros</em></td></tr>
 </table>
 
 <figure class="fig" id="fig-real"></figure>
 
 <div class="callout plain">
-  <b>The one big idea.</b> The zeta function packs the entire multiplicative structure of the integers into a single object. Because of a formula we'll meet next, everything about how the primes are distributed is hidden inside <span class="math">&zeta;(s)</span> — and the zeros of <span class="math">&zeta;</span> are the key that unlocks it.
+  <b>The one big idea.</b> The zeta function packs the entire multiplicative structure of the integers into a single object. Because of a formula we'll meet next, everything about how the primes are distributed is hidden inside \(\zeta(s)\) — and the zeros of \(\zeta\) are the key that unlocks it.
 </div>
 
 
 <!-- ======== SECTION 2 (spiral) ======== -->
 <h2 id="sec2">2. Watching a Sum Spiral</h2>
 
-<p>To go further we have to let <span class="math">s</span> be a <strong>complex number</strong>, <span class="math">s = &sigma; + it</span> — a point on a 2D plane with a real part <span class="math">&sigma;</span> and an imaginary part <span class="math">t</span>. Why? Because a complex power <span class="math">n<sup>&minus;s</sup></span> is not just a shrinking length; it also carries a <em>direction</em>. Writing <span class="math">n<sup>&minus;s</sup> = n<sup>&minus;&sigma;</sup> &middot; e<sup>&minus;i&thinsp;t&thinsp;ln n</sup></span>, the factor <span class="math">n<sup>&minus;&sigma;</sup></span> sets the length and <span class="math">e<sup>&minus;i&thinsp;t&thinsp;ln n</sup></span> sets the angle.</p>
+<p>To go further we have to let \(s\) be a <strong>complex number</strong>, \(s = \sigma + it\) — a point on a 2D plane with a real part \(\sigma\) and an imaginary part \(t\). Why? Because a complex power \(n^{-s}\) is not just a shrinking length; it also carries a <em>direction</em>. Writing \(n^{-s} = n^{-\sigma}\cdot e^{-it\ln n}\), the factor \(n^{-\sigma}\) sets the length and \(e^{-it\ln n}\) sets the angle.</p>
 
-<p>Add the terms nose-to-tail and, instead of creeping along a line, the running total <strong>spirals</strong> inward to its final value. That final point is <span class="math">&zeta;(s)</span>.</p>
+<p>Add the terms nose-to-tail and, instead of creeping along a line, the running total <strong>spirals</strong> inward to its final value. That final point is \(\zeta(s)\).</p>
 
 <figure class="fig" id="fig-spiral"></figure>
 
 <div class="callout plain">
-  <b>Try it.</b> Drag the sliders or press <em>Play</em>. <span class="math">&sigma;</span> controls how fast the terms shrink (bigger <span class="math">&sigma;</span> = tighter, faster convergence); <span class="math">t</span> controls how fast each term rotates relative to the last. Whatever you pick, the spiral always winds down onto one point — the value of <span class="math">&zeta;(&sigma;+it)</span>.
+  <b>Try it.</b> Drag the sliders or press <em>Play</em>. \(\sigma\) controls how fast the terms shrink (bigger \(\sigma\) = tighter, faster convergence); \(t\) controls how fast each term rotates relative to the last. Whatever you pick, the spiral always winds down onto one point — the value of \(\zeta(\sigma+it)\).
 </div>
 
 
 <!-- ======== SECTION 3 (transformation) ======== -->
 <h2 id="sec3">3. The Zeta Transformation</h2>
 
-<p>A single spiral shows <span class="math">&zeta;</span> at one input. To see the whole function at once, watch what it does to an entire <em>grid</em> of inputs. Below, each faint straight line is a row or column of the input plane. Press <em>Play</em> and every point <span class="math">s</span> slides to its output <span class="math">&zeta;(s)</span> — the rigid grid bends into a field of interlocking spirals.</p>
+<p>A single spiral shows \(\zeta\) at one input. To see the whole function at once, watch what it does to an entire <em>grid</em> of inputs. Below, each faint straight line is a row or column of the input plane. Press <em>Play</em> and every point \(s\) slides to its output \(\zeta(s)\) — the rigid grid bends into a field of interlocking spirals.</p>
 
 <figure class="fig" id="fig-transform"></figure>
 
 <div class="callout plain">
-  <b>What you're seeing.</b> This is the geometric personality of <span class="math">&zeta;</span>. Notice how the transformation is <em>smooth and angle-preserving</em> everywhere it's defined — a hallmark of a well-behaved ("analytic") complex function. That smoothness is exactly what lets Riemann extend <span class="math">&zeta;</span> to places the original sum can't reach, in Section&nbsp;5. The point everything swirls around is the pole at <span class="math">s = 1</span>.
+  <b>What you're seeing.</b> This is the geometric personality of \(\zeta\). Notice how the transformation is <em>smooth and angle-preserving</em> everywhere it's defined — a hallmark of a well-behaved ("analytic") complex function. That smoothness is exactly what lets Riemann extend \(\zeta\) to places the original sum can't reach, in Section&nbsp;5. The point everything swirls around is the pole at \(s = 1\).
 </div>
 
 
@@ -581,9 +578,9 @@
 
 <p>Here is why any of this touches the primes. In 1737 Euler proved that the same sum can be rewritten as a <strong>product over the prime buildings alone</strong>:</p>
 
-<p class="eq"><span class="math">&zeta;(s) = &sum;<sub>n</sub> 1/n<sup>s</sup> = &prod;<sub>p&nbsp;prime</sub> 1/(1 &minus; p<sup>&minus;s</sup>)</span></p>
+<p class="eq">\[ \zeta(s) = \sum_{n} \frac{1}{n^s} = \prod_{p\ \text{prime}} \frac{1}{1-p^{-s}} \]</p>
 
-<p>The proof is our city in disguise. Expand each factor as a geometric series, <span class="math">1/(1&minus;p<sup>&minus;s</sup>) = 1 + p<sup>&minus;s</sup> + p<sup>&minus;2s</sup> + &hellip;</span>, and multiply all the factors together. When you pick one term from each bracket and multiply, you get <span class="math">1/n<sup>s</sup></span> for a number <span class="math">n</span> built from those exact prime powers. Because every <span class="math">n</span> has <em>one</em> unique prime recipe, every <span class="math">1/n<sup>s</sup></span> appears <em>exactly once</em>. The product <em>is</em> unique factorization, written in analysis.</p>
+<p>The proof is our city in disguise. Expand each factor as a geometric series, \(\dfrac{1}{1-p^{-s}} = 1+p^{-s}+p^{-2s}+\cdots\), and multiply all the factors together. When you pick one term from each bracket and multiply, you get \(1/n^s\) for a number \(n\) built from those exact prime powers. Because every \(n\) has <em>one</em> unique prime recipe, every \(1/n^s\) appears <em>exactly once</em>. The product <em>is</em> unique factorization, written in analysis.</p>
 
 <div class="callout plain">
   <b>In plain terms.</b> A sum over <em>every building</em> equals a product over <em>just the prime buildings</em>. That equals sign is the bridge — cross it in either direction and facts about primes become facts about a smooth function, and back. Below, switch on more primes and watch the product close in on the true curve.
@@ -592,87 +589,103 @@
 <figure class="fig" id="fig-euler"></figure>
 
 <div class="callout insight">
-  <strong>First payoff — infinitely many primes.</strong> As <span class="math">s &rarr; 1</span>, the left side <span class="math">&zeta;(s) &rarr; &infin;</span>. If there were only finitely many primes, the right side would be a finite product of finite numbers — finite. Contradiction, so there are <em>infinitely many primes</em>. Euler even showed <span class="math">&sum;<sub>p</sub> 1/p = &infin;</span>: the primes are dense enough that their reciprocals still diverge.
+  <strong>First payoff — infinitely many primes.</strong> As \(s \to 1\), the left side \(\zeta(s) \to \infty\). If there were only finitely many primes, the right side would be a finite product of finite numbers — finite. Contradiction, so there are <em>infinitely many primes</em>. Euler even showed \(\sum_p \tfrac1p = \infty\): the primes are dense enough that their reciprocals still diverge.
 </div>
 
 
 <!-- ======== SECTION 5 (continuation) ======== -->
 <h2 id="sec5">5. Analytic Continuation &amp; the Zeros</h2>
 
-<p>The sum and the product both only make sense for <span class="math">Re(s) &gt; 1</span> — that's the "wall." Riemann's decisive step (1859) was to show that <span class="math">&zeta;</span> can be extended, <em>uniquely</em> and smoothly, to the entire complex plane, with the single exception of the pole at <span class="math">s = 1</span>. This is <strong>analytic continuation</strong>.</p>
+<p>The sum and the product both only make sense for \(\operatorname{Re}(s) > 1\) — that's the "wall." Riemann's decisive step (1859) was to show that \(\zeta\) can be extended, <em>uniquely</em> and smoothly, to the entire complex plane, with the single exception of the pole at \(s = 1\). This is <strong>analytic continuation</strong>.</p>
 
 <div class="callout plain">
-  <b>Why "unique."</b> A key theorem of complex analysis says a smooth (analytic) function is astonishingly rigid: if two such functions agree on any small patch, they agree <em>everywhere</em> they're both defined. So there is only one possible smooth extension of <span class="math">&zeta;</span> past the wall. Riemann found it — and a whole landscape, full of zeros, appeared on the far side.
+  <b>Why "unique."</b> A key theorem of complex analysis says a smooth (analytic) function is astonishingly rigid: if two such functions agree on any small patch, they agree <em>everywhere</em> they're both defined. So there is only one possible smooth extension of \(\zeta\) past the wall. Riemann found it — and a whole landscape, full of zeros, appeared on the far side.
 </div>
 
 <p>The extension obeys a beautiful mirror symmetry. Define the <strong>completed zeta function</strong> by attaching a couple of standard factors:</p>
 
-<p class="eq"><span class="math">&xi;(s) = &pi;<sup>&minus;s/2</sup> &Gamma;(s/2) &zeta;(s)</span>, &nbsp;&nbsp; which satisfies &nbsp;&nbsp; <span class="math">&xi;(s) = &xi;(1 &minus; s)</span></p>
+<p class="eq">\[ \xi(s) = \pi^{-s/2}\,\Gamma\!\left(\tfrac{s}{2}\right)\zeta(s), \qquad \xi(s) = \xi(1-s) \]</p>
 
-<p>Here <span class="math">&Gamma;</span> is the gamma function, the smooth version of the factorial. The identity <span class="math">&xi;(s) = &xi;(1-s)</span> says the function is perfectly symmetric under reflection through the vertical line <span class="math">Re(s) = &frac12;</span>. That line — the <strong>critical line</strong> — is forced into the centre of the story by this symmetry alone.</p>
+<p>Here \(\Gamma\) is the gamma function, the smooth version of the factorial. The identity \(\xi(s) = \xi(1-s)\) says the function is perfectly symmetric under reflection through the vertical line \(\operatorname{Re}(s) = \tfrac12\). That line — the <strong>critical line</strong> — is forced into the centre of the story by this symmetry alone.</p>
 
 <p>The functional equation also explains the two families of zeros:</p>
 
 <ul class="plainlist">
-  <li><strong>Trivial zeros</strong> at <span class="math">s = &minus;2, &minus;4, &minus;6, &hellip;</span>. On the negative real axis the <span class="math">&Gamma;(s/2)</span> factor forces <span class="math">&zeta;</span> to vanish at every negative even integer. They're "trivial" because we understand them completely.</li>
-  <li><strong>Nontrivial zeros</strong> — every <em>other</em> zero. The symmetry pins them inside the <strong>critical strip</strong> <span class="math">0 &le; Re(s) &le; 1</span>, and in mirror-image families: if <span class="math">&rho;</span> is a zero, so are <span class="math">\bar&rho;</span>, <span class="math">1&minus;&rho;</span>, and <span class="math">1&minus;\bar&rho;</span>.</li>
+  <li><strong>Trivial zeros</strong> at \(s = -2, -4, -6, \dots\). On the negative real axis the \(\Gamma(s/2)\) factor forces \(\zeta\) to vanish at every negative even integer. They're "trivial" because we understand them completely.</li>
+  <li><strong>Nontrivial zeros</strong> — every <em>other</em> zero. The symmetry pins them inside the <strong>critical strip</strong> \(0 \le \operatorname{Re}(s) \le 1\), and in mirror-image families: if \(\rho\) is a zero, so are \(\bar\rho\), \(1-\rho\), and \(1-\bar\rho\).</li>
 </ul>
 
 <p>And a famous byproduct of the continuation, the one that shows up all over the internet:</p>
 
 <div class="meme">
-  <div class="top">1 + 2 + 3 + 4 + &hellip;</div>
-  <div class="bottom">= &minus;1/12&nbsp;?!</div>
-  <div class="note">Not literally. The series obviously diverges to infinity. What's actually true is <span class="math" style="background:transparent;color:#e8c060">&zeta;(&minus;1) = &minus;1/12</span> — the number the <em>analytically continued</em> function assigns to <span class="math" style="background:transparent;color:#e8c060">s = &minus;1</span>. The continuation, not the naive sum, produces it (and physics — the Casimir effect — really does use this value).</div>
+  <div class="top">\(1 + 2 + 3 + 4 + \cdots\)</div>
+  <div class="bottom">\(= -\dfrac{1}{12}\)&nbsp;?!</div>
+  <div class="note">Not literally. The series obviously diverges to infinity. What's actually true is \(\zeta(-1) = -\tfrac{1}{12}\) — the number the <em>analytically continued</em> function assigns to \(s = -1\). The continuation, not the naive sum, produces it (and physics — the Casimir effect — really does use this value).</div>
 </div>
 
 
 <!-- ======== SECTION 6 (pi(x)) ======== -->
 <h2 id="sec6">6. Where Are the Primes? Counting with &pi;(x)</h2>
 
-<p>Let <span class="math">&pi;(x)</span> count the primes up to <span class="math">x</span> — the one-storey buildings up to house number <span class="math">x</span>. So <span class="math">&pi;(10)=4</span>, <span class="math">&pi;(100)=25</span>, <span class="math">&pi;(10&sup6;)=78{,}498</span>. Plotted, it's a <strong>staircase</strong> that jumps by <span class="math">+1</span> at each prime.</p>
+<p>Let \(\pi(x)\) count the primes up to \(x\) — the one-storey buildings up to house number \(x\). So \(\pi(10)=4\), \(\pi(100)=25\), \(\pi(10^6)=78{,}498\). Plotted, it's a <strong>staircase</strong> that jumps by \(+1\) at each prime.</p>
 
-<p>The teenage Gauss (c. 1792) noticed the staircase is closely shadowed by <span class="math">x/\ln x</span>. A sharper companion is the <strong>logarithmic integral</strong> <span class="math">Li(x) = &int;<sub>2</sub><sup>x</sup> dt/\ln t</span>. The <strong>Prime Number Theorem</strong> (Hadamard and de la Vall&eacute;e Poussin, 1896) proved these really are the right growth rate: <span class="math">&pi;(x) ~ x/\ln x</span>. Their proof worked precisely by using the zeros of <span class="math">&zeta;</span>.</p>
+<p>The teenage Gauss (c. 1792) noticed the staircase is closely shadowed by \(x/\ln x\). A sharper companion is the <strong>logarithmic integral</strong> \(\operatorname{Li}(x) = \int_2^x \frac{dt}{\ln t}\). The <strong>Prime Number Theorem</strong> (Hadamard and de la Vall&eacute;e Poussin, 1896) proved these really are the right growth rate: \(\pi(x) \sim x/\ln x\). Their proof worked precisely by using the zeros of \(\zeta\).</p>
 
 <figure class="fig" id="fig-pi"></figure>
 
-<p>The staircase is the exact truth; the smooth curves are the approximations, and <span class="math">Li(x)</span> hugs it tightly. The entire Riemann Hypothesis is, at heart, a statement about the <em>size of the gap</em> between the staircase and <span class="math">Li(x)</span>.</p>
+<p>The staircase is the exact truth; the smooth curves are the approximations, and \(\operatorname{Li}(x)\) hugs it tightly. The entire Riemann Hypothesis is, at heart, a statement about the <em>size of the gap</em> between the staircase and \(\operatorname{Li}(x)\).</p>
 
 
 <!-- ======== SECTION 7 (waves) ======== -->
 <h2 id="sec7">7. Primes as a Chorus of Waves</h2>
 
-<p>Riemann's paper made the zeros-control-primes link exact. Using a weighted prime count, the Chebyshev function <span class="math">&psi;(x) = &sum;<sub>p<sup>k</sup> &le; x</sub> \ln p</span>, the <strong>explicit formula</strong> (von Mangoldt, 1895) reads:</p>
+<p>Riemann's paper made the zeros-control-primes link exact. Using a weighted prime count, the Chebyshev function \(\psi(x) = \sum_{p^k \le x} \ln p\), the <strong>explicit formula</strong> (von Mangoldt, 1895) reads:</p>
 
-<p class="eq"><span class="math">&psi;(x) = x &minus; &sum;<sub>&rho;</sub> x<sup>&rho;</sup>/&rho; &minus; \ln(2&pi;) &minus; &frac12;\ln(1 &minus; x<sup>&minus;2</sup>)</span></p>
+<p class="eq">\[ \psi(x) = x - \sum_{\rho} \frac{x^{\rho}}{\rho} - \ln(2\pi) - \tfrac12\ln\!\left(1-x^{-2}\right) \]</p>
 
-<p>Read it as: a smooth trend <span class="math">x</span>, corrected by one term per nontrivial zero <span class="math">&rho;</span>. Since <span class="math">&rho; = &beta; + i&gamma;</span> gives <span class="math">x<sup>&rho;</sup> = x<sup>&beta;</sup>e<sup>i&gamma;\ln x</sup></span>, each zero contributes an oscillating <strong>wave</strong> whose amplitude is set by <span class="math">x<sup>&beta;</sup></span> — the real part of the zero. Stack the waves and you rebuild the prime staircase exactly. This is the literal "music of the primes": the zeros are its frequencies.</p>
+<p>Read it as: a smooth trend \(x\), corrected by one term per nontrivial zero \(\rho\). Since \(\rho = \beta + i\gamma\) gives \(x^{\rho} = x^{\beta} e^{i\gamma \ln x}\), each zero contributes an oscillating <strong>wave</strong> whose amplitude is set by \(x^{\beta}\) — the real part of the zero. Stack the waves and you rebuild the prime staircase exactly. This is the literal "music of the primes": the zeros are its frequencies.</p>
 
 <div class="callout plain">
-  <b>Drag the slider.</b> Start with the bare trend line <span class="math">y = x</span>, then add zeros one pair at a time. A few pairs give a loose wobble; add more and the curve snaps onto the true staircase, step by step.
+  <b>Drag the slider.</b> Start with the bare trend line \(y = x\), then add zeros one pair at a time. A few pairs give a loose wobble; add more and the curve snaps onto the true staircase, step by step.
 </div>
 
 <figure class="fig" id="fig-psi"></figure>
 
-<p>The punchline is in that amplitude <span class="math">x<sup>&beta;</sup></span>. A zero with <span class="math">&beta;</span> close to 1 would inject a violent, prime-scrambling wave; a zero with <span class="math">&beta; = &frac12;</span> keeps its wave as quiet as the symmetry allows. So the question "how regular are the primes?" becomes, precisely, "how far right can a zero sit?"</p>
+<p>The punchline is in that amplitude \(x^{\beta}\). A zero with \(\beta\) close to 1 would inject a violent, prime-scrambling wave; a zero with \(\beta = \tfrac12\) keeps its wave as quiet as the symmetry allows. So the question "how regular are the primes?" becomes, precisely, "how far right can a zero sit?"</p>
 
 
 <!-- ======== SECTION 8 (RH) ======== -->
 <h2 id="sec8">8. The Riemann Hypothesis</h2>
 
-<blockquote>Every nontrivial zero of <span class="math">&zeta;(s)</span> has real part exactly <span class="math">&frac12;</span>.</blockquote>
+<blockquote>Every nontrivial zero of \(\zeta(s)\) has real part exactly \(\tfrac12\).</blockquote>
 
-<p>That's the whole conjecture. Every one of the infinitely many nontrivial zeros — despite only being <em>known</em> to live somewhere in the strip <span class="math">0 &le; Re(s) &le; 1</span> — should sit precisely on the critical line <span class="math">Re(s) = &frac12;</span>. The plot below shows the actual computed picture: trivial zeros marching along the negative real axis, and every nontrivial zero (as far as anyone has ever calculated) balanced exactly on the yellow line.</p>
+<p>That's the whole conjecture. Every one of the infinitely many nontrivial zeros — despite only being <em>known</em> to live somewhere in the strip \(0 \le \operatorname{Re}(s) \le 1\) — should sit precisely on the critical line \(\operatorname{Re}(s) = \tfrac12\).</p>
+
+<h3>The single most important picture on this page</h3>
+
+<p>Walk straight up the critical line and trace the value of \(\zeta(\tfrac12+it)\) itself as a curve in the complex plane — its real part on the horizontal axis, its imaginary part on the vertical axis, \(t\) increasing continuously. The result is a looping, spiralling curve — and <strong>every single time it passes through the origin, that crossing is a nontrivial zero.</strong> This is the classical "polar graph of \(\zeta(\tfrac12+it)\)," and it is arguably the most direct way to <em>see</em> the Riemann Hypothesis: not a list of coordinates, but a real curve, live in the plane, threading the needle at the origin again and again.</p>
+
+<figure class="fig" id="fig-polar"></figure>
+
+<p>Every loop that swings out and curls back through the centre is one nontrivial zero. Drag the \(t\) slider or press Play and watch the curve grow, lobe by lobe — the deeper it winds, the more zeros it has already threaded.</p>
+
+<p>The map below shows the same zeros from a different angle: trivial zeros marching along the negative real axis, and every nontrivial zero (as far as anyone has ever calculated) balanced exactly on the yellow line.</p>
 
 <figure class="fig" id="fig-zeros"></figure>
 
-<h3>Why <span class="math">&frac12;</span>, and why it matters</h3>
+<h3>The landscape of \(|\zeta(s)|\)</h3>
 
-<p>The functional equation <span class="math">&xi;(s)=&xi;(1-s)</span> already forces the nontrivial zeros to be symmetric about <span class="math">Re(s)=&frac12;</span>: they come in pairs <span class="math">&rho;</span> and <span class="math">1-&rho;</span> straddling the line. RH is the claim that every pair has actually <em>collapsed onto</em> the line — that there are no off-line pairs at all. Through the explicit formula of Section&nbsp;7, this is exactly equivalent to the primes being as evenly spread as mathematically possible. Concretely, von Koch proved in 1901 that RH is the same statement as:</p>
+<p>One more way to see it, in three dimensions this time. Treat \(\sigma=\operatorname{Re}(s)\) and \(t=\operatorname{Im}(s)\) as a flat map, and raise a landscape above it whose height is \(|\zeta(\sigma+it)|\). The pole at \(s=1\) becomes a mountain that shoots off the top of the chart; every nontrivial zero becomes a valley that drops all the way to sea level. Rotate the terrain below and look for the trench of zero-valleys running along \(\sigma=\tfrac12\) — the critical line, seen as topography.</p>
 
-<p class="eq"><span class="math">|&pi;(x) &minus; Li(x)| &le; C &middot; &radic;x &middot; \ln x</span></p>
+<figure class="fig" id="fig-surface"></figure>
 
-<p>The error between the true prime count and its smooth estimate stays as small as <span class="math">&radic;x</span> — the size of the fluctuation you'd get from flipping a fair coin <span class="math">x</span> times. RH says the primes, for all their local unpredictability, are globally as <em>pseudorandom and well-behaved</em> as they could ever be. An off-line zero at real part <span class="math">&beta; &gt; &frac12;</span> would blow this error up to size <span class="math">x<sup>&beta;</sup></span> — a detectable clumping of the primes.</p>
+<h3>Why \(\tfrac12\), and why it matters</h3>
+
+<p>The functional equation \(\xi(s)=\xi(1-s)\) already forces the nontrivial zeros to be symmetric about \(\operatorname{Re}(s)=\tfrac12\): they come in pairs \(\rho\) and \(1-\rho\) straddling the line. RH is the claim that every pair has actually <em>collapsed onto</em> the line — that there are no off-line pairs at all. Through the explicit formula of Section&nbsp;7, this is exactly equivalent to the primes being as evenly spread as mathematically possible. Concretely, von Koch proved in 1901 that RH is the same statement as:</p>
+
+<p class="eq">\[ \left|\pi(x) - \operatorname{Li}(x)\right| \le C\sqrt{x}\,\ln x \]</p>
+
+<p>The error between the true prime count and its smooth estimate stays as small as \(\sqrt{x}\) — the size of the fluctuation you'd get from flipping a fair coin \(x\) times. RH says the primes, for all their local unpredictability, are globally as <em>pseudorandom and well-behaved</em> as they could ever be. An off-line zero at real part \(\beta > \tfrac12\) would blow this error up to size \(x^{\beta}\) — a detectable clumping of the primes.</p>
 
 <div class="callout insight">
   <strong>Why anyone cares.</strong> RH is not one isolated puzzle. Hundreds of published theorems begin "assume the Riemann Hypothesis…" — results on prime gaps, on fast primality testing, on the growth of arithmetic functions. It sits under so much of number theory that a proof would instantly upgrade an entire library of conditional results to unconditional ones. It is Problem&nbsp;8 on Hilbert's 1900 list and a Clay Millennium Prize Problem carrying a <strong>$1,000,000</strong> reward.
@@ -680,12 +693,12 @@
 
 <h3>Visual evidence: the gaps between primes</h3>
 
-<p>Zoom back into the street and measure the distance between consecutive one-storey buildings — the <strong>prime gaps</strong>. On average the gap near <span class="math">x</span> is about <span class="math">\ln x</span> (primes near a million sit ~14 apart; near a billion, ~21). But the average hides real structure:</p>
+<p>Zoom back into the street and measure the distance between consecutive one-storey buildings — the <strong>prime gaps</strong>. On average the gap near \(x\) is about \(\ln x\) (primes near a million sit ~14 apart; near a billion, ~21). But the average hides real structure:</p>
 
 <ul class="plainlist">
-  <li><strong>Gaps are almost always even.</strong> Past 2, every prime is odd, so consecutive primes differ by an even number — odd gaps simply can't occur (bar the lone <span class="math">2&rarr;3</span>).</li>
+  <li><strong>Gaps are almost always even.</strong> Past 2, every prime is odd, so consecutive primes differ by an even number — odd gaps simply can't occur (bar the lone \(2\to 3\)).</li>
   <li><strong>Small gaps never run out.</strong> Gap 2 (twin primes like 11 &amp; 13) keeps recurring as far as anyone computes; whether it happens <em>infinitely</em> often is the still-open Twin Prime Conjecture.</li>
-  <li><strong>Large gaps stay rare, predictably.</strong> Cramér's conjecture guesses the biggest gap near <span class="math">x</span> is about <span class="math">(\ln x)&sup2;</span> — unproven, but matching every gap ever measured.</li>
+  <li><strong>Large gaps stay rare, predictably.</strong> Cramér's conjecture guesses the biggest gap near \(x\) is about \((\ln x)^2\) — unproven, but matching every gap ever measured.</li>
 </ul>
 
 <figure class="fig" id="fig-gaps"></figure>
@@ -699,16 +712,16 @@
 <p>The Riemann Hypothesis is still <strong>open</strong> — no proof, no counterexample. But "open" is a long way from "quiet":</p>
 
 <ul class="status-timeline">
-  <li><strong>Numerical verification.</strong> Rigorous computation (Platt &amp; Trudgian, 2020) confirms every zero up to height <span class="math">&sim;3&times;10&sup1;&sup2;</span> lies exactly on the critical line; large runs push verified counts into the tens of trillions. Not one stray zero has ever appeared.</li>
-  <li><strong>Proportion on the line.</strong> Hardy (1914) proved infinitely many zeros satisfy <span class="math">Re=&frac12;</span>; Selberg (1942) a positive fraction; Conrey (1989) over 40%; recent work nudges it just past 41%.</li>
-  <li><strong>Guth&ndash;Maynard (2024).</strong> Larry Guth and James Maynard sharpened Ingham's 1940 zero-density estimate from <span class="math">3/5</span> to <span class="math">13/25</span> — the first real move in over 80 years, with direct consequences for primes in short intervals.</li>
-  <li><strong>De Bruijn&ndash;Newman constant.</strong> RH is equivalent to <span class="math">&Lambda; = 0</span> for a real constant <span class="math">&Lambda;</span>. Rodgers &amp; Tao proved <span class="math">&Lambda; &ge; 0</span> (2018); Polymath&nbsp;15 showed <span class="math">&Lambda; &le; 0.2</span>. If RH holds, it holds "just barely."</li>
+  <li><strong>Numerical verification.</strong> Rigorous computation (Platt &amp; Trudgian, 2020) confirms every zero up to height \(\sim 3\times10^{12}\) lies exactly on the critical line; large runs push verified counts into the tens of trillions. Not one stray zero has ever appeared.</li>
+  <li><strong>Proportion on the line.</strong> Hardy (1914) proved infinitely many zeros satisfy \(\operatorname{Re}=\tfrac12\); Selberg (1942) a positive fraction; Conrey (1989) over 40%; recent work nudges it just past 41%.</li>
+  <li><strong>Guth&ndash;Maynard (2024).</strong> Larry Guth and James Maynard sharpened Ingham's 1940 zero-density estimate from \(3/5\) to \(13/25\) — the first real move in over 80 years, with direct consequences for primes in short intervals.</li>
+  <li><strong>De Bruijn&ndash;Newman constant.</strong> RH is equivalent to \(\Lambda = 0\) for a real constant \(\Lambda\). Rodgers &amp; Tao proved \(\Lambda \ge 0\) (2018); Polymath&nbsp;15 showed \(\Lambda \le 0.2\). If RH holds, it holds "just barely."</li>
   <li><strong>Connes' program (2026).</strong> A February 2026 survey by Alain Connes outlines a strategy via Weil's quadratic form and trace formulas; using only primes below 13 it reproduces the first 50 zeros, provably on the line.</li>
   <li><strong>Formalization.</strong> The Prime Number Theorem is now machine-verified in Lean&nbsp;4's Mathlib, and analytic number theory is being formalized in earnest.</li>
 </ul>
 
 <div class="callout insight">
-  <strong>The honest summary.</strong> After 167 years — overwhelming numerics, 40%+ of zeros provably on the line, the sharpest density bounds in nearly a century, an exact equivalent (<span class="math">&Lambda;=0</span>) balanced on a knife's edge, and a fully proved analogue over finite fields — there is still no proof. Most experts expect the answer will need either a genuinely new idea in analysis, or the successful import of the spectral/geometric machinery that already settled the function-field case.
+  <strong>The honest summary.</strong> After 167 years — overwhelming numerics, 40%+ of zeros provably on the line, the sharpest density bounds in nearly a century, an exact equivalent (\(\Lambda=0\)) balanced on a knife's edge, and a fully proved analogue over finite fields — there is still no proof. Most experts expect the answer will need either a genuinely new idea in analysis, or the successful import of the spectral/geometric machinery that already settled the function-field case.
 </div>
 
 
@@ -993,7 +1006,7 @@ function lerpCol(a,b,f){const pa=hexToRgb(a),pb=hexToRgb(b);return 'rgb('+Math.r
     title:'ζ(s) along the real line',
     legend:[{label:'ζ(s)',color:COL.teal},{label:'trivial zeros (−2,−4,−6)',color:COL.yellow,dot:1},
             {label:'ζ(2)=π²/6',color:COL.green,dot:1},{label:'pole at s=1',color:COL.red}],
-    caption:'Figure 1 &mdash; The red line is the pole at <span class="math">s=1</span>; yellow dots are trivial zeros at negative even integers; the green dot is <span class="math">ζ(2)=π²/6</span>. Zoom in anywhere.'
+    caption:'Figure 1 &mdash; The red line is the pole at \(s=1\); yellow dots are trivial zeros at negative even integers; the green dot is \(\zeta(2)=\pi^2/6\). Zoom in anywhere.'
   });
   const markers=[{x:2,y:zetaReal(2),color:COL.green,label:'ζ(2)'}];
   for(const k of [-2,-4,-6]) markers.push({x:k,y:0,color:COL.yellow});
@@ -1037,7 +1050,7 @@ function lerpCol(a,b,f){const pa=hexToRgb(a),pb=hexToRgb(b);return 'rgb('+Math.r
   box.appendChild(lg);
   fig.appendChild(box);
   const fc=document.createElement('figcaption');
-  fc.innerHTML='Figure 2 &mdash; Each segment is one term <span class="math">1/nˢ</span> laid nose-to-tail. Press Play to draw the spiral term by term; drag the sliders to change <span class="math">s = σ+it</span>.';
+  fc.innerHTML='Figure 2 &mdash; Each segment is one term \(1/n^{s}\) laid nose-to-tail. Press Play to draw the spiral term by term; drag the sliders to change \(s = \sigma+it\).';
   fig.appendChild(fc);
 
   const H=380, N=600;
@@ -1141,7 +1154,7 @@ function lerpCol(a,b,f){const pa=hexToRgb(a),pb=hexToRgb(b);return 'rgb('+Math.r
   box.appendChild(lg);
   fig.appendChild(box);
   const fc=document.createElement('figcaption');
-  fc.innerHTML='Figure 3 &mdash; The full complex grid, coloured by direction, transformed by <span class="math">ζ</span>. At morph 0 it is the ordinary plane; press Play and every point <span class="math">s</span> flows to <span class="math">ζ(s)</span>, folding the grid into interlocking spirals — the geometric signature of the zeta function.';
+  fc.innerHTML='Figure 3 &mdash; The full complex grid, coloured by direction, transformed by \(\zeta\). At morph 0 it is the ordinary plane; press Play and every point \(s\) flows to \(\zeta(s)\), folding the grid into interlocking spirals — the geometric signature of the zeta function.';
   fig.appendChild(fc);
 
   const H=470, SAMP=90;
@@ -1234,7 +1247,7 @@ function lerpCol(a,b,f){const pa=hexToRgb(a),pb=hexToRgb(b);return 'rgb('+Math.r
   const {cv,reset,ro}=mount('fig-euler',{
     title:'Building ζ(s) one prime at a time',
     legend:[{label:'true ζ(s)',color:'#ffffff'},{label:'product over first N primes',color:COL.orange}],
-    caption:'Figure 4 &mdash; Each prime adds one factor and pulls the orange product (dashed) toward the true <span class="math">ζ(s)</span> (white). Slide to add primes.',
+    caption:'Figure 4 &mdash; Each prime adds one factor and pulls the orange product (dashed) toward the true \(\zeta(s)\) (white). Slide to add primes.',
     controls:(bar)=>{
       const w=document.createElement('span'); w.className='ctrl';
       const l=document.createElement('label'); l.textContent='primes:';
@@ -1263,7 +1276,7 @@ function lerpCol(a,b,f){const pa=hexToRgb(a),pb=hexToRgb(b);return 'rgb('+Math.r
   const {cv,reset,ro}=mount('fig-pi',{
     title:'The prime-counting staircase π(x) and its approximations',
     legend:[{label:'π(x) — exact prime count',color:COL.blue},{label:'x / ln x (Gauss)',color:COL.yellow},{label:'Li(x) (log integral)',color:COL.green}],
-    caption:'Figure 5 &mdash; The blue staircase jumps <span class="math">+1</span> at every prime; <span class="math">Li(x)</span> (green) tracks it far more tightly than <span class="math">x/ln x</span> (yellow). Zoom near a step to see the jumps.'
+    caption:'Figure 5 &mdash; The blue staircase jumps \(+1\) at every prime; \(\operatorname{Li}(x)\) (green) tracks it far more tightly than \(x/\ln x\) (yellow). Zoom near a step to see the jumps.'
   });
   const p=new Plot(cv,[
     {data:xln,color:COL.yellow,width:1.8,dash:[7,4]},
@@ -1297,7 +1310,7 @@ function lerpCol(a,b,f){const pa=hexToRgb(a),pb=hexToRgb(b);return 'rgb('+Math.r
   const {cv,reset,ro}=mount('fig-psi',{
     title:'More zeros → a sharper approximation of the primes',
     legend:[{label:'exact prime staircase ψ(x)',color:COL.blue},{label:'trend y = x',color:'rgba(150,175,210,0.7)'},{label:'approx. from N zero-pairs',color:COL.purple}],
-    caption:'Figure 6 &mdash; The blue staircase is the (weighted) prime count. Start from the smooth trend <span class="math">y=x</span> and add the wave from one more zero at a time — press <em>Play</em>. Each extra zero of <span class="math">ζ</span> sharpens the approximation until the purple curve reproduces the exact prime steps. This is, literally, the primes being rebuilt from the zeros.',
+    caption:'Figure 6 &mdash; The blue staircase is the (weighted) prime count. Start from the smooth trend \(y=x\) and add the wave from one more zero at a time — press <em>Play</em>. Each extra zero of \(\zeta\) sharpens the approximation until the purple curve reproduces the exact prime steps. This is, literally, the primes being rebuilt from the zeros.',
     controls:(bar)=>{
       playBtn=document.createElement('button'); playBtn.className='btn primary'; playBtn.textContent='▶ Play';
       bar.appendChild(playBtn);
@@ -1325,7 +1338,106 @@ function lerpCol(a,b,f){const pa=hexToRgb(a),pb=hexToRgb(b);return 'rgb('+Math.r
 })();
 
 /* =====================================================================
-   FIGURE 7 — the zeros: trivial (real axis) + nontrivial (critical line)
+   FIGURE 7 — polar curve of zeta(1/2 + it): the beauty shot
+   ===================================================================== */
+(function(){
+  const fig=document.getElementById('fig-polar');
+  const box=document.createElement('div'); box.className='plotbox';
+  const t=document.createElement('div'); t.className='plot-title';
+  t.textContent='The curve ζ(½ + it): every loop through the centre is a zero'; box.appendChild(t);
+  const bar=document.createElement('div'); bar.className='plot-toolbar';
+  bar.innerHTML='<span class="hint">Scroll = zoom &middot; Drag = pan</span>';
+  const playBtn=document.createElement('button'); playBtn.className='btn primary'; playBtn.textContent='▶ Play';
+  const reset=document.createElement('button'); reset.className='btn'; reset.textContent='Reset';
+  bar.appendChild(playBtn); bar.appendChild(reset);
+  const wrapC=document.createElement('span'); wrapC.className='ctrl';
+  const l=document.createElement('label'); l.textContent='t up to:';
+  const sl=document.createElement('input'); sl.type='range'; sl.min=1; sl.max=60; sl.step=0.5; sl.value=60;
+  const lab=document.createElement('span'); lab.className='val'; lab.textContent='60';
+  wrapC.appendChild(l); wrapC.appendChild(sl); wrapC.appendChild(lab); bar.appendChild(wrapC); box.appendChild(bar);
+  const wrap=document.createElement('div'); wrap.className='plot-canvas-wrap';
+  const cv=document.createElement('canvas'); cv.className='plot';
+  const ro=document.createElement('div'); ro.className='readout';
+  wrap.appendChild(cv); wrap.appendChild(ro); box.appendChild(wrap);
+  const lg=document.createElement('div'); lg.className='legend';
+  lg.innerHTML='<span class="item"><span class="swatch" style="background:'+COL.red+'"></span>ζ(½+it), t = 0 → tMax</span>'+
+    '<span class="item"><span class="swatch dot" style="background:#fff"></span>origin — every crossing is a zero</span>';
+  box.appendChild(lg);
+  fig.appendChild(box);
+  const fc=document.createElement('figcaption');
+  fc.innerHTML='Figure 7 &mdash; The polar graph of \\(\\zeta(\\tfrac12+it)\\). Each time the red curve sweeps back through the white origin dot, \\(t\\) has hit the imaginary part of a nontrivial zero. Raise \\(t_{\\max}\\) or press Play to keep tracing.';
+  fig.appendChild(fc);
+
+  const H=460, STEP=0.02;
+  let tmax=60, view=null, initView=null, pts=null;
+  function computeCurve(T){
+    const arr=[]; for(let t=0;t<=T+1e-9;t+=STEP){ arr.push(czeta(C(0.5,t))); } return arr;
+  }
+  function autoView(){
+    view={x0:-2.1,x1:3.4,y0:-2.6,y1:2.6}; initView={...view};
+  }
+  pts=computeCurve(tmax); autoView();
+  const PW=()=>cv.clientWidth-54-16, PH=()=>H-12-36;
+  const px=x=>54+(x-view.x0)/(view.x1-view.x0)*PW();
+  const py=y=>12+(1-(y-view.y0)/(view.y1-view.y0))*PH();
+  const ix=p=>view.x0+(p-54)/PW()*(view.x1-view.x0);
+  const iy=p=>view.y0+(1-(p-12)/PH())*(view.y1-view.y0);
+  let head=pts.length, playing=false, raf=null;
+  function draw(){
+    const w=cv.clientWidth||600, dpr=window.devicePixelRatio||1;
+    cv.width=w*dpr; cv.height=H*dpr; cv.style.height=H+'px';
+    const c=cv.getContext('2d'); c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,w,H);
+    c.save(); c.beginPath(); c.rect(54,12,w-54-16,H-12-36); c.clip();
+    // faint grid
+    c.strokeStyle='rgba(120,150,200,0.10)';
+    for(const gx of ticks(view.x0,view.x1)){c.beginPath();c.moveTo(px(gx),12);c.lineTo(px(gx),H-36);c.stroke();}
+    for(const gy of ticks(view.y0,view.y1)){c.beginPath();c.moveTo(54,py(gy));c.lineTo(w-16,py(gy));c.stroke();}
+    // axes
+    c.strokeStyle='rgba(190,205,230,0.4)'; c.lineWidth=1;
+    c.beginPath(); c.moveTo(54,py(0)); c.lineTo(w-16,py(0)); c.stroke();
+    c.beginPath(); c.moveTo(px(0),12); c.lineTo(px(0),H-36); c.stroke();
+    // the curve
+    const hd=Math.max(2,Math.min(pts.length,Math.round(head)));
+    c.strokeStyle=COL.red; c.lineWidth=1.8; c.beginPath();
+    for(let i=0;i<hd;i++){ const X=px(pts[i].re),Y=py(pts[i].im); if(i===0)c.moveTo(X,Y); else c.lineTo(X,Y); }
+    c.stroke();
+    // origin marker
+    c.fillStyle='#ffffff'; c.beginPath(); c.arc(px(0),py(0),4,0,7); c.fill();
+    c.strokeStyle='rgba(255,255,255,0.5)'; c.beginPath(); c.arc(px(0),py(0),9,0,7); c.stroke();
+    // tip marker
+    const tip=pts[hd-1];
+    c.fillStyle='#ffd24a'; c.beginPath(); c.arc(px(tip.re),py(tip.im),3.5,0,7); c.fill();
+    c.restore();
+    c.font='11px "Source Code Pro", monospace'; c.fillStyle='#8ea0c0'; c.textAlign='center'; c.textBaseline='top';
+    for(const x of ticks(view.x0,view.x1)){const X=px(x); if(X<54||X>w-16)continue; c.fillText(fmt(x),X,H-30);}
+    c.textAlign='right'; c.textBaseline='middle';
+    for(const y of ticks(view.y0,view.y1)){const Y=py(y); if(Y<12||Y>H-36)continue; c.fillText(fmt(y)+'i',48,Y);}
+    c.fillStyle='#dbe2f0'; c.textAlign='left'; c.textBaseline='top';
+    c.fillText('t = 0 → '+((hd-1)*STEP).toFixed(1), 60, 20);
+    c.strokeStyle='rgba(150,175,210,0.28)'; c.lineWidth=1; c.strokeRect(54.5,12.5,w-54-16-1,H-12-36-1);
+  }
+  function stop(){playing=false;playBtn.textContent='▶ Play';playBtn.classList.add('primary');if(raf)cancelAnimationFrame(raf);raf=null;}
+  function step(){ head+=Math.max(2,pts.length/260); if(head>=pts.length){head=pts.length;draw();stop();return;} draw(); raf=requestAnimationFrame(step); }
+  playBtn.onclick=()=>{ if(playing){stop();} else {playing=true;playBtn.textContent='❚❚ Pause';playBtn.classList.remove('primary');head=1;step();} };
+  sl.addEventListener('input',()=>{ stop(); tmax=+sl.value; lab.textContent=tmax.toFixed(0); pts=computeCurve(tmax); head=pts.length; draw(); });
+  let drag=null;
+  cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);drag={x:e.offsetX,y:e.offsetY,v:{...view}};});
+  cv.addEventListener('pointerup',()=>drag=null);
+  cv.addEventListener('pointerleave',()=>ro.style.opacity=0);
+  cv.addEventListener('pointermove',e=>{
+    if(drag){ const ddx=(e.offsetX-drag.x)/PW()*(drag.v.x1-drag.v.x0), ddy=(e.offsetY-drag.y)/PH()*(drag.v.y1-drag.v.y0);
+      view.x0=drag.v.x0-ddx; view.x1=drag.v.x1-ddx; view.y0=drag.v.y0+ddy; view.y1=drag.v.y1+ddy; draw();
+    }else{ ro.textContent='Re='+fmt(ix(e.offsetX))+' Im='+fmt(iy(e.offsetY)); ro.style.opacity=1; }
+  });
+  cv.addEventListener('wheel',e=>{ e.preventDefault(); const f=e.deltaY<0?0.86:1/0.86; const mx=ix(e.offsetX), my=iy(e.offsetY);
+    view.x0=mx-(mx-view.x0)*f; view.x1=mx-(mx-view.x1)*f; view.y0=my-(my-view.y0)*f; view.y1=my-(my-view.y1)*f; draw(); },{passive:false});
+  reset.onclick=()=>{stop();view={...initView};head=pts.length;draw();};
+  window.addEventListener('resize',draw);
+  draw();
+})();
+
+/* =====================================================================
+   FIGURE 8 — the zeros: trivial (real axis) + nontrivial (critical line)
    ===================================================================== */
 (function(){
   const nz=[]; for(const g of ZEROS){nz.push([0.5,g]);nz.push([0.5,-g]);}
@@ -1336,7 +1448,7 @@ function lerpCol(a,b,f){const pa=hexToRgb(a),pb=hexToRgb(b);return 'rgb('+Math.r
             {label:'nontrivial zeros',color:COL.teal,dot:1},
             {label:'trivial zeros (−2,−4,…)',color:COL.orange,dot:1},
             {label:'pole s = 1',color:COL.red,dot:1}],
-    caption:'Figure 7 &mdash; The map of the zeros. Trivial zeros (orange) sit at every negative even integer on the real axis; every nontrivial zero (teal) computed to date lies exactly on the yellow critical line <span class="math">Re(s)=½</span>. The Riemann Hypothesis says <em>all</em> of them do, forever. Drag up the line to see more.'
+    caption:'Figure 8 &mdash; The map of the zeros. Trivial zeros (orange) sit at every negative even integer on the real axis; every nontrivial zero (teal) computed to date lies exactly on the yellow critical line \(\operatorname{Re}(s)=\tfrac12\). The Riemann Hypothesis says <em>all</em> of them do, forever. Drag up the line to see more.'
   });
   const trivial=[]; for(let k=-2;k>=-14;k-=2) trivial.push([k,0]);
   const markers=[
@@ -1358,7 +1470,114 @@ function lerpCol(a,b,f){const pa=hexToRgb(a),pb=hexToRgb(b);return 'rgb('+Math.r
 })();
 
 /* =====================================================================
-   FIGURE 8 — prime gaps scatter
+   FIGURE 9 — the |zeta(s)| landscape, isometric surface with a rotate slider
+   ===================================================================== */
+(function(){
+  const fig=document.getElementById('fig-surface');
+  const box=document.createElement('div'); box.className='plotbox';
+  const t=document.createElement('div'); t.className='plot-title';
+  t.textContent='The surface |ζ(σ+it)|: a mountain at the pole, a trench of valleys at the zeros'; box.appendChild(t);
+  const bar=document.createElement('div'); bar.className='plot-toolbar';
+  bar.innerHTML='<span class="hint">Drag the rotate slider to spin the terrain</span>';
+  const playBtn=document.createElement('button'); playBtn.className='btn primary'; playBtn.textContent='▶ Rotate';
+  const reset=document.createElement('button'); reset.className='btn'; reset.textContent='Reset';
+  bar.appendChild(playBtn); bar.appendChild(reset);
+  const wrapC=document.createElement('span'); wrapC.className='ctrl';
+  const l=document.createElement('label'); l.textContent='angle:';
+  const sl=document.createElement('input'); sl.type='range'; sl.min=-60; sl.max=60; sl.step=1; sl.value=0;
+  wrapC.appendChild(l); wrapC.appendChild(sl); bar.appendChild(wrapC); box.appendChild(bar);
+  const wrap=document.createElement('div'); wrap.className='plot-canvas-wrap';
+  const cv=document.createElement('canvas'); cv.className='plot';
+  wrap.appendChild(cv); box.appendChild(wrap);
+  const lg=document.createElement('div'); lg.className='legend';
+  lg.innerHTML='<span class="item"><span class="swatch" style="background:linear-gradient(90deg,#2a5ea8,#35d0ba,#ffd24a,#ff6b6b)"></span>height = |ζ(σ+it)|, low (blue) → high (red)</span>'+
+    '<span class="item"><span class="swatch dot" style="background:'+COL.yellow+'"></span>critical line σ = ½ runs along the trench of zeros</span>';
+  box.appendChild(lg);
+  fig.appendChild(box);
+  const fc=document.createElement('figcaption');
+  fc.innerHTML='Figure 9 &mdash; An isometric height-map of \\(|\\zeta(\\sigma+it)|\\) over \\(\\sigma\\in[-0.5,1.5]\\), \\(t\\in[0,40]\\), clamped near the pole. The spike is \\(s=1\\); each valley touching the floor is a nontrivial zero, all lined up along \\(\\sigma=\\tfrac12\\).';
+  fig.appendChild(fc);
+
+  const H=440;
+  const NS=26, NT=64; // sigma, t sample counts
+  const S0=-0.6, S1=1.6, T0=0, T1=40, CLAMP=5.2;
+  const heights=[];
+  for(let i=0;i<=NS;i++){
+    const row=[];
+    const sigma=S0+(S1-S0)*i/NS;
+    for(let j=0;j<=NT;j++){
+      const tt=T0+(T1-T0)*j/NT;
+      let m;
+      if(Math.abs(sigma-1)<0.05 && tt<0.6){ m=CLAMP; }
+      else { m=Math.min(CLAMP, cabs(czeta(C(sigma,tt)))); }
+      row.push(m);
+    }
+    heights.push(row);
+  }
+  function colormap(v){ // 0..CLAMP -> blue..teal..gold..red
+    const f=Math.max(0,Math.min(1,v/CLAMP));
+    const stops=[[42,94,168],[53,208,186],[255,210,74],[255,107,107]];
+    const seg=f*3; const i=Math.min(2,Math.floor(seg)); const lf=seg-i;
+    const a=stops[i], b=stops[i+1];
+    const r=Math.round(a[0]+(b[0]-a[0])*lf), g=Math.round(a[1]+(b[1]-a[1])*lf), bl=Math.round(a[2]+(b[2]-a[2])*lf);
+    return 'rgb('+r+','+g+','+bl+')';
+  }
+  let angle=0, spinning=false, raf=null;
+  function project(i,j,h,w,cx,cy,cell,hscale,ang){
+    const rad=ang*Math.PI/180;
+    const u=i-NS/2, v=j-NT/2*(NS/NT);
+    const ur=u*Math.cos(rad)-v*Math.sin(rad);
+    const vr=u*Math.sin(rad)+v*Math.cos(rad);
+    const isoA=Math.PI/6;
+    const X=cx+(ur-vr)*Math.cos(isoA)*cell;
+    const Y=cy+(ur+vr)*Math.sin(isoA)*cell*0.6 - h*hscale;
+    return [X,Y];
+  }
+  function draw(){
+    const w=cv.clientWidth||600, dpr=window.devicePixelRatio||1;
+    cv.width=w*dpr; cv.height=H*dpr; cv.style.height=H+'px';
+    const c=cv.getContext('2d'); c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,w,H);
+    const cx=w/2, cy=H*0.62, cell=Math.min(w/(NS*1.7), 10), hscale=26;
+    const quads=[];
+    for(let i=0;i<NS;i++){
+      for(let j=0;j<NT;j++){
+        const h00=heights[i][j], h10=heights[i+1][j], h11=heights[i+1][j+1], h01=heights[i][j+1];
+        const p00=project(i,j,h00,w,cx,cy,cell,hscale,angle);
+        const p10=project(i+1,j,h10,w,cx,cy,cell,hscale,angle);
+        const p11=project(i+1,j+1,h11,w,cx,cy,cell,hscale,angle);
+        const p01=project(i,j+1,h01,w,cx,cy,cell,hscale,angle);
+        const havg=(h00+h10+h11+h01)/4;
+        quads.push({pts:[p00,p10,p11,p01], h:havg, depth:i+j});
+      }
+    }
+    quads.sort((a,b)=>a.depth-b.depth);
+    for(const q of quads){
+      c.fillStyle=colormap(q.h);
+      c.beginPath(); c.moveTo(q.pts[0][0],q.pts[0][1]);
+      for(let k=1;k<4;k++) c.lineTo(q.pts[k][0],q.pts[k][1]);
+      c.closePath(); c.fill();
+      c.strokeStyle='rgba(10,14,23,0.35)'; c.lineWidth=0.6; c.stroke();
+    }
+    const critI = Math.round((0.5-S0)/(S1-S0)*NS);
+    c.strokeStyle=COL.yellow; c.lineWidth=2; c.beginPath();
+    for(let j=0;j<=NT;j++){ const P=project(critI,j,heights[critI][j],w,cx,cy,cell,hscale,angle); j===0?c.moveTo(P[0],P[1]):c.lineTo(P[0],P[1]); }
+    c.stroke();
+    c.fillStyle='#dbe2f0'; c.font='12px "Space Grotesk", sans-serif'; c.textAlign='left'; c.textBaseline='top';
+    c.fillText('pole at s=1 →', 14, 14);
+    c.fillStyle='#8ea0c0'; c.font='11px "Source Code Pro", monospace';
+    c.fillText('σ (real part) & t (imaginary part) →, height = |ζ(s)|', 14, H-18);
+  }
+  function stop(){spinning=false;playBtn.textContent='▶ Rotate';playBtn.classList.add('primary');if(raf)cancelAnimationFrame(raf);raf=null;}
+  function step(){ angle+=0.6; if(angle>60){angle=60;stop();sl.value=60;draw();return;} sl.value=Math.round(angle); draw(); raf=requestAnimationFrame(step); }
+  playBtn.onclick=()=>{ if(spinning){stop();} else {spinning=true;playBtn.textContent='❚❚ Stop';playBtn.classList.remove('primary'); if(angle>=60)angle=-60; step();} };
+  sl.addEventListener('input',()=>{stop();angle=+sl.value;draw();});
+  reset.onclick=()=>{stop();angle=0;sl.value=0;draw();};
+  window.addEventListener('resize',draw);
+  draw();
+})();
+
+/* =====================================================================
+   FIGURE 10 — prime gaps scatter
    ===================================================================== */
 (function(){
   const X=5000; const gaps=[];
@@ -1366,12 +1585,16 @@ function lerpCol(a,b,f){const pa=hexToRgb(a),pb=hexToRgb(b);return 'rgb('+Math.r
   const {cv,reset,ro}=mount('fig-gaps',{
     title:'Gaps between consecutive primes (up to 5,000)',
     legend:[{label:'gap to the next prime',color:COL.orange,dot:1}],
-    caption:'Figure 8 &mdash; Each dot is the gap from a prime to the next. Chaotic up close, yet banded at even values (2, 4, 6, …) and bounded in a lawful way. Zoom in to explore.'
+    caption:'Figure 10 &mdash; Each dot is the gap from a prime to the next. Chaotic up close, yet banded at even values (2, 4, 6, …) and bounded in a lawful way. Zoom in to explore.'
   });
   const p=new Plot(cv,[{type:'scatter',data:gaps,color:COL.orange,r:1.8}],
     {x0:0,x1:X,y0:0,y1:40},{xlabel:'prime p',ylabel:'gap to next prime'});
   p.readout=ro; reset.onclick=()=>{p.view={...p.init};p.draw();};
 })();
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false});">
 </script>
 </body>
 </html>
