@@ -43,7 +43,7 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
           <div className="pt-4">
             <Link
               href={`/${basePath}`}
-              className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400 text-sm"
+              className="text-sm text-[#047857] hover:text-[#065f46] dark:text-[#34D399] dark:hover:text-[#6ee7b7]"
             >
               &larr; Back
             </Link>
