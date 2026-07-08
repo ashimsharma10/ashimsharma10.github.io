@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Riemann Zeta Function &amp; the Riemann Hypothesis</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Source+Code+Pro:wght@400;600&display=swap');
+
+  :root {
+    --bg: #ffffff;
+    --bg-card: #faf9f6;
+    --bg-code: #f1efe8;
+    --text: #23221f;
+    --text-muted: #5f5e5a;
+    --heading: #17160f;
+    --border: #e2e1dc;
+
+    --c-green:   #1D9E75;  --c-green-bg:  #EAF3DE; --c-green-tx:  #27500A;
+    --c-blue:    #1565c0;  --c-blue-bg:   #E6F1FB; --c-blue-tx:   #0C447C;
+    --c-orange:  #e65100;  --c-orange-bg: #FAECE7; --c-orange-tx: #712B13;
+    --c-gold:    #b8860b;  --c-gold-bg:   #fbf3df; --c-gold-tx:   #7a5a06;
+    --c-purple:  #6a4c93;  --c-purple-bg: #f0ebf7; --c-purple-tx: #4a3468;
+    --c-pink:    #ad1457;  --c-pink-bg:   #fbe7f0; --c-pink-tx:   #7a0e3d;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+    font-size: 18px;
+    line-height: 1.7;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 48px 24px 90px;
+  }
+
+  h1, h2, h3, h4 { font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif; color: var(--heading); line-height: 1.25; font-weight: 700; }
+  h1 { font-size: 2.2em; margin-bottom: 0.5em; letter-spacing: -0.015em; }
+  h2 { font-size: 1.5em; margin: 2.4em 0 0.7em; padding-bottom: 0.35em; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 1.18em; margin: 1.7em 0 0.5em; color: #2e2d29; }
+  p { margin-bottom: 1.05em; }
+  a { color: var(--c-blue); text-decoration: none; border-bottom: 1px solid #cfe0f2; }
+  a:hover { color: var(--c-blue-tx); border-bottom-color: var(--c-blue); }
+  strong { color: #111; font-weight: 600; }
+  em { color: #2e2d29; }
+
+  .math {
+    font-family: 'Source Code Pro', ui-monospace, monospace; font-size: 0.9em;
+    color: var(--c-gold-tx); background: var(--c-gold-bg);
+    padding: 0.05em 0.4em; border-radius: 4px; white-space: nowrap;
+  }
+  p.eq { text-align: center; margin: 1.3em 0; }
+  p.eq .math { font-size: 1.02em; padding: 0.35em 0.9em; white-space: normal; line-height: 1.9; }
+
+  blockquote {
+    border-left: 4px solid var(--c-purple); background: var(--bg-card);
+    padding: 0.9em 1.2em; margin: 1.2em 0; font-size: 1.1em; color: #2e2d29;
+    border-radius: 0 8px 8px 0; font-weight: 500;
+  }
+
+  .callout { border-radius: 10px; padding: 0.9em 1.2em; margin: 1.3em 0; font-size: 0.96em; line-height: 1.6; }
+  .callout.plain   { background: var(--c-green-bg);  color: var(--c-green-tx); }
+  .callout.insight { background: var(--c-orange-bg); color: var(--c-orange-tx); }
+  .callout.note    { background: var(--c-blue-bg);   color: var(--c-blue-tx); }
+  .callout b { font-weight: 700; }
+  .callout .math { background: rgba(0,0,0,0.05); }
+
+  /* ζ-value table */
+  table.zt { border-collapse: collapse; width: 100%; margin: 1.2em 0; font-size: 0.92em; }
+  table.zt th, table.zt td { border: 1px solid var(--border); padding: 7px 12px; text-align: left; }
+  table.zt th { background: var(--bg-card); font-weight: 600; }
+  table.zt td:first-child, table.zt th:first-child { font-family: 'Source Code Pro', monospace; }
+  table.zt tr:nth-child(even) td { background: #fbfbf9; }
+
+  /* the meme card */
+  .meme { background: #17181c; border-radius: 14px; padding: 2em 1.4em 1.6em; margin: 1.6em 0; text-align: center; border: 1px solid #2a2b31; }
+  .meme .top { color: #f4f1e8; font-size: 1.4em; font-weight: 700; }
+  .meme .bottom { color: #e8b64a; font-size: 1.9em; font-weight: 800; margin-top: 0.15em; }
+  .meme .note { color: #a3a2ac; font-size: 0.82em; margin-top: 1em; line-height: 1.6; }
+
+  /* ---- Table of contents ---- */
+  .toc { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 1.1em 1.4em; margin: 1.8em 0 2.2em; }
+  .toc h3 { margin: 0 0 0.6em; font-size: 0.82em; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.09em; font-weight: 700; }
+  .toc ol { list-style: none; counter-reset: toc; columns: 2; column-gap: 2em; font-size: 0.93em; }
+  .toc li { counter-increment: toc; margin: 0.3em 0; break-inside: avoid; }
+  .toc li::before { content: counter(toc) "."; color: var(--c-blue); margin-right: 0.5em; font-weight: 600; }
+  .toc a { border: none; color: var(--text); }
+  .toc a:hover { color: var(--c-blue); }
+
+  /* ---- City pictogram ---- */
+  .city-wrap { background: linear-gradient(#eef3f8, #fbfaf7); border: 1px solid var(--border); border-radius: 12px; padding: 16px 10px 6px; margin: 1.6em 0; overflow-x: auto; }
+  .city-wrap svg { display: block; min-width: 700px; width: 100%; height: auto; }
+  .city-key { display: flex; gap: 20px; flex-wrap: wrap; padding: 8px 10px 2px; font-size: 12.5px; color: var(--text-muted); }
+  .city-key .item { display: flex; align-items: center; gap: 6px; }
+  .city-key .sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+
+  /* ---- Figure / plot ---- */
+  figure.fig { margin: 1.8em 0; }
+  .plotbox { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 14px 12px; overflow: hidden; }
+  .plot-title { font-weight: 600; font-size: 0.95em; color: #23221f; margin-bottom: 4px; }
+  .plot-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; font-size: 12px; color: var(--text-muted); }
+  .plot-toolbar .hint { opacity: .9; }
+  .plot-canvas-wrap { position: relative; }
+  canvas.plot { display: block; width: 100%; border-radius: 8px; cursor: grab; touch-action: none; background: #0a0e17; }
+  canvas.plot:active { cursor: grabbing; }
+  .readout { position: absolute; top: 8px; right: 10px; font-family: 'Source Code Pro', monospace; font-size: 11.5px; color: #cfd8e8; background: rgba(10,10,20,0.65); padding: 2px 7px; border-radius: 5px; pointer-events: none; opacity: 0; transition: opacity .15s; }
+  .plot-canvas-wrap:hover .readout { opacity: 1; }
+  .btn { font-family: inherit; font-size: 12px; color: #2e2d29; background: #fff; border: 1px solid var(--border); padding: 3px 11px; border-radius: 6px; cursor: pointer; }
+  .btn:hover { border-color: var(--c-blue); color: var(--c-blue); }
+  .btn.primary { background: var(--c-blue); color: #fff; border-color: var(--c-blue); }
+  .btn.primary:hover { background: var(--c-blue-tx); color: #fff; }
+  .ctrl { display: flex; align-items: center; gap: 8px; }
+  .ctrl label { font-size: 12px; color: var(--text-muted); }
+  .ctrl input[type=range] { width: 130px; accent-color: var(--c-blue); }
+  .ctrl .val { font-family: 'Source Code Pro', monospace; color: var(--c-blue-tx); min-width: 2.2em; font-size: 12px; }
+  figcaption { font-size: 0.86em; color: var(--text-muted); margin-top: 0.7em; padding: 0 4px; }
+
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 8px; font-size: 12px; }
+  .legend .item { display: flex; align-items: center; gap: 6px; color: #5f5e5a; }
+  .legend .swatch { width: 16px; height: 3px; border-radius: 2px; display: inline-block; }
+  .legend .swatch.dot { width: 9px; height: 9px; border-radius: 50%; }
+
+  ol.refs { font-size: 0.9em; color: var(--text-muted); padding-left: 1.4em; }
+  ol.refs li { margin: 0.35em 0; }
+  ul.plainlist { margin: 0 0 1em 1.4em; }
+  ul.plainlist li { margin: 0.35em 0; }
+
+  .status-timeline { list-style: none; margin: 0.6em 0; }
+  .status-timeline li { position: relative; padding-left: 1.4em; margin: 0.7em 0; }
+  .status-timeline li::before { content: "\2023"; position: absolute; left: 0; color: var(--c-blue); font-weight: 700; }
+
+  @media (max-width: 640px) {
+    body { font-size: 16.5px; padding: 30px 14px 60px; }
+    .toc ol { columns: 1; }
+    h1 { font-size: 1.7em; }
+  }
+  .tagline { font-size: 1.08em; color: #46453f; margin: 0 0 1.1em; }
+  blockquote.tldr { border-left-color: var(--c-blue); background: var(--c-blue-bg); color: #123; font-weight: 400; font-size: 1.0em; }
+</style>
+</head>
+<body>
+
+<h1>The Riemann Zeta Function &amp; the Riemann Hypothesis</h1>
+
+<p class="tagline"><em>What the zeta function actually is, why its zeros secretly govern the prime numbers, and what the Riemann Hypothesis really claims — built from scratch, with live graphs you can zoom, drag, and animate.</em></p>
+
+<blockquote class="tldr"><strong>The 30-second version.</strong> The primes look random, yet a single function <span class="math">&zeta;(s)</span> encodes their exact distribution. Extend <span class="math">&zeta;</span> to the complex plane and it sprouts special inputs — its <em>zeros</em> — that behave like tuning frequencies for the primes. The <strong>Riemann Hypothesis</strong> says every one of those zeros lands on a single vertical line, <span class="math">Re(s) = &frac12;</span>. If true, the primes are spread as evenly as mathematics allows. It has stood open for 167 years and carries a $1,000,000 prize.</blockquote>
+
+<h2 style="margin-top:0">A City Made of Numbers</h2>
+
+<p>Let's say we live in a numbered city. The buildings are lined up in order — building 1, building 2, building 3, and on forever. Every building is put up the same way: by stacking identical unit blocks into storeys.</p>
+
+<p>Some buildings only ever get <strong>one storey</strong>. No smaller building's floor plan divides evenly into them (other than a single unit block). Call these buildings <strong>prime</strong>.</p>
+
+<p>Every other building past the first is <strong>multi-storeyed</strong> — it can be built by repeating some smaller floor plan several times. Building 6 is two copies of building 3's plan stacked up, or three copies of building 2's. These are the <strong>composite</strong> buildings.</p>
+
+<div class="city-wrap">
+<svg viewBox="0 0 1220 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Skyline of numbered buildings; one-storey buildings are primes, taller buildings are composite">
+<line x1="0" y1="250" x2="1220" y2="250" stroke="#c9c6bc" stroke-width="2"/>
+<g>
+<rect x="20" y="237" width="28" height="13" rx="2" fill="#c98a13"/>
+<rect x="26" y="241.5" width="5" height="5" fill="#e8c15a" opacity="0.9"/>
+<rect x="37" y="241.5" width="5" height="5" fill="#e8c15a" opacity="0.9"/>
+<rect x="32.5" y="230" width="3" height="7" fill="#c98a13"/>
+<text x="34.0" y="266" text-anchor="middle" font-size="11" font-family="ui-monospace,monospace" fill="#5f5e5a">2</text>
+</g>
+<g>
+<rect x="55" y="237" width="28" height="13" rx="2" fill="#c98a13"/>
+<rect x="61" y="241.5" width="5" height="5" fill="#e8c15a" opacity="0.9"/>
+<rect x="72" y="241.5" width="5" height="5" fill="#e8c15a" opacity="0.9"/>
+<rect x="67.5" y="230" width="3" height="7" fill="#c98a13"/>
+<text x="69.0" y="266" text-anchor="middle" font-size="11" font-family="ui-monospace,monospace" fill="#5f5e5a">3</text>
+</g>
+<g>
+<rect x="90" y="224" width="28" height="26" rx="2" fill="#4a6fa5"/>
+<rect x="96" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="107" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<line x1="90" y1="224" x2="118" y2="224" stroke="#7d9dc4" stroke-width="1" opacity="0.55"/>
+<rect x="96" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="107" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<text x="104.0" y="266" text-anchor="middle" font-size="11" font-family="ui-monospace,monospace" fill="#5f5e5a">4</text>
+</g>
+<g>
+<rect x="125" y="237" width="28" height="13" rx="2" fill="#c98a13"/>
+<rect x="131" y="241.5" width="5" height="5" fill="#e8c15a" opacity="0.9"/>
+<rect x="142" y="241.5" width="5" height="5" fill="#e8c15a" opacity="0.9"/>
+<rect x="137.5" y="230" width="3" height="7" fill="#c98a13"/>
+<text x="139.0" y="266" text-anchor="middle" font-size="11" font-family="ui-monospace,monospace" fill="#5f5e5a">5</text>
+</g>
+<g>
+<rect x="160" y="224" width="28" height="26" rx="2" fill="#4a6fa5"/>
+<rect x="166" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="177" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<line x1="160" y1="224" x2="188" y2="224" stroke="#7d9dc4" stroke-width="1" opacity="0.55"/>
+<rect x="166" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="177" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<text x="174.0" y="266" text-anchor="middle" font-size="11" font-family="ui-monospace,monospace" fill="#5f5e5a">6</text>
+</g>
+<g>
+<rect x="195" y="237" width="28" height="13" rx="2" fill="#c98a13"/>
+<rect x="201" y="241.5" width="5" height="5" fill="#e8c15a" opacity="0.9"/>
+<rect x="212" y="241.5" width="5" height="5" fill="#e8c15a" opacity="0.9"/>
+<rect x="207.5" y="230" width="3" height="7" fill="#c98a13"/>
+<text x="209.0" y="266" text-anchor="middle" font-size="11" font-family="ui-monospace,monospace" fill="#5f5e5a">7</text>
+</g>
+<g>
+<rect x="230" y="211" width="28" height="39" rx="2" fill="#4a6fa5"/>
+<rect x="236" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="247" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<line x1="230" y1="224" x2="258" y2="224" stroke="#7d9dc4" stroke-width="1" opacity="0.55"/>
+<rect x="236" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="247" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<line x1="230" y1="211" x2="258" y2="211" stroke="#7d9dc4" stroke-width="1" opacity="0.55"/>
+<rect x="236" y="215.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="247" y="215.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<text x="244.0" y="266" text-anchor="middle" font-size="11" font-family="ui-monospace,monospace" fill="#5f5e5a">8</text>
+</g>
+<g>
+<rect x="265" y="224" width="28" height="26" rx="2" fill="#4a6fa5"/>
+<rect x="271" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="282" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<line x1="265" y1="224" x2="293" y2="224" stroke="#7d9dc4" stroke-width="1" opacity="0.55"/>
+<rect x="271" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="282" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<text x="279.0" y="266" text-anchor="middle" font-size="11" font-family="ui-monospace,monospace" fill="#5f5e5a">9</text>
+</g>
+<g>
+<rect x="300" y="224" width="28" height="26" rx="2" fill="#4a6fa5"/>
+<rect x="306" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="317" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<line x1="300" y1="224" x2="328" y2="224" stroke="#7d9dc4" stroke-width="1" opacity="0.55"/>
+<rect x="306" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="317" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<text x="314.0" y="266" text-anchor="middle" font-size="11" font-family="ui-monospace,monospace" fill="#5f5e5a">10</text>
+</g>
+<g>
+<rect x="335" y="237" width="28" height="13" rx="2" fill="#c98a13"/>
+<rect x="341" y="241.5" width="5" height="5" fill="#e8c15a" opacity="0.9"/>
+<rect x="352" y="241.5" width="5" height="5" fill="#e8c15a" opacity="0.9"/>
+<rect x="347.5" y="230" width="3" height="7" fill="#c98a13"/>
+<text x="349.0" y="266" text-anchor="middle" font-size="11" font-family="ui-monospace,monospace" fill="#5f5e5a">11</text>
+</g>
+<g>
+<rect x="370" y="211" width="28" height="39" rx="2" fill="#4a6fa5"/>
+<rect x="376" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="387" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<line x1="370" y1="224" x2="398" y2="224" stroke="#7d9dc4" stroke-width="1" opacity="0.55"/>
+<rect x="376" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="387" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<line x1="370" y1="211" x2="398" y2="211" stroke="#7d9dc4" stroke-width="1" opacity="0.55"/>
+<rect x="376" y="215.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="387" y="215.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<text x="384.0" y="266" text-anchor="middle" font-size="11" font-family="ui-monospace,monospace" fill="#5f5e5a">12</text>
+</g>
+<g>
+<rect x="405" y="237" width="28" height="13" rx="2" fill="#c98a13"/>
+<rect x="411" y="241.5" width="5" height="5" fill="#e8c15a" opacity="0.9"/>
+<rect x="422" y="241.5" width="5" height="5" fill="#e8c15a" opacity="0.9"/>
+<rect x="417.5" y="230" width="3" height="7" fill="#c98a13"/>
+<text x="419.0" y="266" text-anchor="middle" font-size="11" font-family="ui-monospace,monospace" fill="#5f5e5a">13</text>
+</g>
+<g>
+<rect x="440" y="224" width="28" height="26" rx="2" fill="#4a6fa5"/>
+<rect x="446" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="457" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<line x1="440" y1="224" x2="468" y2="224" stroke="#7d9dc4" stroke-width="1" opacity="0.55"/>
+<rect x="446" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="457" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<text x="454.0" y="266" text-anchor="middle" font-size="11" font-family="ui-monospace,monospace" fill="#5f5e5a">14</text>
+</g>
+<g>
+<rect x="475" y="224" width="28" height="26" rx="2" fill="#4a6fa5"/>
+<rect x="481" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="492" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<line x1="475" y1="224" x2="503" y2="224" stroke="#7d9dc4" stroke-width="1" opacity="0.55"/>
+<rect x="481" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="492" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<text x="489.0" y="266" text-anchor="middle" font-size="11" font-family="ui-monospace,monospace" fill="#5f5e5a">15</text>
+</g>
+<g>
+<rect x="510" y="198" width="28" height="52" rx="2" fill="#4a6fa5"/>
+<rect x="516" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="527" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<line x1="510" y1="224" x2="538" y2="224" stroke="#7d9dc4" stroke-width="1" opacity="0.55"/>
+<rect x="516" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="527" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<line x1="510" y1="211" x2="538" y2="211" stroke="#7d9dc4" stroke-width="1" opacity="0.55"/>
+<rect x="516" y="215.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="527" y="215.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<line x1="510" y1="198" x2="538" y2="198" stroke="#7d9dc4" stroke-width="1" opacity="0.55"/>
+<rect x="516" y="202.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="527" y="202.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<text x="524.0" y="266" text-anchor="middle" font-size="11" font-family="ui-monospace,monospace" fill="#5f5e5a">16</text>
+</g>
+<g>
+<rect x="545" y="237" width="28" height="13" rx="2" fill="#c98a13"/>
+<rect x="551" y="241.5" width="5" height="5" fill="#e8c15a" opacity="0.9"/>
+<rect x="562" y="241.5" width="5" height="5" fill="#e8c15a" opacity="0.9"/>
+<rect x="557.5" y="230" width="3" height="7" fill="#c98a13"/>
+<text x="559.0" y="266" text-anchor="middle" font-size="11" font-family="ui-monospace,monospace" fill="#5f5e5a">17</text>
+</g>
+<g>
+<rect x="580" y="211" width="28" height="39" rx="2" fill="#4a6fa5"/>
+<rect x="586" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="597" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<line x1="580" y1="224" x2="608" y2="224" stroke="#7d9dc4" stroke-width="1" opacity="0.55"/>
+<rect x="586" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="597" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<line x1="580" y1="211" x2="608" y2="211" stroke="#7d9dc4" stroke-width="1" opacity="0.55"/>
+<rect x="586" y="215.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="597" y="215.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<text x="594.0" y="266" text-anchor="middle" font-size="11" font-family="ui-monospace,monospace" fill="#5f5e5a">18</text>
+</g>
+<g>
+<rect x="615" y="237" width="28" height="13" rx="2" fill="#c98a13"/>
+<rect x="621" y="241.5" width="5" height="5" fill="#e8c15a" opacity="0.9"/>
+<rect x="632" y="241.5" width="5" height="5" fill="#e8c15a" opacity="0.9"/>
+<rect x="627.5" y="230" width="3" height="7" fill="#c98a13"/>
+<text x="629.0" y="266" text-anchor="middle" font-size="11" font-family="ui-monospace,monospace" fill="#5f5e5a">19</text>
+</g>
+<g>
+<rect x="650" y="211" width="28" height="39" rx="2" fill="#4a6fa5"/>
+<rect x="656" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="667" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<line x1="650" y1="224" x2="678" y2="224" stroke="#7d9dc4" stroke-width="1" opacity="0.55"/>
+<rect x="656" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="667" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<line x1="650" y1="211" x2="678" y2="211" stroke="#7d9dc4" stroke-width="1" opacity="0.55"/>
+<rect x="656" y="215.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="667" y="215.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<text x="664.0" y="266" text-anchor="middle" font-size="11" font-family="ui-monospace,monospace" fill="#5f5e5a">20</text>
+</g>
+<g>
+<rect x="685" y="224" width="28" height="26" rx="2" fill="#4a6fa5"/>
+<rect x="691" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="702" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<line x1="685" y1="224" x2="713" y2="224" stroke="#7d9dc4" stroke-width="1" opacity="0.55"/>
+<rect x="691" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="702" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<text x="699.0" y="266" text-anchor="middle" font-size="11" font-family="ui-monospace,monospace" fill="#5f5e5a">21</text>
+</g>
+<g>
+<rect x="720" y="224" width="28" height="26" rx="2" fill="#4a6fa5"/>
+<rect x="726" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="737" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<line x1="720" y1="224" x2="748" y2="224" stroke="#7d9dc4" stroke-width="1" opacity="0.55"/>
+<rect x="726" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="737" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<text x="734.0" y="266" text-anchor="middle" font-size="11" font-family="ui-monospace,monospace" fill="#5f5e5a">22</text>
+</g>
+<g>
+<rect x="755" y="237" width="28" height="13" rx="2" fill="#c98a13"/>
+<rect x="761" y="241.5" width="5" height="5" fill="#e8c15a" opacity="0.9"/>
+<rect x="772" y="241.5" width="5" height="5" fill="#e8c15a" opacity="0.9"/>
+<rect x="767.5" y="230" width="3" height="7" fill="#c98a13"/>
+<text x="769.0" y="266" text-anchor="middle" font-size="11" font-family="ui-monospace,monospace" fill="#5f5e5a">23</text>
+</g>
+<g>
+<rect x="790" y="198" width="28" height="52" rx="2" fill="#4a6fa5"/>
+<rect x="796" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="807" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<line x1="790" y1="224" x2="818" y2="224" stroke="#7d9dc4" stroke-width="1" opacity="0.55"/>
+<rect x="796" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="807" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<line x1="790" y1="211" x2="818" y2="211" stroke="#7d9dc4" stroke-width="1" opacity="0.55"/>
+<rect x="796" y="215.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="807" y="215.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<line x1="790" y1="198" x2="818" y2="198" stroke="#7d9dc4" stroke-width="1" opacity="0.55"/>
+<rect x="796" y="202.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="807" y="202.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<text x="804.0" y="266" text-anchor="middle" font-size="11" font-family="ui-monospace,monospace" fill="#5f5e5a">24</text>
+</g>
+<g>
+<rect x="825" y="224" width="28" height="26" rx="2" fill="#4a6fa5"/>
+<rect x="831" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="842" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<line x1="825" y1="224" x2="853" y2="224" stroke="#7d9dc4" stroke-width="1" opacity="0.55"/>
+<rect x="831" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="842" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<text x="839.0" y="266" text-anchor="middle" font-size="11" font-family="ui-monospace,monospace" fill="#5f5e5a">25</text>
+</g>
+<g>
+<rect x="860" y="224" width="28" height="26" rx="2" fill="#4a6fa5"/>
+<rect x="866" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="877" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<line x1="860" y1="224" x2="888" y2="224" stroke="#7d9dc4" stroke-width="1" opacity="0.55"/>
+<rect x="866" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="877" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<text x="874.0" y="266" text-anchor="middle" font-size="11" font-family="ui-monospace,monospace" fill="#5f5e5a">26</text>
+</g>
+<g>
+<rect x="895" y="211" width="28" height="39" rx="2" fill="#4a6fa5"/>
+<rect x="901" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="912" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<line x1="895" y1="224" x2="923" y2="224" stroke="#7d9dc4" stroke-width="1" opacity="0.55"/>
+<rect x="901" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="912" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<line x1="895" y1="211" x2="923" y2="211" stroke="#7d9dc4" stroke-width="1" opacity="0.55"/>
+<rect x="901" y="215.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="912" y="215.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<text x="909.0" y="266" text-anchor="middle" font-size="11" font-family="ui-monospace,monospace" fill="#5f5e5a">27</text>
+</g>
+<g>
+<rect x="930" y="211" width="28" height="39" rx="2" fill="#4a6fa5"/>
+<rect x="936" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="947" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<line x1="930" y1="224" x2="958" y2="224" stroke="#7d9dc4" stroke-width="1" opacity="0.55"/>
+<rect x="936" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="947" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<line x1="930" y1="211" x2="958" y2="211" stroke="#7d9dc4" stroke-width="1" opacity="0.55"/>
+<rect x="936" y="215.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="947" y="215.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<text x="944.0" y="266" text-anchor="middle" font-size="11" font-family="ui-monospace,monospace" fill="#5f5e5a">28</text>
+</g>
+<g>
+<rect x="965" y="237" width="28" height="13" rx="2" fill="#c98a13"/>
+<rect x="971" y="241.5" width="5" height="5" fill="#e8c15a" opacity="0.9"/>
+<rect x="982" y="241.5" width="5" height="5" fill="#e8c15a" opacity="0.9"/>
+<rect x="977.5" y="230" width="3" height="7" fill="#c98a13"/>
+<text x="979.0" y="266" text-anchor="middle" font-size="11" font-family="ui-monospace,monospace" fill="#5f5e5a">29</text>
+</g>
+<g>
+<rect x="1000" y="211" width="28" height="39" rx="2" fill="#4a6fa5"/>
+<rect x="1006" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="1017" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<line x1="1000" y1="224" x2="1028" y2="224" stroke="#7d9dc4" stroke-width="1" opacity="0.55"/>
+<rect x="1006" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="1017" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<line x1="1000" y1="211" x2="1028" y2="211" stroke="#7d9dc4" stroke-width="1" opacity="0.55"/>
+<rect x="1006" y="215.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="1017" y="215.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<text x="1014.0" y="266" text-anchor="middle" font-size="11" font-family="ui-monospace,monospace" fill="#5f5e5a">30</text>
+</g>
+<g>
+<rect x="1035" y="237" width="28" height="13" rx="2" fill="#c98a13"/>
+<rect x="1041" y="241.5" width="5" height="5" fill="#e8c15a" opacity="0.9"/>
+<rect x="1052" y="241.5" width="5" height="5" fill="#e8c15a" opacity="0.9"/>
+<rect x="1047.5" y="230" width="3" height="7" fill="#c98a13"/>
+<text x="1049.0" y="266" text-anchor="middle" font-size="11" font-family="ui-monospace,monospace" fill="#5f5e5a">31</text>
+</g>
+<g>
+<rect x="1070" y="185" width="28" height="65" rx="2" fill="#4a6fa5"/>
+<rect x="1076" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="1087" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<line x1="1070" y1="224" x2="1098" y2="224" stroke="#7d9dc4" stroke-width="1" opacity="0.55"/>
+<rect x="1076" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="1087" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<line x1="1070" y1="211" x2="1098" y2="211" stroke="#7d9dc4" stroke-width="1" opacity="0.55"/>
+<rect x="1076" y="215.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="1087" y="215.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<line x1="1070" y1="198" x2="1098" y2="198" stroke="#7d9dc4" stroke-width="1" opacity="0.55"/>
+<rect x="1076" y="202.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="1087" y="202.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<line x1="1070" y1="185" x2="1098" y2="185" stroke="#7d9dc4" stroke-width="1" opacity="0.55"/>
+<rect x="1076" y="189.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="1087" y="189.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<text x="1084.0" y="266" text-anchor="middle" font-size="11" font-family="ui-monospace,monospace" fill="#5f5e5a">32</text>
+</g>
+<g>
+<rect x="1105" y="224" width="28" height="26" rx="2" fill="#4a6fa5"/>
+<rect x="1111" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="1122" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<line x1="1105" y1="224" x2="1133" y2="224" stroke="#7d9dc4" stroke-width="1" opacity="0.55"/>
+<rect x="1111" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="1122" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<text x="1119.0" y="266" text-anchor="middle" font-size="11" font-family="ui-monospace,monospace" fill="#5f5e5a">33</text>
+</g>
+<g>
+<rect x="1140" y="224" width="28" height="26" rx="2" fill="#4a6fa5"/>
+<rect x="1146" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="1157" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<line x1="1140" y1="224" x2="1168" y2="224" stroke="#7d9dc4" stroke-width="1" opacity="0.55"/>
+<rect x="1146" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="1157" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<text x="1154.0" y="266" text-anchor="middle" font-size="11" font-family="ui-monospace,monospace" fill="#5f5e5a">34</text>
+</g>
+<g>
+<rect x="1175" y="224" width="28" height="26" rx="2" fill="#4a6fa5"/>
+<rect x="1181" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="1192" y="241.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<line x1="1175" y1="224" x2="1203" y2="224" stroke="#7d9dc4" stroke-width="1" opacity="0.55"/>
+<rect x="1181" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<rect x="1192" y="228.5" width="5" height="5" fill="#7d9dc4" opacity="0.9"/>
+<text x="1189.0" y="266" text-anchor="middle" font-size="11" font-family="ui-monospace,monospace" fill="#5f5e5a">35</text>
+</g>
+</svg>
+<div class="city-key">
+  <span class="item"><span class="sw" style="background:#c98a13"></span>prime — exactly one storey</span>
+  <span class="item"><span class="sw" style="background:#4a6fa5"></span>composite — smaller floor plans stacked</span>
+</div>
+</div>
+
+<p>Every building from 2 onward is either prime, or a stack of primes multiplied together — and that stack is <strong>unique</strong>. Building 12 is always two of building&nbsp;2's plan and one of building&nbsp;3's (<span class="math">12 = 2&times;2&times;3</span>), and nothing else. This is the <strong>Fundamental Theorem of Arithmetic</strong>: the primes are the atoms, and every number has exactly one atomic recipe. It is the single fact this whole page rests on.</p>
+
+<p>The question that runs through everything below: as the city stretches to infinity, <strong>where are the one-storey buildings?</strong> They thin out — but never on a schedule. 2, 3, 5, 7, 11, 13, 17, 19… sometimes neighbours, sometimes far apart, never repeating. The tool that turns that chaos into a precise, testable law is a strange function called <span class="math">&zeta;(s)</span>, and the deepest unsolved question about it is the <strong>Riemann Hypothesis</strong> — the destination of this page.</p>
+
+<div class="callout note">
+  <b>How to read the graphs.</b> Every plot below is live. <strong>Scroll</strong> to zoom, <strong>drag</strong> to pan, <strong>double&#8209;click</strong> to reset. Some have sliders or a <em>Play</em> button — move them and watch the mathematics respond.
+</div>
+
+<div class="toc">
+  <h3>Contents</h3>
+  <ol>
+    <li><a href="#sec1">What the zeta function is</a></li>
+    <li><a href="#sec2">Watching a sum spiral</a></li>
+    <li><a href="#sec3">The zeta transformation</a></li>
+    <li><a href="#sec4">Euler's product — the bridge to primes</a></li>
+    <li><a href="#sec5">Analytic continuation &amp; the zeros</a></li>
+    <li><a href="#sec6">Counting primes: &pi;(x)</a></li>
+    <li><a href="#sec7">Primes as a chorus of waves</a></li>
+    <li><a href="#sec8">The Riemann Hypothesis</a></li>
+    <li><a href="#sec9">Where it stands (2026)</a></li>
+  </ol>
+</div>
+
+
+<!-- ======== SECTION 1 ======== -->
+<h2 id="sec1">1. What the Zeta Function Is</h2>
+
+<p>Take a number <span class="math">s</span>, and add up the reciprocals of every whole number raised to the power <span class="math">s</span>. That infinite sum <em>is</em> the zeta function:</p>
+
+<p class="eq"><span class="math">&zeta;(s) = &sum;<sub>n=1</sub><sup>&infin;</sup> 1/n<sup>s</sup> = 1 + 1/2<sup>s</sup> + 1/3<sup>s</sup> + 1/4<sup>s</sup> + &hellip;</span></p>
+
+<p>Think of it as a machine: feed in <span class="math">s</span>, and it returns the total of that sum. Whether the machine gives a sensible answer depends entirely on <span class="math">s</span>:</p>
+
+<ul class="plainlist">
+  <li>If <span class="math">s &gt; 1</span>, the terms shrink fast enough that the sum <strong>converges</strong> to a finite number. <span class="math">&zeta;(2) = 1 + 1/4 + 1/9 + &hellip; = &pi;&sup2;/6 &approx; 1.645</span> (Euler's Basel Problem, 1734).</li>
+  <li>At <span class="math">s = 1</span> we get the harmonic series <span class="math">1 + 1/2 + 1/3 + &hellip;</span>, which <strong>diverges</strong> to infinity. This point is a <strong>pole</strong> — the function blows up there.</li>
+  <li>If <span class="math">s &lt; 1</span>, the raw sum diverges too. So how can <span class="math">&zeta;(&minus;1)</span> possibly equal a number? That's the story of Section&nbsp;5.</li>
+</ul>
+
+<table class="zt">
+  <tr><th>s</th><th>&zeta;(s)</th><th>what it is</th></tr>
+  <tr><td>2</td><td>&pi;&sup2;/6 &approx; 1.6449</td><td>the Basel Problem</td></tr>
+  <tr><td>4</td><td>&pi;&#8308;/90 &approx; 1.0823</td><td>converges quickly</td></tr>
+  <tr><td>1</td><td>&infin; (pole)</td><td>harmonic series diverges</td></tr>
+  <tr><td>0</td><td>&minus;1/2</td><td>only via continuation</td></tr>
+  <tr><td>&minus;1</td><td>&minus;1/12</td><td>the famous "1+2+3+…" value</td></tr>
+  <tr><td>&minus;2, &minus;4, &minus;6, …</td><td>0</td><td>the <em>trivial zeros</em></td></tr>
+</table>
+
+<figure class="fig" id="fig-real"></figure>
+
+<div class="callout plain">
+  <b>The one big idea.</b> The zeta function packs the entire multiplicative structure of the integers into a single object. Because of a formula we'll meet next, everything about how the primes are distributed is hidden inside <span class="math">&zeta;(s)</span> — and the zeros of <span class="math">&zeta;</span> are the key that unlocks it.
+</div>
+
+
+<!-- ======== SECTION 2 (spiral) ======== -->
+<h2 id="sec2">2. Watching a Sum Spiral</h2>
+
+<p>To go further we have to let <span class="math">s</span> be a <strong>complex number</strong>, <span class="math">s = &sigma; + it</span> — a point on a 2D plane with a real part <span class="math">&sigma;</span> and an imaginary part <span class="math">t</span>. Why? Because a complex power <span class="math">n<sup>&minus;s</sup></span> is not just a shrinking length; it also carries a <em>direction</em>. Writing <span class="math">n<sup>&minus;s</sup> = n<sup>&minus;&sigma;</sup> &middot; e<sup>&minus;i&thinsp;t&thinsp;ln n</sup></span>, the factor <span class="math">n<sup>&minus;&sigma;</sup></span> sets the length and <span class="math">e<sup>&minus;i&thinsp;t&thinsp;ln n</sup></span> sets the angle.</p>
+
+<p>Add the terms nose-to-tail and, instead of creeping along a line, the running total <strong>spirals</strong> inward to its final value. That final point is <span class="math">&zeta;(s)</span>.</p>
+
+<figure class="fig" id="fig-spiral"></figure>
+
+<div class="callout plain">
+  <b>Try it.</b> Drag the sliders or press <em>Play</em>. <span class="math">&sigma;</span> controls how fast the terms shrink (bigger <span class="math">&sigma;</span> = tighter, faster convergence); <span class="math">t</span> controls how fast each term rotates relative to the last. Whatever you pick, the spiral always winds down onto one point — the value of <span class="math">&zeta;(&sigma;+it)</span>.
+</div>
+
+
+<!-- ======== SECTION 3 (transformation) ======== -->
+<h2 id="sec3">3. The Zeta Transformation</h2>
+
+<p>A single spiral shows <span class="math">&zeta;</span> at one input. To see the whole function at once, watch what it does to an entire <em>grid</em> of inputs. Below, each faint straight line is a row or column of the input plane. Press <em>Play</em> and every point <span class="math">s</span> slides to its output <span class="math">&zeta;(s)</span> — the rigid grid bends into a field of interlocking spirals.</p>
+
+<figure class="fig" id="fig-transform"></figure>
+
+<div class="callout plain">
+  <b>What you're seeing.</b> This is the geometric personality of <span class="math">&zeta;</span>. Notice how the transformation is <em>smooth and angle-preserving</em> everywhere it's defined — a hallmark of a well-behaved ("analytic") complex function. That smoothness is exactly what lets Riemann extend <span class="math">&zeta;</span> to places the original sum can't reach, in Section&nbsp;5. The point everything swirls around is the pole at <span class="math">s = 1</span>.
+</div>
+
+
+<!-- ======== SECTION 4 (Euler) ======== -->
+<h2 id="sec4">4. Euler's Product — the Bridge to the Primes</h2>
+
+<p>Here is why any of this touches the primes. In 1737 Euler proved that the same sum can be rewritten as a <strong>product over the prime buildings alone</strong>:</p>
+
+<p class="eq"><span class="math">&zeta;(s) = &sum;<sub>n</sub> 1/n<sup>s</sup> = &prod;<sub>p&nbsp;prime</sub> 1/(1 &minus; p<sup>&minus;s</sup>)</span></p>
+
+<p>The proof is our city in disguise. Expand each factor as a geometric series, <span class="math">1/(1&minus;p<sup>&minus;s</sup>) = 1 + p<sup>&minus;s</sup> + p<sup>&minus;2s</sup> + &hellip;</span>, and multiply all the factors together. When you pick one term from each bracket and multiply, you get <span class="math">1/n<sup>s</sup></span> for a number <span class="math">n</span> built from those exact prime powers. Because every <span class="math">n</span> has <em>one</em> unique prime recipe, every <span class="math">1/n<sup>s</sup></span> appears <em>exactly once</em>. The product <em>is</em> unique factorization, written in analysis.</p>
+
+<div class="callout plain">
+  <b>In plain terms.</b> A sum over <em>every building</em> equals a product over <em>just the prime buildings</em>. That equals sign is the bridge — cross it in either direction and facts about primes become facts about a smooth function, and back. Below, switch on more primes and watch the product close in on the true curve.
+</div>
+
+<figure class="fig" id="fig-euler"></figure>
+
+<div class="callout insight">
+  <strong>First payoff — infinitely many primes.</strong> As <span class="math">s &rarr; 1</span>, the left side <span class="math">&zeta;(s) &rarr; &infin;</span>. If there were only finitely many primes, the right side would be a finite product of finite numbers — finite. Contradiction, so there are <em>infinitely many primes</em>. Euler even showed <span class="math">&sum;<sub>p</sub> 1/p = &infin;</span>: the primes are dense enough that their reciprocals still diverge.
+</div>
+
+
+<!-- ======== SECTION 5 (continuation) ======== -->
+<h2 id="sec5">5. Analytic Continuation &amp; the Zeros</h2>
+
+<p>The sum and the product both only make sense for <span class="math">Re(s) &gt; 1</span> — that's the "wall." Riemann's decisive step (1859) was to show that <span class="math">&zeta;</span> can be extended, <em>uniquely</em> and smoothly, to the entire complex plane, with the single exception of the pole at <span class="math">s = 1</span>. This is <strong>analytic continuation</strong>.</p>
+
+<div class="callout plain">
+  <b>Why "unique."</b> A key theorem of complex analysis says a smooth (analytic) function is astonishingly rigid: if two such functions agree on any small patch, they agree <em>everywhere</em> they're both defined. So there is only one possible smooth extension of <span class="math">&zeta;</span> past the wall. Riemann found it — and a whole landscape, full of zeros, appeared on the far side.
+</div>
+
+<p>The extension obeys a beautiful mirror symmetry. Define the <strong>completed zeta function</strong> by attaching a couple of standard factors:</p>
+
+<p class="eq"><span class="math">&xi;(s) = &pi;<sup>&minus;s/2</sup> &Gamma;(s/2) &zeta;(s)</span>, &nbsp;&nbsp; which satisfies &nbsp;&nbsp; <span class="math">&xi;(s) = &xi;(1 &minus; s)</span></p>
+
+<p>Here <span class="math">&Gamma;</span> is the gamma function, the smooth version of the factorial. The identity <span class="math">&xi;(s) = &xi;(1-s)</span> says the function is perfectly symmetric under reflection through the vertical line <span class="math">Re(s) = &frac12;</span>. That line — the <strong>critical line</strong> — is forced into the centre of the story by this symmetry alone.</p>
+
+<p>The functional equation also explains the two families of zeros:</p>
+
+<ul class="plainlist">
+  <li><strong>Trivial zeros</strong> at <span class="math">s = &minus;2, &minus;4, &minus;6, &hellip;</span>. On the negative real axis the <span class="math">&Gamma;(s/2)</span> factor forces <span class="math">&zeta;</span> to vanish at every negative even integer. They're "trivial" because we understand them completely.</li>
+  <li><strong>Nontrivial zeros</strong> — every <em>other</em> zero. The symmetry pins them inside the <strong>critical strip</strong> <span class="math">0 &le; Re(s) &le; 1</span>, and in mirror-image families: if <span class="math">&rho;</span> is a zero, so are <span class="math">\bar&rho;</span>, <span class="math">1&minus;&rho;</span>, and <span class="math">1&minus;\bar&rho;</span>.</li>
+</ul>
+
+<p>And a famous byproduct of the continuation, the one that shows up all over the internet:</p>
+
+<div class="meme">
+  <div class="top">1 + 2 + 3 + 4 + &hellip;</div>
+  <div class="bottom">= &minus;1/12&nbsp;?!</div>
+  <div class="note">Not literally. The series obviously diverges to infinity. What's actually true is <span class="math" style="background:transparent;color:#e8c060">&zeta;(&minus;1) = &minus;1/12</span> — the number the <em>analytically continued</em> function assigns to <span class="math" style="background:transparent;color:#e8c060">s = &minus;1</span>. The continuation, not the naive sum, produces it (and physics — the Casimir effect — really does use this value).</div>
+</div>
+
+
+<!-- ======== SECTION 6 (pi(x)) ======== -->
+<h2 id="sec6">6. Where Are the Primes? Counting with &pi;(x)</h2>
+
+<p>Let <span class="math">&pi;(x)</span> count the primes up to <span class="math">x</span> — the one-storey buildings up to house number <span class="math">x</span>. So <span class="math">&pi;(10)=4</span>, <span class="math">&pi;(100)=25</span>, <span class="math">&pi;(10&sup6;)=78{,}498</span>. Plotted, it's a <strong>staircase</strong> that jumps by <span class="math">+1</span> at each prime.</p>
+
+<p>The teenage Gauss (c. 1792) noticed the staircase is closely shadowed by <span class="math">x/\ln x</span>. A sharper companion is the <strong>logarithmic integral</strong> <span class="math">Li(x) = &int;<sub>2</sub><sup>x</sup> dt/\ln t</span>. The <strong>Prime Number Theorem</strong> (Hadamard and de la Vall&eacute;e Poussin, 1896) proved these really are the right growth rate: <span class="math">&pi;(x) ~ x/\ln x</span>. Their proof worked precisely by using the zeros of <span class="math">&zeta;</span>.</p>
+
+<figure class="fig" id="fig-pi"></figure>
+
+<p>The staircase is the exact truth; the smooth curves are the approximations, and <span class="math">Li(x)</span> hugs it tightly. The entire Riemann Hypothesis is, at heart, a statement about the <em>size of the gap</em> between the staircase and <span class="math">Li(x)</span>.</p>
+
+
+<!-- ======== SECTION 7 (waves) ======== -->
+<h2 id="sec7">7. Primes as a Chorus of Waves</h2>
+
+<p>Riemann's paper made the zeros-control-primes link exact. Using a weighted prime count, the Chebyshev function <span class="math">&psi;(x) = &sum;<sub>p<sup>k</sup> &le; x</sub> \ln p</span>, the <strong>explicit formula</strong> (von Mangoldt, 1895) reads:</p>
+
+<p class="eq"><span class="math">&psi;(x) = x &minus; &sum;<sub>&rho;</sub> x<sup>&rho;</sup>/&rho; &minus; \ln(2&pi;) &minus; &frac12;\ln(1 &minus; x<sup>&minus;2</sup>)</span></p>
+
+<p>Read it as: a smooth trend <span class="math">x</span>, corrected by one term per nontrivial zero <span class="math">&rho;</span>. Since <span class="math">&rho; = &beta; + i&gamma;</span> gives <span class="math">x<sup>&rho;</sup> = x<sup>&beta;</sup>e<sup>i&gamma;\ln x</sup></span>, each zero contributes an oscillating <strong>wave</strong> whose amplitude is set by <span class="math">x<sup>&beta;</sup></span> — the real part of the zero. Stack the waves and you rebuild the prime staircase exactly. This is the literal "music of the primes": the zeros are its frequencies.</p>
+
+<div class="callout plain">
+  <b>Drag the slider.</b> Start with the bare trend line <span class="math">y = x</span>, then add zeros one pair at a time. A few pairs give a loose wobble; add more and the curve snaps onto the true staircase, step by step.
+</div>
+
+<figure class="fig" id="fig-psi"></figure>
+
+<p>The punchline is in that amplitude <span class="math">x<sup>&beta;</sup></span>. A zero with <span class="math">&beta;</span> close to 1 would inject a violent, prime-scrambling wave; a zero with <span class="math">&beta; = &frac12;</span> keeps its wave as quiet as the symmetry allows. So the question "how regular are the primes?" becomes, precisely, "how far right can a zero sit?"</p>
+
+
+<!-- ======== SECTION 8 (RH) ======== -->
+<h2 id="sec8">8. The Riemann Hypothesis</h2>
+
+<blockquote>Every nontrivial zero of <span class="math">&zeta;(s)</span> has real part exactly <span class="math">&frac12;</span>.</blockquote>
+
+<p>That's the whole conjecture. Every one of the infinitely many nontrivial zeros — despite only being <em>known</em> to live somewhere in the strip <span class="math">0 &le; Re(s) &le; 1</span> — should sit precisely on the critical line <span class="math">Re(s) = &frac12;</span>. The plot below shows the actual computed picture: trivial zeros marching along the negative real axis, and every nontrivial zero (as far as anyone has ever calculated) balanced exactly on the yellow line.</p>
+
+<figure class="fig" id="fig-zeros"></figure>
+
+<h3>Why <span class="math">&frac12;</span>, and why it matters</h3>
+
+<p>The functional equation <span class="math">&xi;(s)=&xi;(1-s)</span> already forces the nontrivial zeros to be symmetric about <span class="math">Re(s)=&frac12;</span>: they come in pairs <span class="math">&rho;</span> and <span class="math">1-&rho;</span> straddling the line. RH is the claim that every pair has actually <em>collapsed onto</em> the line — that there are no off-line pairs at all. Through the explicit formula of Section&nbsp;7, this is exactly equivalent to the primes being as evenly spread as mathematically possible. Concretely, von Koch proved in 1901 that RH is the same statement as:</p>
+
+<p class="eq"><span class="math">|&pi;(x) &minus; Li(x)| &le; C &middot; &radic;x &middot; \ln x</span></p>
+
+<p>The error between the true prime count and its smooth estimate stays as small as <span class="math">&radic;x</span> — the size of the fluctuation you'd get from flipping a fair coin <span class="math">x</span> times. RH says the primes, for all their local unpredictability, are globally as <em>pseudorandom and well-behaved</em> as they could ever be. An off-line zero at real part <span class="math">&beta; &gt; &frac12;</span> would blow this error up to size <span class="math">x<sup>&beta;</sup></span> — a detectable clumping of the primes.</p>
+
+<div class="callout insight">
+  <strong>Why anyone cares.</strong> RH is not one isolated puzzle. Hundreds of published theorems begin "assume the Riemann Hypothesis…" — results on prime gaps, on fast primality testing, on the growth of arithmetic functions. It sits under so much of number theory that a proof would instantly upgrade an entire library of conditional results to unconditional ones. It is Problem&nbsp;8 on Hilbert's 1900 list and a Clay Millennium Prize Problem carrying a <strong>$1,000,000</strong> reward.
+</div>
+
+<h3>Visual evidence: the gaps between primes</h3>
+
+<p>Zoom back into the street and measure the distance between consecutive one-storey buildings — the <strong>prime gaps</strong>. On average the gap near <span class="math">x</span> is about <span class="math">\ln x</span> (primes near a million sit ~14 apart; near a billion, ~21). But the average hides real structure:</p>
+
+<ul class="plainlist">
+  <li><strong>Gaps are almost always even.</strong> Past 2, every prime is odd, so consecutive primes differ by an even number — odd gaps simply can't occur (bar the lone <span class="math">2&rarr;3</span>).</li>
+  <li><strong>Small gaps never run out.</strong> Gap 2 (twin primes like 11 &amp; 13) keeps recurring as far as anyone computes; whether it happens <em>infinitely</em> often is the still-open Twin Prime Conjecture.</li>
+  <li><strong>Large gaps stay rare, predictably.</strong> Cramér's conjecture guesses the biggest gap near <span class="math">x</span> is about <span class="math">(\ln x)&sup2;</span> — unproven, but matching every gap ever measured.</li>
+</ul>
+
+<figure class="fig" id="fig-gaps"></figure>
+
+<p>Individually the gaps look like noise — no formula fits that scatter. But taken as a whole they obey the tight statistical law RH predicts: locally unpredictable, globally lawful. That is the fingerprint of the critical line.</p>
+
+
+<!-- ======== SECTION 9 (status) ======== -->
+<h2 id="sec9">9. Where It Stands (mid&#8209;2026)</h2>
+
+<p>The Riemann Hypothesis is still <strong>open</strong> — no proof, no counterexample. But "open" is a long way from "quiet":</p>
+
+<ul class="status-timeline">
+  <li><strong>Numerical verification.</strong> Rigorous computation (Platt &amp; Trudgian, 2020) confirms every zero up to height <span class="math">&sim;3&times;10&sup1;&sup2;</span> lies exactly on the critical line; large runs push verified counts into the tens of trillions. Not one stray zero has ever appeared.</li>
+  <li><strong>Proportion on the line.</strong> Hardy (1914) proved infinitely many zeros satisfy <span class="math">Re=&frac12;</span>; Selberg (1942) a positive fraction; Conrey (1989) over 40%; recent work nudges it just past 41%.</li>
+  <li><strong>Guth&ndash;Maynard (2024).</strong> Larry Guth and James Maynard sharpened Ingham's 1940 zero-density estimate from <span class="math">3/5</span> to <span class="math">13/25</span> — the first real move in over 80 years, with direct consequences for primes in short intervals.</li>
+  <li><strong>De Bruijn&ndash;Newman constant.</strong> RH is equivalent to <span class="math">&Lambda; = 0</span> for a real constant <span class="math">&Lambda;</span>. Rodgers &amp; Tao proved <span class="math">&Lambda; &ge; 0</span> (2018); Polymath&nbsp;15 showed <span class="math">&Lambda; &le; 0.2</span>. If RH holds, it holds "just barely."</li>
+  <li><strong>Connes' program (2026).</strong> A February 2026 survey by Alain Connes outlines a strategy via Weil's quadratic form and trace formulas; using only primes below 13 it reproduces the first 50 zeros, provably on the line.</li>
+  <li><strong>Formalization.</strong> The Prime Number Theorem is now machine-verified in Lean&nbsp;4's Mathlib, and analytic number theory is being formalized in earnest.</li>
+</ul>
+
+<div class="callout insight">
+  <strong>The honest summary.</strong> After 167 years — overwhelming numerics, 40%+ of zeros provably on the line, the sharpest density bounds in nearly a century, an exact equivalent (<span class="math">&Lambda;=0</span>) balanced on a knife's edge, and a fully proved analogue over finite fields — there is still no proof. Most experts expect the answer will need either a genuinely new idea in analysis, or the successful import of the spectral/geometric machinery that already settled the function-field case.
+</div>
+
+
+<!-- ======== REFERENCES ======== -->
+<h2 id="refs">References</h2>
+<ol class="refs">
+  <li>B. Riemann, <em>&Uuml;ber die Anzahl der Primzahlen unter einer gegebenen Gr&ouml;sse</em>, 1859.</li>
+  <li>H. M. Edwards, <em>Riemann's Zeta Function</em>, Dover, 2001.</li>
+  <li>E. C. Titchmarsh (rev. D. R. Heath-Brown), <em>The Theory of the Riemann Zeta-Function</em>, 2nd ed., Oxford, 1986.</li>
+  <li>J. B. Conrey, "The Riemann Hypothesis," <em>Notices of the AMS</em> 50, 341&ndash;353, 2003.</li>
+  <li>L. Guth &amp; J. Maynard, "New large value estimates for Dirichlet polynomials," arXiv:2405.20552, 2024.</li>
+  <li>B. Rodgers &amp; T. Tao, "The de Bruijn&ndash;Newman constant is non-negative," <em>Forum of Math, Pi</em>, 2020.</li>
+  <li>D. Platt &amp; T. Trudgian, "The Riemann hypothesis is true up to 3&middot;10&sup1;&sup2;," <em>Bull. LMS</em>, 2021.</li>
+  <li>A. Connes, "The Riemann Hypothesis: Past, Present and a Letter Through Time," arXiv:2602.04022, 2026.</li>
+  <li>P. Borwein, "An Efficient Algorithm for the Riemann Zeta Function," 1995 (used for the live computations here).</li>
+  <li>Clay Mathematics Institute, <a href="https://www.claymath.org/millennium/riemann-hypothesis/">Millennium Problem: Riemann Hypothesis</a>.</li>
+  <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Riemann_hypothesis">Riemann Hypothesis</a> · <a href="https://en.wikipedia.org/wiki/Riemann_zeta_function">Riemann Zeta Function</a>.</li>
+</ol>
+
+<script>
+/* =====================================================================
+   Complex arithmetic + Riemann zeta (Borwein acceleration + functional eq)
+   ===================================================================== */
+const C  = (re, im=0) => ({re, im});
+const cadd=(a,b)=>({re:a.re+b.re, im:a.im+b.im});
+const csub=(a,b)=>({re:a.re-b.re, im:a.im-b.im});
+const cmul=(a,b)=>({re:a.re*b.re-a.im*b.im, im:a.re*b.im+a.im*b.re});
+const cdiv=(a,b)=>{const d=b.re*b.re+b.im*b.im; return {re:(a.re*b.re+a.im*b.im)/d, im:(a.im*b.re-a.re*b.im)/d};};
+const cexp=a=>{const e=Math.exp(a.re); return {re:e*Math.cos(a.im), im:e*Math.sin(a.im)};};
+const clog=a=>({re:0.5*Math.log(a.re*a.re+a.im*a.im), im:Math.atan2(a.im,a.re)});
+const cpow=(a,b)=>(a.re===0&&a.im===0)?C(0):cexp(cmul(b,clog(a)));
+const csin=a=>({re:Math.sin(a.re)*Math.cosh(a.im), im:Math.cos(a.re)*Math.sinh(a.im)});
+const cabs=a=>Math.hypot(a.re,a.im);
+
+const _G=7;
+const _Lc=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,
+           -176.61502916214059,12.507343278686905,-0.13857109526572012,
+           9.9843695780195716e-6,1.5056327351493116e-7];
+function cgamma(z){
+  if(z.re<0.5){
+    const s=csin(cmul(C(Math.PI),z));
+    return cdiv(C(Math.PI), cmul(s, cgamma(csub(C(1),z))));
+  }
+  z=csub(z,C(1));
+  let x=C(_Lc[0]);
+  for(let i=1;i<_G+2;i++) x=cadd(x, cdiv(C(_Lc[i]), cadd(z,C(i))));
+  const t=cadd(z,C(_G+0.5));
+  const tp=cpow(t, cadd(z,C(0.5)));
+  const et=cexp(cmul(C(-1),t));
+  return cmul(C(Math.sqrt(2*Math.PI)), cmul(tp, cmul(et,x)));
+}
+const _BN=24;
+const _d=(()=>{const d=[]; const f=[1]; for(let i=1;i<=2*_BN+2;i++) f[i]=f[i-1]*i;
+  for(let k=0;k<=_BN;k++){let s=0; for(let i=0;i<=k;i++) s+=f[_BN+i-1]*Math.pow(4,i)/(f[_BN-i]*f[2*i]); d[k]=_BN*s;}
+  return d;})();
+function ceta(s){
+  const dn=_d[_BN]; let sum=C(0);
+  for(let k=0;k<_BN;k++){
+    let t=cdiv(C(_d[k]-dn), cpow(C(k+1), s));
+    if(k&1) t={re:-t.re, im:-t.im};
+    sum=cadd(sum,t);
+  }
+  return {re:-sum.re/dn, im:-sum.im/dn};
+}
+function czeta(s){
+  if(Math.abs(s.re)<1e-9 && Math.abs(s.im)<1e-9) return C(-0.5);
+  if(Math.abs(s.re-1)<1e-7 && Math.abs(s.im)<1e-7) return C(1e9);
+  if(s.re<0.5){
+    const os=csub(C(1),s);
+    const zt=czeta(os);
+    return cmul(cpow(C(2),s),
+             cmul(cpow(C(Math.PI),csub(s,C(1))),
+               cmul(csin(cmul(C(Math.PI/2),s)),
+                 cmul(cgamma(os), zt))));
+  }
+  return cdiv(ceta(s), csub(C(1), cpow(C(2), csub(C(1),s))));
+}
+const zetaReal = x => czeta(C(x,0)).re;
+
+const ZEROS=[14.134725142,21.022039639,25.010857580,30.424876126,32.935061588,
+  37.586178159,40.918719012,43.327073281,48.005150881,49.773832478,52.970321478,
+  56.446247697,59.347044003,60.831778525,65.112544048,67.079810529,69.546401711,
+  72.067157674,75.704690699,77.144840069,79.337375020,82.910380854,84.735492981,
+  87.425274613,88.809111208,92.491899271,94.651344041,95.870634228,98.831194218,
+  101.317851006,103.725538040,105.446623052,107.168611184,111.029535543,111.874659177,
+  114.320220915,116.226680321,118.790782866,121.370125002,122.946829294];
+
+/* =====================================================================
+   Prime machinery
+   ===================================================================== */
+function sieve(n){
+  const p=new Uint8Array(n+1); p.fill(1); p[0]=p[1]=0;
+  for(let i=2;i*i<=n;i++) if(p[i]) for(let j=i*i;j<=n;j+=i) p[j]=0;
+  const out=[]; for(let i=2;i<=n;i++) if(p[i]) out.push(i);
+  return out;
+}
+const PRIMES = sieve(100000);
+function piStairs(X){
+  const v=[[0,0]]; let c=0;
+  for(const p of PRIMES){ if(p>X) break; v.push([p,c]); c++; v.push([p,c]); }
+  v.push([X,c]); return v;
+}
+function liTable(X,step){
+  const out=[[2,0]]; let acc=0, prev=2, prevF=1/Math.log(2);
+  for(let x=2+step;x<=X+1e-9;x+=step){
+    const f=1/Math.log(x); acc+=(f+prevF)*0.5*(x-prev); prevF=f; prev=x; out.push([x,acc]);
+  }
+  return out;
+}
+
+/* =====================================================================
+   Generic interactive plot (pan / zoom / drag)
+   ===================================================================== */
+class Plot{
+  constructor(canvas, series, view, opts={}){
+    this.cv=canvas; this.ctx=canvas.getContext('2d');
+    this.series=series; this.opts=opts;
+    this.init={...view}; this.view={...view};
+    this.m={l:54,r:16,t:12,b:36}; this.readout=null;
+    this._bind(); this.resize();
+  }
+  resize(){
+    const w=this.cv.clientWidth||600, h=this.opts.height||330;
+    const dpr=window.devicePixelRatio||1;
+    this.cv.width=w*dpr; this.cv.height=h*dpr; this.cv.style.height=h+'px';
+    this.ctx.setTransform(dpr,0,0,dpr,0,0); this.W=w; this.H=h; this.draw();
+  }
+  px(x){const {l,r}=this.m; return l+(x-this.view.x0)/(this.view.x1-this.view.x0)*(this.W-l-r);}
+  py(y){const {t,b}=this.m; return t+(1-(y-this.view.y0)/(this.view.y1-this.view.y0))*(this.H-t-b);}
+  ix(p){const {l,r}=this.m; return this.view.x0+(p-l)/(this.W-l-r)*(this.view.x1-this.view.x0);}
+  iy(p){const {t,b}=this.m; return this.view.y0+(1-(p-t)/(this.H-t-b))*(this.view.y1-this.view.y0);}
+  _bind(){
+    const cv=this.cv; let drag=null;
+    cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId); drag={x:e.offsetX,y:e.offsetY};});
+    cv.addEventListener('pointerup',()=>drag=null);
+    cv.addEventListener('pointerleave',()=>{if(this.readout)this.readout.style.opacity=0;});
+    cv.addEventListener('pointermove',e=>{
+      if(drag){
+        const w=this.W-this.m.l-this.m.r, h=this.H-this.m.t-this.m.b;
+        const ddx=(e.offsetX-drag.x)/w*(this.view.x1-this.view.x0);
+        const ddy=(e.offsetY-drag.y)/h*(this.view.y1-this.view.y0);
+        this.view.x0-=ddx; this.view.x1-=ddx; this.view.y0+=ddy; this.view.y1+=ddy;
+        drag={x:e.offsetX,y:e.offsetY}; this.draw();
+      } else if(this.readout){
+        this.readout.textContent='x='+fmt(this.ix(e.offsetX))+'  y='+fmt(this.iy(e.offsetY));
+        this.readout.style.opacity=1;
+      }
+    });
+    cv.addEventListener('wheel',e=>{
+      e.preventDefault();
+      const f=e.deltaY<0?0.86:1/0.86;
+      const mx=this.ix(e.offsetX), my=this.iy(e.offsetY);
+      this.view.x0=mx-(mx-this.view.x0)*f; this.view.x1=mx-(mx-this.view.x1)*f;
+      this.view.y0=my-(my-this.view.y0)*f; this.view.y1=my-(my-this.view.y1)*f;
+      this.draw();
+    },{passive:false});
+    cv.addEventListener('dblclick',()=>{this.view={...this.init}; this.draw();});
+    window.addEventListener('resize',()=>this.resize());
+  }
+  _grid(){
+    const c=this.ctx, {l,r,t,b}=this.m;
+    c.save(); c.font='11px "Source Code Pro", monospace'; c.textAlign='center'; c.textBaseline='top';
+    for(const x of ticks(this.view.x0,this.view.x1)){ const X=this.px(x);
+      if(X<l-1||X>this.W-r+1)continue;
+      c.strokeStyle='rgba(120,150,200,0.14)'; c.beginPath(); c.moveTo(X,t); c.lineTo(X,this.H-b); c.stroke();
+      c.fillStyle='#8ea0c0'; c.fillText(fmt(x),X,this.H-b+6);
+    }
+    c.textAlign='right'; c.textBaseline='middle';
+    for(const y of ticks(this.view.y0,this.view.y1)){ const Y=this.py(y);
+      if(Y<t-1||Y>this.H-b+1)continue;
+      c.strokeStyle='rgba(120,150,200,0.14)'; c.beginPath(); c.moveTo(l,Y); c.lineTo(this.W-r,Y); c.stroke();
+      c.fillStyle='#8ea0c0'; c.fillText(fmt(y),l-6,Y);
+    }
+    c.fillStyle='#b9c3d9'; c.font='12px "Space Grotesk", sans-serif';
+    if(this.opts.xlabel){c.textAlign='center';c.textBaseline='bottom';c.fillText(this.opts.xlabel,(l+this.W-r)/2,this.H+3);}
+    if(this.opts.ylabel){c.save();c.translate(13,(t+this.H-b)/2);c.rotate(-Math.PI/2);c.textAlign='center';c.textBaseline='top';c.fillText(this.opts.ylabel,0,0);c.restore();}
+    c.restore();
+  }
+  _clip(fn){const c=this.ctx,{l,r,t,b}=this.m; c.save(); c.beginPath(); c.rect(l,t,this.W-l-r,this.H-t-b); c.clip(); fn(); c.restore();}
+  draw(){
+    const c=this.ctx; c.clearRect(0,0,this.W,this.H);
+    this._clip(()=>{
+      for(const rg of (this.opts.regions||[])){
+        c.fillStyle=rg.color; const x0=this.px(rg.x0), x1=this.px(rg.x1);
+        c.fillRect(x0,this.m.t,x1-x0,this.H-this.m.t-this.m.b);
+      }
+    });
+    this._grid();
+    this._clip(()=>{
+      for(const s of this.series){ if(s.type!=='bar')continue;
+        c.fillStyle=s.color; const bw=s.bw||1;
+        for(const d of s.data){const X=this.px(d[0]),Y=this.py(d[1]),Y0=this.py(0);
+          const w=this.px(d[0]+bw)-X; c.fillRect(X-w/2,Math.min(Y,Y0),Math.max(w-1,1),Math.abs(Y0-Y));}
+      }
+      for(const v of (this.opts.vlines||[])){const X=this.px(v.x);
+        c.strokeStyle=v.color; c.lineWidth=v.width||1; c.setLineDash(v.dash||[]);
+        c.beginPath(); c.moveTo(X,this.m.t); c.lineTo(X,this.H-this.m.b); c.stroke(); c.setLineDash([]);}
+      for(const v of (this.opts.hlines||[])){const Y=this.py(v.y);
+        c.strokeStyle=v.color; c.lineWidth=v.width||1; c.setLineDash(v.dash||[]);
+        c.beginPath(); c.moveTo(this.m.l,Y); c.lineTo(this.W-this.m.r,Y); c.stroke(); c.setLineDash([]);}
+      for(const s of this.series){ if(s.type&&s.type!=='line')continue;
+        c.strokeStyle=s.color; c.lineWidth=s.width||2; c.setLineDash(s.dash||[]); c.lineJoin='round'; c.beginPath(); let started=false;
+        for(const d of s.data){
+          if(d[1]==null||!isFinite(d[1])){started=false;continue;}
+          const X=this.px(d[0]),Y=this.py(d[1]);
+          if(!started){c.moveTo(X,Y);started=true;} else c.lineTo(X,Y);
+        }
+        c.stroke(); c.setLineDash([]);
+      }
+      for(const s of this.series){ if(s.type!=='scatter')continue;
+        c.fillStyle=s.color; const r=s.r||2.4;
+        for(const d of s.data){ if(!isFinite(d[1]))continue; c.beginPath(); c.arc(this.px(d[0]),this.py(d[1]),r,0,7); c.fill();}
+      }
+      for(const mk of (this.opts.markers||[])){
+        const X=this.px(mk.x),Y=this.py(mk.y);
+        c.fillStyle=mk.color; c.beginPath(); c.arc(X,Y,mk.r||4,0,7); c.fill();
+        if(mk.label){c.fillStyle='#dbe2f0'; c.font='11px "Source Code Pro", monospace'; c.textAlign=mk.ta||'left'; c.textBaseline='bottom'; c.fillText(mk.label,X+(mk.ta==='right'?-7:7),Y-4);}
+      }
+    });
+    c.strokeStyle='rgba(150,175,210,0.28)'; c.lineWidth=1;
+    c.strokeRect(this.m.l+.5,this.m.t+.5,this.W-this.m.l-this.m.r-1,this.H-this.m.t-this.m.b-1);
+  }
+}
+function niceNum(range,round){
+  const exp=Math.floor(Math.log10(range||1)); const f=(range||1)/Math.pow(10,exp);
+  let nf; if(round) nf=f<1.5?1:f<3?2:f<7?5:10; else nf=f<=1?1:f<=2?2:f<=5?5:10;
+  return nf*Math.pow(10,exp);
+}
+function ticks(min,max,n=6){
+  if(!(max>min)) return [];
+  const step=niceNum(niceNum(max-min,false)/(n-1),true);
+  const start=Math.ceil(min/step)*step, out=[];
+  for(let v=start;v<=max+step*0.5;v+=step) out.push(Math.round(v/step)*step);
+  return out;
+}
+function fmt(v){
+  if(Math.abs(v)<1e-9) return '0';
+  const a=Math.abs(v);
+  if(a>=1e4||a<1e-3) return v.toExponential(1);
+  if(a>=100) return v.toFixed(0);
+  if(a>=1) return (Math.round(v*100)/100).toString();
+  return (Math.round(v*1000)/1000).toString();
+}
+function mount(figId,{title,caption,legend,controls}){
+  const fig=document.getElementById(figId);
+  const box=document.createElement('div'); box.className='plotbox';
+  if(title){const t=document.createElement('div'); t.className='plot-title'; t.textContent=title; box.appendChild(t);}
+  const bar=document.createElement('div'); bar.className='plot-toolbar';
+  bar.innerHTML='<span class="hint">Scroll = zoom &middot; Drag = pan &middot; Double&#8209;click = reset</span>';
+  const reset=document.createElement('button'); reset.className='btn'; reset.textContent='Reset view';
+  bar.appendChild(reset);
+  if(controls) controls(bar);
+  box.appendChild(bar);
+  const wrap=document.createElement('div'); wrap.className='plot-canvas-wrap';
+  const cv=document.createElement('canvas'); cv.className='plot';
+  const ro=document.createElement('div'); ro.className='readout';
+  wrap.appendChild(cv); wrap.appendChild(ro); box.appendChild(wrap);
+  if(legend){
+    const lg=document.createElement('div'); lg.className='legend';
+    lg.innerHTML=legend.map(i=>'<span class="item"><span class="swatch '+(i.dot?'dot':'')+'" style="background:'+i.color+'"></span>'+i.label+'</span>').join('');
+    box.appendChild(lg);
+  }
+  fig.appendChild(box);
+  if(caption){const fc=document.createElement('figcaption'); fc.innerHTML=caption; fig.appendChild(fc);}
+  return {cv, reset, ro};
+}
+const COL={blue:'#5ac8fa',teal:'#35d0ba',green:'#8bd450',yellow:'#ffd24a',
+  orange:'#ff9f43',red:'#ff6b6b',pink:'#ff77c8',purple:'#b285f0'};
+function hexToRgb(h){h=h.replace('#','');return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
+function lerpCol(a,b,f){const pa=hexToRgb(a),pb=hexToRgb(b);return 'rgb('+Math.round(pa[0]+(pb[0]-pa[0])*f)+','+Math.round(pa[1]+(pb[1]-pa[1])*f)+','+Math.round(pa[2]+(pb[2]-pa[2])*f)+')';}
+
+/* =====================================================================
+   FIGURE 1 — zeta on the real line
+   ===================================================================== */
+(function(){
+  const line=[];
+  for(let x=-8;x<=8;x+=0.02){
+    if(x>0.72&&x<1.28){line.push([x,null]);continue;}
+    let y=zetaReal(x); if(y>18||y<-6)y=null; line.push([x,y]);
+  }
+  const {cv,reset,ro}=mount('fig-real',{
+    title:'ζ(s) along the real line',
+    legend:[{label:'ζ(s)',color:COL.teal},{label:'trivial zeros (−2,−4,−6)',color:COL.yellow,dot:1},
+            {label:'ζ(2)=π²/6',color:COL.green,dot:1},{label:'pole at s=1',color:COL.red}],
+    caption:'Figure 1 &mdash; The red line is the pole at <span class="math">s=1</span>; yellow dots are trivial zeros at negative even integers; the green dot is <span class="math">ζ(2)=π²/6</span>. Zoom in anywhere.'
+  });
+  const markers=[{x:2,y:zetaReal(2),color:COL.green,label:'ζ(2)'}];
+  for(const k of [-2,-4,-6]) markers.push({x:k,y:0,color:COL.yellow});
+  const p=new Plot(cv,[{data:line,color:COL.teal,width:2.4}],
+    {x0:-8,x1:8,y0:-6,y1:12},
+    {xlabel:'s',ylabel:'ζ(s)',hlines:[{y:0,color:'rgba(150,175,210,0.35)'}],
+     vlines:[{x:1,color:COL.red,dash:[5,4],width:1.5}], markers});
+  p.readout=ro; reset.onclick=()=>{p.view={...p.init};p.draw();};
+})();
+
+/* =====================================================================
+   FIGURE 2 — spiral of partial sums (interactive + animated)
+   ===================================================================== */
+(function(){
+  const fig=document.getElementById('fig-spiral');
+  const box=document.createElement('div'); box.className='plotbox';
+  const t=document.createElement('div'); t.className='plot-title';
+  t.textContent='Partial sums of Σ 1/nˢ spiraling toward ζ(s)'; box.appendChild(t);
+  const bar=document.createElement('div'); bar.className='plot-toolbar';
+  bar.innerHTML='<span class="hint">Scroll = zoom &middot; Drag = pan</span>';
+  const playBtn=document.createElement('button'); playBtn.className='btn primary'; playBtn.textContent='▶ Play';
+  const reset=document.createElement('button'); reset.className='btn'; reset.textContent='Reset';
+  bar.appendChild(playBtn); bar.appendChild(reset);
+  const mkSlider=(label,min,max,step,val)=>{
+    const wrap=document.createElement('span'); wrap.className='ctrl';
+    const l=document.createElement('label'); l.textContent=label;
+    const sl=document.createElement('input'); sl.type='range'; sl.min=min; sl.max=max; sl.step=step; sl.value=val;
+    const lab=document.createElement('span'); lab.className='val'; lab.textContent=val;
+    wrap.appendChild(l); wrap.appendChild(sl); wrap.appendChild(lab); return {wrap,sl,lab};
+  };
+  const sigC=mkSlider('σ:',1.05,3,0.05,1.3);
+  const tC=mkSlider('t:',0,120,1,45);
+  bar.appendChild(sigC.wrap); bar.appendChild(tC.wrap); box.appendChild(bar);
+  const wrap=document.createElement('div'); wrap.className='plot-canvas-wrap';
+  const cv=document.createElement('canvas'); cv.className='plot';
+  const ro=document.createElement('div'); ro.className='readout';
+  wrap.appendChild(cv); wrap.appendChild(ro); box.appendChild(wrap);
+  const lg=document.createElement('div'); lg.className='legend';
+  lg.innerHTML='<span class="item"><span class="swatch" style="background:linear-gradient(90deg,'+COL.teal+','+COL.yellow+')"></span>partial-sum path (n = 1, 2, 3, …)</span>'+
+    '<span class="item"><span class="swatch dot" style="background:#fff"></span>final point = ζ(σ+it)</span>';
+  box.appendChild(lg);
+  fig.appendChild(box);
+  const fc=document.createElement('figcaption');
+  fc.innerHTML='Figure 2 &mdash; Each segment is one term <span class="math">1/nˢ</span> laid nose-to-tail. Press Play to draw the spiral term by term; drag the sliders to change <span class="math">s = σ+it</span>.';
+  fig.appendChild(fc);
+
+  const H=380, N=600;
+  let view=null, initView=null, pts=null, head=N, playing=false, raf=null;
+  function computePath(sigma,t){
+    const arr=[{re:0,im:0}]; let re=0, im=0;
+    for(let n=1;n<=N;n++){ const r=Math.pow(n,-sigma), th=-t*Math.log(n); re+=r*Math.cos(th); im+=r*Math.sin(th); arr.push({re,im}); }
+    return arr;
+  }
+  function autoView(){
+    let xmin=1e9,xmax=-1e9,ymin=1e9,ymax=-1e9;
+    for(const p of pts){xmin=Math.min(xmin,p.re);xmax=Math.max(xmax,p.re);ymin=Math.min(ymin,p.im);ymax=Math.max(ymax,p.im);}
+    const pad=Math.max(xmax-xmin,ymax-ymin,0.4)*0.16+0.05;
+    view={x0:xmin-pad,x1:xmax+pad,y0:ymin-pad,y1:ymax+pad}; initView={...view};
+  }
+  pts=computePath(+sigC.sl.value,+tC.sl.value); autoView();
+  const PW=()=>cv.clientWidth-54-16, PH=()=>H-12-36;
+  const px=x=>54+(x-view.x0)/(view.x1-view.x0)*PW();
+  const py=y=>12+(1-(y-view.y0)/(view.y1-view.y0))*PH();
+  const ix=p=>view.x0+(p-54)/PW()*(view.x1-view.x0);
+  const iy=p=>view.y0+(1-(p-12)/PH())*(view.y1-view.y0);
+  function draw(){
+    const w=cv.clientWidth||600, dpr=window.devicePixelRatio||1;
+    cv.width=w*dpr; cv.height=H*dpr; cv.style.height=H+'px';
+    const c=cv.getContext('2d'); c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,w,H);
+    c.save(); c.beginPath(); c.rect(54,12,w-54-16,H-12-36); c.clip();
+    const cx=px(0), cy=py(0), maxR=Math.max(w,H);
+    c.strokeStyle='rgba(120,150,200,0.10)';
+    for(let rr=40;rr<maxR;rr+=40){ c.beginPath(); c.arc(cx,cy,rr,0,7); c.stroke(); }
+    c.strokeStyle='rgba(120,150,200,0.06)';
+    for(let a=0;a<360;a+=30){ const ang=a*Math.PI/180; c.beginPath(); c.moveTo(cx,cy); c.lineTo(cx+Math.cos(ang)*maxR,cy+Math.sin(ang)*maxR); c.stroke(); }
+    c.strokeStyle='rgba(180,195,220,0.4)'; c.lineWidth=1;
+    c.beginPath(); c.moveTo(54,cy); c.lineTo(w-16,cy); c.stroke();
+    c.beginPath(); c.moveTo(cx,12); c.lineTo(cx,H-36); c.stroke();
+    const hd=Math.max(1,Math.min(N,Math.round(head)));
+    for(let i=1;i<=hd;i++){
+      c.strokeStyle=lerpCol(COL.teal,COL.yellow,i/N); c.lineWidth=1.6;
+      c.beginPath(); c.moveTo(px(pts[i-1].re),py(pts[i-1].im)); c.lineTo(px(pts[i].re),py(pts[i].im)); c.stroke();
+    }
+    const tip=pts[hd];
+    c.fillStyle='#ffffff'; c.beginPath(); c.arc(px(tip.re),py(tip.im),4.5,0,7); c.fill();
+    c.strokeStyle='rgba(255,255,255,0.5)'; c.lineWidth=1; c.beginPath(); c.arc(px(tip.re),py(tip.im),8,0,7); c.stroke();
+    c.restore();
+    c.font='11px "Source Code Pro", monospace'; c.fillStyle='#8ea0c0'; c.textAlign='center'; c.textBaseline='top';
+    for(const x of ticks(view.x0,view.x1)){const X=px(x); if(X<54||X>w-16)continue; c.fillText(fmt(x),X,H-30);}
+    c.textAlign='right'; c.textBaseline='middle';
+    for(const y of ticks(view.y0,view.y1)){const Y=py(y); if(Y<12||Y>H-36)continue; c.fillText(fmt(y),48,Y);}
+    const last=pts[N];
+    c.fillStyle='#dbe2f0'; c.textAlign='left'; c.fillText('ζ ≈ '+fmt(last.re)+(last.im>=0?'+':'')+fmt(last.im)+'i', 60, 22);
+    c.strokeStyle='rgba(150,175,210,0.28)'; c.lineWidth=1; c.strokeRect(54.5,12.5,w-54-16-1,H-12-36-1);
+  }
+  function stop(){playing=false;playBtn.textContent='▶ Play';playBtn.classList.add('primary');if(raf)cancelAnimationFrame(raf);raf=null;}
+  function step(){ head+=6; if(head>=N){head=N; draw(); stop(); return;} draw(); raf=requestAnimationFrame(step); }
+  playBtn.onclick=()=>{ if(playing){stop();} else {playing=true;playBtn.textContent='❚❚ Pause';playBtn.classList.remove('primary');head=0;step();} };
+  let drag=null;
+  cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);drag={x:e.offsetX,y:e.offsetY,v:{...view}};});
+  cv.addEventListener('pointerup',()=>drag=null);
+  cv.addEventListener('pointerleave',()=>ro.style.opacity=0);
+  cv.addEventListener('pointermove',e=>{
+    if(drag){
+      const ddx=(e.offsetX-drag.x)/PW()*(drag.v.x1-drag.v.x0), ddy=(e.offsetY-drag.y)/PH()*(drag.v.y1-drag.v.y0);
+      view.x0=drag.v.x0-ddx; view.x1=drag.v.x1-ddx; view.y0=drag.v.y0+ddy; view.y1=drag.v.y1+ddy; draw();
+    }else{ ro.textContent='Re='+fmt(ix(e.offsetX))+' Im='+fmt(iy(e.offsetY)); ro.style.opacity=1; }
+  });
+  cv.addEventListener('wheel',e=>{
+    e.preventDefault(); const f=e.deltaY<0?0.86:1/0.86; const mx=ix(e.offsetX), my=iy(e.offsetY);
+    view.x0=mx-(mx-view.x0)*f; view.x1=mx-(mx-view.x1)*f; view.y0=my-(my-view.y0)*f; view.y1=my-(my-view.y1)*f; draw();
+  },{passive:false});
+  reset.onclick=()=>{stop();head=N;view={...initView};draw();};
+  window.addEventListener('resize',draw);
+  function recompute(){ pts=computePath(+sigC.sl.value,+tC.sl.value); autoView(); head=N; draw(); }
+  sigC.sl.addEventListener('input',()=>{sigC.lab.textContent=(+sigC.sl.value).toFixed(2);stop();recompute();});
+  tC.sl.addEventListener('input',()=>{tC.lab.textContent=tC.sl.value;stop();recompute();});
+  draw();
+})();
+
+/* =====================================================================
+   FIGURE 3 — the zeta transformation (animated full-plane grid morph)
+   ===================================================================== */
+(function(){
+  const fig=document.getElementById('fig-transform');
+  const box=document.createElement('div'); box.className='plotbox';
+  const t=document.createElement('div'); t.className='plot-title';
+  t.textContent='The whole plane of inputs s bending into outputs ζ(s)'; box.appendChild(t);
+  const bar=document.createElement('div'); bar.className='plot-toolbar';
+  bar.innerHTML='<span class="hint">Scroll = zoom &middot; Drag = pan</span>';
+  const playBtn=document.createElement('button'); playBtn.className='btn primary'; playBtn.textContent='▶ Play';
+  const reset=document.createElement('button'); reset.className='btn'; reset.textContent='Reset';
+  bar.appendChild(playBtn); bar.appendChild(reset);
+  const wrapC=document.createElement('span'); wrapC.className='ctrl';
+  const l=document.createElement('label'); l.textContent='morph:';
+  const sl=document.createElement('input'); sl.type='range'; sl.min=0; sl.max=1; sl.step=0.01; sl.value=0;
+  wrapC.appendChild(l); wrapC.appendChild(sl); bar.appendChild(wrapC); box.appendChild(bar);
+  const wrap=document.createElement('div'); wrap.className='plot-canvas-wrap';
+  const cv=document.createElement('canvas'); cv.className='plot';
+  const ro=document.createElement('div'); ro.className='readout';
+  wrap.appendChild(cv); wrap.appendChild(ro); box.appendChild(wrap);
+  const lg=document.createElement('div'); lg.className='legend';
+  lg.innerHTML='<span class="item">colour = direction of the input point (a rainbow around the origin)</span>'+
+    '<span class="item">morph 0 = plain grid &nbsp;·&nbsp; morph 1 = ζ(grid)</span>';
+  box.appendChild(lg);
+  fig.appendChild(box);
+  const fc=document.createElement('figcaption');
+  fc.innerHTML='Figure 3 &mdash; The full complex grid, coloured by direction, transformed by <span class="math">ζ</span>. At morph 0 it is the ordinary plane; press Play and every point <span class="math">s</span> flows to <span class="math">ζ(s)</span>, folding the grid into interlocking spirals — the geometric signature of the zeta function.';
+  fig.appendChild(fc);
+
+  const H=470, SAMP=90;
+  const hueOf=(re,im)=>((Math.atan2(im,re)/(2*Math.PI))+1)%1;
+  const hcol=(h,a)=>'hsla('+(h*360).toFixed(0)+',82%,62%,'+a+')';
+  const lines=[];
+  for(let re=-6; re<=7.0001; re+=0.5){
+    const pts=[]; for(let k=0;k<=SAMP;k++){ const im=-3.4+6.8*k/SAMP; pts.push({sx:re,sy:im,z:czeta(C(re,im)),h:hueOf(re,im)}); }
+    lines.push(pts);
+  }
+  for(let im=-3; im<=3.0001; im+=0.5){
+    const pts=[]; for(let k=0;k<=SAMP;k++){ const re=-6+13*k/SAMP; pts.push({sx:re,sy:im,z:czeta(C(re,im)),h:hueOf(re,im)}); }
+    lines.push(pts);
+  }
+  let view={x0:-6.6,x1:7.6,y0:-3.9,y1:3.9}, initView={...view};
+  let morph=0, playing=false, raf=null, dir=1;
+  const PW=()=>cv.clientWidth-54-16, PH=()=>H-12-36;
+  const px=x=>54+(x-view.x0)/(view.x1-view.x0)*PW();
+  const py=y=>12+(1-(y-view.y0)/(view.y1-view.y0))*PH();
+  const ix=p=>view.x0+(p-54)/PW()*(view.x1-view.x0);
+  const iy=p=>view.y0+(1-(p-12)/PH())*(view.y1-view.y0);
+  function draw(){
+    const w=cv.clientWidth||600, dpr=window.devicePixelRatio||1;
+    cv.width=w*dpr; cv.height=H*dpr; cv.style.height=H+'px';
+    const c=cv.getContext('2d'); c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,w,H);
+    c.save(); c.beginPath(); c.rect(54,12,w-54-16,H-12-36); c.clip();
+    // polar backdrop (grey circles + radial spokes) around the origin
+    const cx=px(0), cy=py(0), maxR=Math.max(w,H)*1.4;
+    c.strokeStyle='rgba(150,170,205,0.09)'; c.lineWidth=1;
+    const rstep=Math.abs(px(1)-px(0));
+    for(let rr=rstep; rr<maxR; rr+=rstep){ c.beginPath(); c.arc(cx,cy,rr,0,7); c.stroke(); }
+    for(let a=0;a<360;a+=15){ const ang=a*Math.PI/180; c.beginPath(); c.moveTo(cx,cy); c.lineTo(cx+Math.cos(ang)*maxR,cy+Math.sin(ang)*maxR); c.stroke(); }
+    // axes
+    c.strokeStyle='rgba(190,205,230,0.45)'; c.lineWidth=1.1;
+    if(view.y0<0&&view.y1>0){c.beginPath();c.moveTo(54,cy);c.lineTo(w-16,cy);c.stroke();}
+    if(view.x0<0&&view.x1>0){c.beginPath();c.moveTo(cx,12);c.lineTo(cx,H-36);c.stroke();}
+    // the transformed grid
+    c.lineWidth=1.4;
+    for(const pts of lines){
+      let prev=null, prevH=0;
+      for(const pt of pts){
+        const z=pt.z;
+        if(!isFinite(z.re)||!isFinite(z.im)||cabs(z)>30){prev=null;continue;}
+        const X=px((1-morph)*pt.sx+morph*z.re), Y=py((1-morph)*pt.sy+morph*z.im);
+        if(prev){ c.strokeStyle=hcol(pt.h,0.85); c.beginPath(); c.moveTo(prev[0],prev[1]); c.lineTo(X,Y); c.stroke(); }
+        prev=[X,Y]; prevH=pt.h;
+      }
+    }
+    // ζ = Σ 1/nˢ label + pole dot
+    c.fillStyle='rgba(235,238,248,0.92)'; c.font='600 15px "Space Grotesk", sans-serif'; c.textAlign='left'; c.textBaseline='top';
+    c.fillText('ζ(s) = Σ 1/nˢ', 62, 20);
+    const pX=px((1-morph)*1+morph*1e9);
+    c.restore();
+    c.font='11px "Source Code Pro", monospace'; c.fillStyle='#8ea0c0'; c.textAlign='center'; c.textBaseline='top';
+    for(const x of ticks(view.x0,view.x1)){const X=px(x); if(X<54||X>w-16)continue; c.fillText(fmt(x),X,H-30);}
+    c.textAlign='right'; c.textBaseline='middle';
+    for(const y of ticks(view.y0,view.y1)){const Y=py(y); if(Y<12||Y>H-36)continue; c.fillText(fmt(y)+'i',48,Y);}
+    c.fillStyle='#dbe2f0'; c.textAlign='right'; c.textBaseline='top'; c.font='11px "Source Code Pro", monospace';
+    c.fillText('morph = '+morph.toFixed(2), w-22, 20);
+    c.strokeStyle='rgba(150,175,210,0.28)'; c.lineWidth=1; c.strokeRect(54.5,12.5,w-54-16-1,H-12-36-1);
+  }
+  function stop(){playing=false;playBtn.textContent='▶ Play';playBtn.classList.add('primary');if(raf)cancelAnimationFrame(raf);raf=null;}
+  function step(){ morph+=dir*0.007; if(morph>=1){morph=1;dir=-1;} else if(morph<=0){morph=0;dir=1;} sl.value=morph; draw(); raf=requestAnimationFrame(step); }
+  playBtn.onclick=()=>{ if(playing){stop();} else {playing=true;playBtn.textContent='❚❚ Pause';playBtn.classList.remove('primary');step();} };
+  sl.addEventListener('input',()=>{stop();morph=+sl.value;draw();});
+  let drag=null;
+  cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);drag={x:e.offsetX,y:e.offsetY,v:{...view}};});
+  cv.addEventListener('pointerup',()=>drag=null);
+  cv.addEventListener('pointerleave',()=>ro.style.opacity=0);
+  cv.addEventListener('pointermove',e=>{
+    if(drag){ const ddx=(e.offsetX-drag.x)/PW()*(drag.v.x1-drag.v.x0), ddy=(e.offsetY-drag.y)/PH()*(drag.v.y1-drag.v.y0);
+      view.x0=drag.v.x0-ddx; view.x1=drag.v.x1-ddx; view.y0=drag.v.y0+ddy; view.y1=drag.v.y1+ddy; draw();
+    }else{ ro.textContent='s = '+fmt(ix(e.offsetX))+(iy(e.offsetY)>=0?' + ':' − ')+fmt(Math.abs(iy(e.offsetY)))+'i'; ro.style.opacity=1; }
+  });
+  cv.addEventListener('wheel',e=>{ e.preventDefault(); const f=e.deltaY<0?0.86:1/0.86; const mx=ix(e.offsetX), my=iy(e.offsetY);
+    view.x0=mx-(mx-view.x0)*f; view.x1=mx-(mx-view.x1)*f; view.y0=my-(my-view.y0)*f; view.y1=my-(my-view.y1)*f; draw(); },{passive:false});
+  reset.onclick=()=>{stop();morph=0;sl.value=0;view={...initView};draw();};
+  window.addEventListener('resize',draw);
+  draw();
+})();
+
+/* =====================================================================
+   FIGURE 4 — Euler product convergence (slider)
+   ===================================================================== */
+(function(){
+  const xs=[]; for(let x=1.06;x<=6;x+=0.03) xs.push(x);
+  const truth=xs.map(x=>[x,zetaReal(x)]);
+  function partial(np){ const ps=PRIMES.slice(0,np); return xs.map(x=>{let prod=1; for(const p of ps) prod*=1/(1-Math.pow(p,-x)); return [x,prod];}); }
+  let np=1, plot, sl, lab;
+  const {cv,reset,ro}=mount('fig-euler',{
+    title:'Building ζ(s) one prime at a time',
+    legend:[{label:'true ζ(s)',color:'#ffffff'},{label:'product over first N primes',color:COL.orange}],
+    caption:'Figure 4 &mdash; Each prime adds one factor and pulls the orange product (dashed) toward the true <span class="math">ζ(s)</span> (white). Slide to add primes.',
+    controls:(bar)=>{
+      const w=document.createElement('span'); w.className='ctrl';
+      const l=document.createElement('label'); l.textContent='primes:';
+      sl=document.createElement('input'); sl.type='range'; sl.min=1; sl.max=25; sl.value=1;
+      lab=document.createElement('span'); lab.className='val';
+      w.appendChild(l); w.appendChild(sl); w.appendChild(lab); bar.appendChild(w);
+    }
+  });
+  plot=new Plot(cv,[{data:truth,color:'#ffffff',width:2},{data:partial(1),color:COL.orange,width:2.2,dash:[6,4]}],
+    {x0:1,x1:6,y0:0,y1:9},{xlabel:'s',ylabel:'ζ(s)'});
+  plot.readout=ro;
+  function redraw(){ const ps=PRIMES.slice(0,np); const s=ps.join(','); lab.textContent=np+' ('+(s.length>20?s.slice(0,20)+'…':s)+')'; plot.series[1].data=partial(np); plot.draw(); }
+  sl.addEventListener('input',()=>{np=+sl.value;redraw();});
+  reset.onclick=()=>{plot.view={...plot.init};plot.draw();};
+  redraw();
+})();
+
+/* =====================================================================
+   FIGURE 5 — pi(x) staircase vs x/ln x vs Li(x)
+   ===================================================================== */
+(function(){
+  const X=1000;
+  const stair=piStairs(X);
+  const xln=[]; for(let x=2;x<=X;x+=2) xln.push([x,x/Math.log(x)]);
+  const li=liTable(X,2);
+  const {cv,reset,ro}=mount('fig-pi',{
+    title:'The prime-counting staircase π(x) and its approximations',
+    legend:[{label:'π(x) — exact prime count',color:COL.blue},{label:'x / ln x (Gauss)',color:COL.yellow},{label:'Li(x) (log integral)',color:COL.green}],
+    caption:'Figure 5 &mdash; The blue staircase jumps <span class="math">+1</span> at every prime; <span class="math">Li(x)</span> (green) tracks it far more tightly than <span class="math">x/ln x</span> (yellow). Zoom near a step to see the jumps.'
+  });
+  const p=new Plot(cv,[
+    {data:xln,color:COL.yellow,width:1.8,dash:[7,4]},
+    {data:li,color:COL.green,width:1.8,dash:[2,3]},
+    {data:stair,color:COL.blue,width:2},
+  ],{x0:0,x1:X,y0:0,y1:170},{xlabel:'x',ylabel:'count'});
+  p.readout=ro; reset.onclick=()=>{p.view={...p.init};p.draw();};
+})();
+
+/* =====================================================================
+   FIGURE 6 — explicit formula: more zeros -> better prime approximation
+   ===================================================================== */
+(function(){
+  const X=50;
+  const jumps=[];
+  for(const p of PRIMES){ if(p>X)break; let pk=p; while(pk<=X){ jumps.push([pk,Math.log(p)]); pk*=p; } }
+  jumps.sort((a,b)=>a[0]-b[0]);
+  const stair=[[0,0]]; let acc=0;
+  for(const j of jumps){ stair.push([j[0],acc]); acc+=j[1]; stair.push([j[0],acc]); }
+  stair.push([X,acc]);
+  function approx(nz){
+    const out=[];
+    for(let x=2;x<=X;x+=0.05){
+      let s=x-Math.log(2*Math.PI); const lnx=Math.log(x), sq=Math.sqrt(x);
+      for(let k=0;k<nz;k++){ const g=ZEROS[k]; const num=cmul(C(sq,0), cexp(C(0,g*lnx))); s-=2*cdiv(num, C(0.5,g)).re; }
+      out.push([x,s]);
+    }
+    return out;
+  }
+  let nz=2, plot, sl, lab, playBtn, playing=false, raf=null;
+  const {cv,reset,ro}=mount('fig-psi',{
+    title:'More zeros → a sharper approximation of the primes',
+    legend:[{label:'exact prime staircase ψ(x)',color:COL.blue},{label:'trend y = x',color:'rgba(150,175,210,0.7)'},{label:'approx. from N zero-pairs',color:COL.purple}],
+    caption:'Figure 6 &mdash; The blue staircase is the (weighted) prime count. Start from the smooth trend <span class="math">y=x</span> and add the wave from one more zero at a time — press <em>Play</em>. Each extra zero of <span class="math">ζ</span> sharpens the approximation until the purple curve reproduces the exact prime steps. This is, literally, the primes being rebuilt from the zeros.',
+    controls:(bar)=>{
+      playBtn=document.createElement('button'); playBtn.className='btn primary'; playBtn.textContent='▶ Play';
+      bar.appendChild(playBtn);
+      const w=document.createElement('span'); w.className='ctrl';
+      const l=document.createElement('label'); l.textContent='zero-pairs:';
+      sl=document.createElement('input'); sl.type='range'; sl.min=0; sl.max=ZEROS.length; sl.value=2;
+      lab=document.createElement('span'); lab.className='val';
+      w.appendChild(l); w.appendChild(sl); w.appendChild(lab); bar.appendChild(w);
+    }
+  });
+  plot=new Plot(cv,[
+    {data:[[2,2],[X,X]],color:'rgba(150,175,210,0.7)',width:1.5,dash:[5,4]},
+    {data:approx(2),color:COL.purple,width:2},
+    {data:stair,color:COL.blue,width:2},
+  ],{x0:2,x1:X,y0:0,y1:X+6},{xlabel:'x',ylabel:'ψ(x)'});
+  plot.readout=ro;
+  function redraw(){lab.textContent=nz; sl.value=nz; plot.series[1].data=approx(nz); plot.draw();}
+  function stop(){playing=false;playBtn.textContent='▶ Play';playBtn.classList.add('primary');if(raf)cancelAnimationFrame(raf);raf=null;}
+  let acc2=0;
+  function step(ts){ acc2+=1; if(acc2>=3){acc2=0; nz++; if(nz>ZEROS.length){nz=ZEROS.length; redraw(); stop(); return;} redraw();} raf=requestAnimationFrame(step); }
+  playBtn.onclick=()=>{ if(playing){stop();} else {playing=true;playBtn.textContent='❚❚ Pause';playBtn.classList.remove('primary'); nz=0; redraw(); raf=requestAnimationFrame(step);} };
+  sl.addEventListener('input',()=>{stop();nz=+sl.value;redraw();});
+  reset.onclick=()=>{stop();plot.view={...plot.init};plot.draw();};
+  redraw();
+})();
+
+/* =====================================================================
+   FIGURE 7 — the zeros: trivial (real axis) + nontrivial (critical line)
+   ===================================================================== */
+(function(){
+  const nz=[]; for(const g of ZEROS){nz.push([0.5,g]);nz.push([0.5,-g]);}
+  const {cv,reset,ro}=mount('fig-zeros',{
+    title:'Every known zero of ζ(s): trivial on the real axis, nontrivial on Re = ½',
+    legend:[{label:'critical strip 0 ≤ Re ≤ 1',color:'rgba(178,133,240,0.35)'},
+            {label:'critical line Re = ½',color:COL.yellow},
+            {label:'nontrivial zeros',color:COL.teal,dot:1},
+            {label:'trivial zeros (−2,−4,…)',color:COL.orange,dot:1},
+            {label:'pole s = 1',color:COL.red,dot:1}],
+    caption:'Figure 7 &mdash; The map of the zeros. Trivial zeros (orange) sit at every negative even integer on the real axis; every nontrivial zero (teal) computed to date lies exactly on the yellow critical line <span class="math">Re(s)=½</span>. The Riemann Hypothesis says <em>all</em> of them do, forever. Drag up the line to see more.'
+  });
+  const trivial=[]; for(let k=-2;k>=-14;k-=2) trivial.push([k,0]);
+  const markers=[
+    {x:1,y:0,color:COL.red,r:4},
+    {x:0.5,y:ZEROS[0],color:COL.teal,r:4,label:'½ + '+ZEROS[0].toFixed(2)+'i'},
+    {x:0.5,y:ZEROS[1],color:COL.teal,r:4,label:'½ + '+ZEROS[1].toFixed(2)+'i'},
+    {x:-2,y:0,color:COL.orange,r:4,label:'−2',ta:'right'},
+    {x:-4,y:0,color:COL.orange,r:4,label:'−4',ta:'right'},
+  ];
+  const p=new Plot(cv,[
+    {type:'scatter',data:nz,color:COL.teal,r:3.4},
+    {type:'scatter',data:trivial,color:COL.orange,r:4},
+  ],{x0:-15,x1:3,y0:-45,y1:45},
+    {xlabel:'Re(s)  (real part)',ylabel:'Im(s)  (imaginary part)', height:430,
+     regions:[{x0:0,x1:1,color:'rgba(178,133,240,0.16)'}],
+     vlines:[{x:0.5,color:COL.yellow,dash:[6,4],width:1.5}],
+     hlines:[{y:0,color:'rgba(150,175,210,0.3)'}], markers});
+  p.readout=ro; reset.onclick=()=>{p.view={...p.init};p.draw();};
+})();
+
+/* =====================================================================
+   FIGURE 8 — prime gaps scatter
+   ===================================================================== */
+(function(){
+  const X=5000; const gaps=[];
+  for(let i=1;i<PRIMES.length && PRIMES[i]<=X;i++) gaps.push([PRIMES[i],PRIMES[i]-PRIMES[i-1]]);
+  const {cv,reset,ro}=mount('fig-gaps',{
+    title:'Gaps between consecutive primes (up to 5,000)',
+    legend:[{label:'gap to the next prime',color:COL.orange,dot:1}],
+    caption:'Figure 8 &mdash; Each dot is the gap from a prime to the next. Chaotic up close, yet banded at even values (2, 4, 6, …) and bounded in a lawful way. Zoom in to explore.'
+  });
+  const p=new Plot(cv,[{type:'scatter',data:gaps,color:COL.orange,r:1.8}],
+    {x0:0,x1:X,y0:0,y1:40},{xlabel:'prime p',ylabel:'gap to next prime'});
+  p.readout=ro; reset.onclick=()=>{p.view={...p.init};p.draw();};
+})();
+</script>
+</body>
+</html>
