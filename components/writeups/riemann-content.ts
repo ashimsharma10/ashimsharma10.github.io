@@ -1,5 +1,4 @@
 // Auto-derived from the standalone Riemann write-up: scoped CSS + prose HTML.
-/* eslint-disable */
 export const css = `@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Source+Code+Pro:wght@400;600&display=swap');
 @scope (.riemann-root) {
 
