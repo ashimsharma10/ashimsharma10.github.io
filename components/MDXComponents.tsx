@@ -7,12 +7,14 @@ import CustomLink from './Link'
 import TableWrapper from './TableWrapper'
 import MermaidChart from './MermaidChart'
 import LinuxFSHierarchy from './LinuxFSHierarchy'
+import RiemannZeta from './writeups/RiemannZeta'
 
 export const components: MDXComponents = {
   Image,
   TOCInline,
   MermaidChart,
   LinuxFSHierarchy,
+  RiemannZeta,
   a: CustomLink,
   pre: Pre,
   table: TableWrapper,
