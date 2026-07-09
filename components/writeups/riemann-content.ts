@@ -130,7 +130,7 @@ export const css = `@import url('https://fonts.googleapis.com/css2?family=Space+
 
   .status-timeline { list-style: none; margin: 0.6em 0; }
   .status-timeline li { position: relative; padding-left: 1.4em; margin: 0.7em 0; }
-  .status-timeline li::before { content: "\\\\\\\\\\\\\\\\2023"; position: absolute; left: 0; color: var(--c-blue); font-weight: 700; }
+  .status-timeline li::before { content: "\\2023"; position: absolute; left: 0; color: var(--c-blue); font-weight: 700; }
 
   @media (max-width: 640px) {
     .toc ol { columns: 1; }
@@ -139,7 +139,7 @@ export const css = `@import url('https://fonts.googleapis.com/css2?family=Space+
   blockquote.tldr { border-left-color: var(--c-blue); background: var(--c-blue-bg); color: var(--c-blue-tx); font-weight: 400; font-size: 1.0em; }
 }
 
-/* Dark theme (site toggles a \\\\\\\`.dark\\\\\\\` class on <html> via next-themes).
+/* Dark theme (site toggles a \`.dark\` class on <html> via next-themes).
    Canvas plot backgrounds intentionally stay light/paper-white — the
    drawn axes, gridlines and data colors are calibrated for a white
    canvas, so re-theming just the surrounding chrome (and keeping each
