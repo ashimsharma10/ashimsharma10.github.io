@@ -146,6 +146,13 @@
     }
   }
 
+  /* Light theme only: force the remaining typography-gray text (blockquotes,
+     table headers, captions) to pure black. Scoped with :not(.dark) so the
+     dark theme is left exactly as-is. */
+  html:not(.dark) .prose :where(blockquote, blockquote p, th, thead th, figcaption, caption) {
+    color: #000;
+  }
+
   :where(.dark, .dark *) .prose {
     color: var(--color-gray-400);
 
