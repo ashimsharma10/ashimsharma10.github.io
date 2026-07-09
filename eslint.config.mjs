@@ -14,7 +14,7 @@ const compat = new FlatCompat({
 
 export default [
   {
-    ignores: ['next-env.d.ts', 'next.config.js'],
+    ignores: ['next-env.d.ts', 'next.config.js', 'components/writeups/riemann-engine.js'],
   },
   js.configs.recommended,
   ...compat.extends(
