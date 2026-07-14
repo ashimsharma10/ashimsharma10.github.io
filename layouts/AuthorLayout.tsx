@@ -70,11 +70,27 @@ const education = [
 
 const skillGroups = [
   { label: 'Languages', value: 'Python, SQL, C++, TypeScript' },
-  { label: 'AI Frameworks', value: 'LangChain, PyTorch, TensorFlow, OpenAI, HuggingFace, LlamaIndex' },
-  { label: 'Machine Learning', value: 'Natural Language Processing, Deep Learning, Pre-trained Models, Model Integration' },
-  { label: 'Cloud Technologies', value: 'AWS, Azure, GCP, Databricks (Delta Lake, MLflow), Data Lakes' },
-  { label: 'Data & Analytics', value: 'Large Datasets, Data Pipelines, Vector Databases (Pinecone, FAISS), ETL' },
-  { label: 'Development', value: 'Version Control Systems (Git), Agile Methodologies, CI/CD, Docker, Software Development' },
+  {
+    label: 'AI Frameworks',
+    value: 'LangChain, PyTorch, TensorFlow, OpenAI, HuggingFace, LlamaIndex',
+  },
+  {
+    label: 'Machine Learning',
+    value: 'Natural Language Processing, Deep Learning, Pre-trained Models, Model Integration',
+  },
+  {
+    label: 'Cloud Technologies',
+    value: 'AWS, Azure, GCP, Databricks (Delta Lake, MLflow), Data Lakes',
+  },
+  {
+    label: 'Data & Analytics',
+    value: 'Large Datasets, Data Pipelines, Vector Databases (Pinecone, FAISS), ETL',
+  },
+  {
+    label: 'Development',
+    value:
+      'Version Control Systems (Git), Agile Methodologies, CI/CD, Docker, Software Development',
+  },
 ]
 
 const publications = [
@@ -82,9 +98,13 @@ const publications = [
     citationParts: [
       { text: 'Gaire R.R., Subedi R., ', bold: false },
       { text: 'Sharma A.', bold: true },
-      { text: ', Subedi S., Ghimire S.K., Shakya S. (2022) GAN-Based Two-Step Pipeline for Real-World Image Super-Resolution.', bold: false },
+      {
+        text: ', Subedi S., Ghimire S.K., Shakya S. (2022) GAN-Based Two-Step Pipeline for Real-World Image Super-Resolution.',
+        bold: false,
+      },
     ],
-    venue: 'ICT with Intelligent Applications. Smart Innovation, Systems and Technologies, vol 248. Springer, Singapore.',
+    venue:
+      'ICT with Intelligent Applications. Smart Innovation, Systems and Technologies, vol 248. Springer, Singapore.',
     url: 'https://link.springer.com/chapter/10.1007%2F978-981-16-4177-0_75',
   },
 ]
@@ -224,7 +244,7 @@ export default function AuthorLayout({ children, content }: Props) {
   return (
     <div className="lg:flex lg:gap-8 xl:gap-12">
       {/* Left sticky sidebar */}
-      <aside className="pt-8 pb-8 lg:sticky lg:top-8 lg:w-56 lg:flex-shrink-0 lg:self-start xl:w-64 lg:-ml-6">
+      <aside className="pt-8 pb-8 lg:sticky lg:top-16 lg:-ml-6 lg:w-56 lg:flex-shrink-0 lg:self-start lg:pt-16 xl:w-64">
         <div className="flex flex-col items-center text-center">
           {avatar && (
             <Image
@@ -235,13 +255,13 @@ export default function AuthorLayout({ children, content }: Props) {
               className="mb-6 h-24 w-24 rounded-full"
             />
           )}
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100 xl:text-3xl">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 xl:text-3xl dark:text-gray-100">
             {name}
           </h1>
           <p className="mt-2 text-sm text-gray-900 dark:text-gray-400">{occupation}</p>
 
           {/* Section nav — desktop only */}
-          <nav className="mt-10 hidden lg:block w-full">
+          <nav className="mt-10 hidden w-full lg:block">
             <ul className="mx-auto w-fit space-y-3">
               {navLinks.map(({ id, label }) => (
                 <li key={id}>
@@ -282,7 +302,7 @@ export default function AuthorLayout({ children, content }: Props) {
       <main className="min-w-0 flex-1 py-8 lg:py-16 lg:pb-[60vh]">
         {/* About */}
         <section id="about" className="mb-16 scroll-mt-8">
-          <h2 className="mb-5 text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 lg:sr-only">
+          <h2 className="mb-5 text-xs font-semibold tracking-widest text-gray-400 uppercase lg:sr-only dark:text-gray-500">
             About
           </h2>
           <div className="prose prose-base dark:prose-invert max-w-none [&>*]:text-gray-900 dark:[&>*]:text-gray-300 [&>p:first-child]:mt-0">
@@ -292,7 +312,7 @@ export default function AuthorLayout({ children, content }: Props) {
 
         {/* Experience */}
         <section id="experience" className="mb-16 scroll-mt-8">
-          <h2 className="mb-8 text-xs font-semibold uppercase tracking-widest text-gray-900 dark:text-gray-500">
+          <h2 className="mb-8 text-xs font-semibold tracking-widest text-gray-900 uppercase dark:text-gray-500">
             Experience
           </h2>
           <div className="space-y-10">
@@ -336,7 +356,7 @@ export default function AuthorLayout({ children, content }: Props) {
 
         {/* Education */}
         <section id="education" className="mb-16 scroll-mt-8">
-          <h2 className="mb-8 text-xs font-semibold uppercase tracking-widest text-gray-900 dark:text-gray-500">
+          <h2 className="mb-8 text-xs font-semibold tracking-widest text-gray-900 uppercase dark:text-gray-500">
             Education
           </h2>
           <div className="space-y-8">
@@ -351,7 +371,9 @@ export default function AuthorLayout({ children, content }: Props) {
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-col gap-0.5 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                     <div>
-                      <h3 className="font-semibold text-gray-900 dark:text-gray-100">{edu.degree}</h3>
+                      <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                        {edu.degree}
+                      </h3>
                       <p className="text-sm text-gray-900 dark:text-gray-400">{edu.school}</p>
                     </div>
                     <div className="flex-shrink-0 sm:text-right">
@@ -372,12 +394,15 @@ export default function AuthorLayout({ children, content }: Props) {
 
         {/* Skills */}
         <section id="skills" className="mb-16 scroll-mt-8">
-          <h2 className="mb-8 text-xs font-semibold uppercase tracking-widest text-gray-900 dark:text-gray-500">
+          <h2 className="mb-8 text-xs font-semibold tracking-widest text-gray-900 uppercase dark:text-gray-500">
             Skills
           </h2>
           <div className="space-y-3">
             {skillGroups.map((group) => (
-              <p key={group.label} className="text-sm leading-relaxed text-gray-900 dark:text-gray-400">
+              <p
+                key={group.label}
+                className="text-sm leading-relaxed text-gray-900 dark:text-gray-400"
+              >
                 <span className="font-semibold">{group.label}:</span> {group.value}
               </p>
             ))}
@@ -386,7 +411,7 @@ export default function AuthorLayout({ children, content }: Props) {
 
         {/* Publications */}
         <section id="publications" className="mb-16 scroll-mt-8">
-          <h2 className="mb-8 text-xs font-semibold uppercase tracking-widest text-gray-900 dark:text-gray-500">
+          <h2 className="mb-8 text-xs font-semibold tracking-widest text-gray-900 uppercase dark:text-gray-500">
             Publications
           </h2>
           <ul className="space-y-4">
@@ -401,7 +426,11 @@ export default function AuthorLayout({ children, content }: Props) {
                     className="hover:underline"
                   >
                     {pub.citationParts.map((part, j) =>
-                      part.bold ? <strong key={j}>{part.text}</strong> : <span key={j}>{part.text}</span>
+                      part.bold ? (
+                        <strong key={j}>{part.text}</strong>
+                      ) : (
+                        <span key={j}>{part.text}</span>
+                      )
                     )}
                   </a>{' '}
                   <span className="italic">{pub.venue}</span>
@@ -413,10 +442,10 @@ export default function AuthorLayout({ children, content }: Props) {
 
         {/* Certifications */}
         <section id="certifications" className="mb-16 scroll-mt-8">
-          <h2 className="mb-8 text-xs font-semibold uppercase tracking-widest text-gray-900 dark:text-gray-500">
+          <h2 className="mb-8 text-xs font-semibold tracking-widest text-gray-900 uppercase dark:text-gray-500">
             Certifications
           </h2>
-          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {certifications.map((cert, i) => (
               <li key={i} className="flex items-center gap-3">
                 <OrgLogo
@@ -450,7 +479,7 @@ export default function AuthorLayout({ children, content }: Props) {
 
         {/* Conferences Attended */}
         <section id="conferences" className="mb-16 scroll-mt-8">
-          <h2 className="mb-8 text-xs font-semibold uppercase tracking-widest text-gray-900 dark:text-gray-500">
+          <h2 className="mb-8 text-xs font-semibold tracking-widest text-gray-900 uppercase dark:text-gray-500">
             Conferences Attended
           </h2>
           <ul className="space-y-4">
