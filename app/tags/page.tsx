@@ -13,11 +13,11 @@ export default async function Page() {
     <>
       <div className="pt-6 pb-8 md:mt-8">
         <div className="mb-4 md:mb-8">
-          <h1 className="text-3xl leading-9 font-extrabold tracking-tight text-gray-900 sm:text-4xl sm:leading-10 md:text-6xl md:leading-14 dark:text-gray-100">
+          <h1 className="text-2xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-3xl sm:leading-9 md:text-4xl md:leading-10 dark:text-gray-100">
             Tags
           </h1>
           <p className="mt-2 text-base text-gray-500 dark:text-gray-400">
-            A map of everything I write about — each write-up and the ideas that connect them.
+            A map of everything I write about and the ideas that connect them.
           </p>
         </div>
         {posts.length === 0 ? 'No tags found.' : <TagGraph posts={posts} />}

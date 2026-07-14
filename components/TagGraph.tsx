@@ -110,6 +110,14 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const tipRef = useRef<HTMLDivElement>(null)
 
+  // Hold the theme in a ref the render loop reads each frame, so toggling
+  // light/dark recolours in place without re-running the setup effect (which
+  // would reset the camera zoom, rotation, and any dragged/pinned nodes).
+  const themeRef = useRef<string | undefined>(resolvedTheme)
+  useEffect(() => {
+    themeRef.current = resolvedTheme
+  }, [resolvedTheme])
+
   const { nodes, edges, adj, textList } = useMemo(() => {
     const tagCount: Record<string, number> = {}
     posts.forEach((p) => p.tags.forEach((t) => (tagCount[t] = (tagCount[t] || 0) + 1)))
@@ -213,7 +221,7 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
     let W = 0
     let H = 0
     let S = 1 // graph-units → screen-px scale
-    const col = () => (resolvedTheme === 'dark' ? palette.dark : palette.light)
+    const col = () => (themeRef.current === 'dark' ? palette.dark : palette.light)
 
     const resize = () => {
       const rect = wrap.getBoundingClientRect()
@@ -231,7 +239,7 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
     // Camera + interaction state.
     let ry = 0.6 // yaw
     let rx = -0.35 // pitch
-    let zoom = 1
+    let zoom = 1.35 // default: framed a little tighter so the graph fills the canvas
     let autoRotate = true
     let hover: Node | null = null
     let drag: Node | null = null
@@ -241,6 +249,7 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
     // the graph settles quickly (less initial motion, easier to grab a node).
     let alpha = 0.5
     let raf = 0
+    let pinnedAny = false // once the user drops a node, stop auto-recentering
     let last: { x: number; y: number } = { x: 0, y: 0 }
     const FOCAL = R0 * 2.4
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -328,23 +337,26 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
           n.z += n.vz * alpha
         })
         // Recenter on the origin so the graph doesn't drift out of frame while
-        // it settles (skipped once settled, so pinned nodes stay put).
-        let cxs = 0
-        let cys = 0
-        let czs = 0
-        nodes.forEach((n) => {
-          cxs += n.x
-          cys += n.y
-          czs += n.z
-        })
-        cxs /= nodes.length
-        cys /= nodes.length
-        czs /= nodes.length
-        nodes.forEach((n) => {
-          n.x -= cxs
-          n.y -= cys
-          n.z -= czs
-        })
+        // it settles. Skipped during a drag, and once the user has pinned a
+        // node, so grabbed/pinned nodes stay where they were dropped.
+        if (!drag && !pinnedAny) {
+          let cxs = 0
+          let cys = 0
+          let czs = 0
+          nodes.forEach((n) => {
+            cxs += n.x
+            cys += n.y
+            czs += n.z
+          })
+          cxs /= nodes.length
+          cys /= nodes.length
+          czs /= nodes.length
+          nodes.forEach((n) => {
+            n.x -= cxs
+            n.y -= cys
+            n.z -= czs
+          })
+        }
         alpha *= 0.99
       }
 
@@ -470,7 +482,11 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
       last = { x: e.clientX, y: e.clientY }
       if (n) drag = n
       else orbit = { x: e.clientX, y: e.clientY }
-      canvas.setPointerCapture(e.pointerId)
+      try {
+        canvas.setPointerCapture(e.pointerId)
+      } catch {
+        /* no-op */
+      }
       canvas.style.cursor = 'grabbing'
     }
     const onMove = (e: PointerEvent) => {
@@ -485,10 +501,22 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
         const gy = -ddy / sc
         const rt = camRight()
         const up = camUp()
-        drag.x += rt[0] * gx + up[0] * gy
-        drag.y += rt[1] * gx + up[1] * gy
-        drag.z += rt[2] * gx + up[2] * gy
+        const dgx = rt[0] * gx + up[0] * gy
+        const dgy = rt[1] * gx + up[1] * gy
+        const dgz = rt[2] * gx + up[2] * gy
+        drag.x += dgx
+        drag.y += dgy
+        drag.z += dgz
         drag.vx = drag.vy = drag.vz = 0
+        // Connected nodes follow the grabbed node, then the springs relax them.
+        const nb = adj[drag.id]
+        nodes.forEach((m) => {
+          if (m === drag || m.fixed || !nb.has(m.id)) return
+          m.x += dgx * 0.55
+          m.y += dgy * 0.55
+          m.z += dgz * 0.55
+        })
+        alpha = Math.max(alpha, 0.25)
         if (Math.abs(ddx) + Math.abs(ddy) > 1) moved = true
         return
       }
@@ -525,7 +553,10 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
     const onUp = (e: PointerEvent) => {
       if (drag) {
         if (!moved) router.push(drag.url)
-        else drag.fixed = true // pin where dropped
+        else {
+          drag.fixed = true // pin where dropped
+          pinnedAny = true
+        }
       }
       drag = null
       orbit = null
@@ -562,8 +593,9 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
     const onReset = () => {
       ry = 0.6
       rx = -0.35
-      zoom = 1
+      zoom = 1.35
       autoRotate = !reducedMotion
+      pinnedAny = false
       nodes.forEach((n, i) => {
         const total = nodes.length
         const pos = spherePoint(i, total, n.type === 'post' ? 210 : 70)
@@ -587,7 +619,9 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
       canvas.removeEventListener('wheel', onWheel)
       resetBtn?.removeEventListener('click', onReset)
     }
-  }, [mounted, resolvedTheme, nodes, edges, adj, router])
+    // Note: resolvedTheme is intentionally not a dependency — the render loop
+    // reads it via themeRef so theme changes recolour without re-init.
+  }, [mounted, nodes, edges, adj, router])
 
   return (
     <div className="w-full">
@@ -600,14 +634,11 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
           <span className="inline-block h-3 w-3 rounded-full bg-[#0f9d58] dark:bg-[#1aa06e]" />
           tag — opens the tag page
         </span>
-        <span className="ml-auto hidden sm:inline">
-          drag to orbit · scroll to zoom · drag a node to pin it
-        </span>
       </div>
 
       <div
         ref={wrapRef}
-        className="relative h-[70vh] max-h-[680px] min-h-[440px] w-full overflow-hidden rounded-xl border border-gray-200 bg-[#f7f8fa] dark:border-gray-700 dark:bg-[#0e1117]"
+        className="relative h-[82vh] max-h-[820px] min-h-[480px] w-full overflow-hidden rounded-xl border border-gray-200 bg-[#f7f8fa] dark:border-gray-700 dark:bg-[#0e1117]"
       >
         <canvas ref={canvasRef} className="block h-full w-full cursor-grab touch-none" />
         <div
