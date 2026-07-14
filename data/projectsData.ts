@@ -8,6 +8,13 @@ interface Project {
 
 const projectsData: Project[] = [
   {
+    title: 'Social Sentiment Dashboard',
+    description:
+      'An event-driven sentiment monitor for Rivian: Reddit, App Store reviews, X/Twitter, and NHTSA complaints flow through a Kafka pipeline with HuggingFace sentiment analysis into a FastAPI + Next.js dashboard, backed by a Slack-integrated safety-triage queue.',
+    imgSrc: '/static/images/social-sentiment-dashboard/card-thumbnail.png',
+    href: '/projects/social-sentiment-dashboard',
+  },
+  {
     title: 'GAN-Based Real-World Image Super-Resolution',
     description:
       'A two-step GAN pipeline for real-world image super-resolution using a Real-to-Bicubic generator and nESRGAN+ network, achieving state-of-the-art perceptual quality.',
