@@ -58,15 +58,15 @@ export default function SocialSentimentDashboardPage() {
 
           <h2>Why it matters</h2>
           <p>
-            For a hardware company, customer feedback is both critical and hopelessly fragmented.
-            A frustrated owner might vent on Reddit, leave a one-star App Store review, tag the
-            brand on X, and &mdash; if it&rsquo;s a genuine safety defect &mdash; file an NHTSA
-            complaint, and no single team ever sees the whole picture. Safety and service signals
-            in particular are easy to miss until they become a pattern, by which point they&rsquo;re
-            expensive. This project treats that scattered chatter as a real-time stream: it
-            aggregates every source into one place, quantifies whether sentiment is trending up or
-            down, clusters the noise into concrete issues, and makes sure a critical safety
-            complaint reaches a human in Slack within minutes rather than a weekly report.
+            For a hardware company, customer feedback is both critical and hopelessly fragmented. A
+            frustrated owner might vent on Reddit, leave a one-star App Store review, tag the brand
+            on X, and &mdash; if it&rsquo;s a genuine safety defect &mdash; file an NHTSA complaint,
+            and no single team ever sees the whole picture. Safety and service signals in particular
+            are easy to miss until they become a pattern, by which point they&rsquo;re expensive.
+            This project treats that scattered chatter as a real-time stream: it aggregates every
+            source into one place, quantifies whether sentiment is trending up or down, clusters the
+            noise into concrete issues, and makes sure a critical safety complaint reaches a human
+            in Slack within minutes rather than a weekly report.
           </p>
           <p>
             Just as importantly, it&rsquo;s built the way such a system would run in production
@@ -102,9 +102,9 @@ export default function SocialSentimentDashboardPage() {
           </div>
           <p>
             Everything runs under Docker Compose: a KRaft-mode Kafka broker, Postgres 16, a poller
-            process (fetch loops plus backfill and command consumers), a worker process (five
-            stage consumers), the FastAPI backend, and the Next.js frontend &mdash; with Kafka UI
-            for topic and consumer-lag inspection.
+            process (fetch loops plus backfill and command consumers), a worker process (five stage
+            consumers), the FastAPI backend, and the Next.js frontend &mdash; with Kafka UI for
+            topic and consumer-lag inspection.
           </p>
 
           <h2>The Kafka pipeline</h2>
@@ -112,17 +112,16 @@ export default function SocialSentimentDashboardPage() {
             Seven topics (three partitions each) carry JSON payloads validated by Pydantic v2
             schemas. Raw items land in <code>social.items.raw</code> and{' '}
             <code>nhtsa.complaints.raw</code>; an ingest writer dedupes and persists them, then
-            emits <code>items.new</code>. An analyzer consumer scores sentiment with a RoBERTa
-            model and emits <code>items.analyzed</code>; a flagger promotes safety- and
-            service-related posts to <code>flags.created</code>; a notifier delivers
-            severity-filtered alerts to Slack. A <code>pipeline.commands</code> topic lets the API
-            trigger polls and refreshes on demand.
+            emits <code>items.new</code>. An analyzer consumer scores sentiment with a RoBERTa model
+            and emits <code>items.analyzed</code>; a flagger promotes safety- and service-related
+            posts to <code>flags.created</code>; a notifier delivers severity-filtered alerts to
+            Slack. A <code>pipeline.commands</code> topic lets the API trigger polls and refreshes
+            on demand.
           </p>
           <p>
-            Delivery is at-least-once: consumers commit offsets only after the database
-            transaction commits, and every write is idempotent under redelivery via unique
-            constraints &mdash; so a crash between commit and offset advance never duplicates
-            data.
+            Delivery is at-least-once: consumers commit offsets only after the database transaction
+            commits, and every write is idempotent under redelivery via unique constraints &mdash;
+            so a crash between commit and offset advance never duplicates data.
           </p>
 
           <h2>Data sources</h2>
@@ -130,18 +129,18 @@ export default function SocialSentimentDashboardPage() {
             Sources are pluggable behind a small <code>Source</code> ABC &mdash; adding one means
             implementing a fetch method and registering it. Current sources: Reddit (public JSON
             with RSS fallback), NHTSA complaints, Apple App Store reviews (RSS), and X/Twitter via
-            an Apify scraper with owner-voice queries and a promo filter (kept inert unless a
-            token is configured, so no accidental spend).
+            an Apify scraper with owner-voice queries and a promo filter (kept inert unless a token
+            is configured, so no accidental spend).
           </p>
 
           <h2>Dashboard &amp; API</h2>
           <p>
             The FastAPI backend exposes stats (sentiment time series, per-entity and per-source
             breakdowns, weekly changes, executive summary), filtered post search, clustered issue
-            cards, NHTSA complaint analytics, and a flag queue where resolving requires a note.
-            The Next.js dashboard covers Overview, Charts, Entities, Issues, Posts, Flagged, and
-            NHTSA views, plus a manual &ldquo;fetch now&rdquo; trigger that publishes a command
-            into the pipeline. The backend ships with 47 tests.
+            cards, NHTSA complaint analytics, and a flag queue where resolving requires a note. The
+            Next.js dashboard covers Overview, Charts, Entities, Issues, Posts, Flagged, and NHTSA
+            views, plus a manual &ldquo;fetch now&rdquo; trigger that publishes a command into the
+            pipeline. The backend ships with 47 tests.
           </p>
 
           <h2>Tech Stack</h2>
