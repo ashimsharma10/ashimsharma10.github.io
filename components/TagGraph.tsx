@@ -110,6 +110,14 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const tipRef = useRef<HTMLDivElement>(null)
 
+  // Hold the theme in a ref the render loop reads each frame, so toggling
+  // light/dark recolours in place without re-running the setup effect (which
+  // would reset the camera zoom, rotation, and any dragged/pinned nodes).
+  const themeRef = useRef<string | undefined>(resolvedTheme)
+  useEffect(() => {
+    themeRef.current = resolvedTheme
+  }, [resolvedTheme])
+
   const { nodes, edges, adj, textList } = useMemo(() => {
     const tagCount: Record<string, number> = {}
     posts.forEach((p) => p.tags.forEach((t) => (tagCount[t] = (tagCount[t] || 0) + 1)))
@@ -213,7 +221,7 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
     let W = 0
     let H = 0
     let S = 1 // graph-units → screen-px scale
-    const col = () => (resolvedTheme === 'dark' ? palette.dark : palette.light)
+    const col = () => (themeRef.current === 'dark' ? palette.dark : palette.light)
 
     const resize = () => {
       const rect = wrap.getBoundingClientRect()
@@ -611,7 +619,9 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
       canvas.removeEventListener('wheel', onWheel)
       resetBtn?.removeEventListener('click', onReset)
     }
-  }, [mounted, resolvedTheme, nodes, edges, adj, router])
+    // Note: resolvedTheme is intentionally not a dependency — the render loop
+    // reads it via themeRef so theme changes recolour without re-init.
+  }, [mounted, nodes, edges, adj, router])
 
   return (
     <div className="w-full">
