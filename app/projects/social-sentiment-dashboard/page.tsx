@@ -49,39 +49,32 @@ export default function SocialSentimentDashboardPage() {
           <p>
             Social Sentiment Dashboard is a sentiment monitor for the EV maker Rivian. It
             continuously watches what owners and prospective buyers are saying across four very
-            different channels &mdash; Reddit posts and comments, Apple App Store reviews, X/Twitter
-            posts, and official NHTSA safety complaints &mdash; scores each item for sentiment,
-            surfaces recurring issues, and pushes anything safety-related to a review queue with
-            Slack alerts. Everything lands in a single FastAPI + Next.js dashboard instead of four
+            different channels: Reddit posts and comments, Apple App Store reviews, X/Twitter posts,
+            and official NHTSA safety complaints. It scores each item for sentiment, surfaces
+            recurring issues, and pushes anything safety-related to a review queue with Slack
+            alerts. Everything lands in a single FastAPI and Next.js dashboard instead of four
             scattered feeds.
           </p>
 
           <h2>Why it matters</h2>
           <p>
-            For a hardware company, customer feedback is both critical and hopelessly fragmented. A
-            frustrated owner might vent on Reddit, leave a one-star App Store review, tag the brand
-            on X, and &mdash; if it&rsquo;s a genuine safety defect &mdash; file an NHTSA complaint,
-            and no single team ever sees the whole picture. Safety and service signals in particular
-            are easy to miss until they become a pattern, by which point they&rsquo;re expensive.
-            This project treats that scattered chatter as a real-time stream: it aggregates every
-            source into one place, quantifies whether sentiment is trending up or down, clusters the
-            noise into concrete issues, and makes sure a critical safety complaint reaches a human
-            in Slack within minutes rather than a weekly report.
-          </p>
-          <p>
-            Just as importantly, it&rsquo;s built the way such a system would run in production
-            &mdash; as an event-driven Kafka pipeline rather than a cron job or a batch script. That
-            choice is what lets the sources, the sentiment model, the safety flagging, and the
-            alerting all scale and fail independently, and it&rsquo;s the part of the project most
-            of the engineering went into.
+            For a hardware company, customer feedback is critical but hopelessly fragmented. The
+            same unhappy owner might vent on Reddit, leave a one-star App Store review, tag the
+            brand on X, and file an NHTSA complaint, so no single team ever sees the whole picture.
+            Safety and service problems are the easiest to miss and the most expensive to catch
+            late. This project pulls every source into one place, tracks whether sentiment is rising
+            or falling, and makes sure a critical safety complaint reaches a human in Slack within
+            minutes.
           </p>
 
           <h2>How it works</h2>
           <p>
-            The sources feed an Apache Kafka pipeline whose stages &mdash; ingestion,
-            HuggingFace-based sentiment analysis, safety flagging, and Slack notification &mdash;
-            each run as independent consumers. Postgres backs the FastAPI API and the Next.js
-            dashboard, including the safety-triage queue for reviewing flagged posts.
+            It runs as an event-driven Kafka pipeline rather than a cron job or a batch script, so
+            the sources, the sentiment model, the safety flagging, and the alerting all scale and
+            fail independently. The pipeline stages (ingestion, HuggingFace-based sentiment
+            analysis, safety flagging, and Slack notification) each run as independent consumers,
+            and Postgres backs the FastAPI API and the Next.js dashboard, including the
+            safety-triage queue for reviewing flagged posts.
           </p>
 
           <h2>Architecture</h2>
@@ -103,8 +96,8 @@ export default function SocialSentimentDashboardPage() {
           <p>
             Everything runs under Docker Compose: a KRaft-mode Kafka broker, Postgres 16, a poller
             process (fetch loops plus backfill and command consumers), a worker process (five stage
-            consumers), the FastAPI backend, and the Next.js frontend &mdash; with Kafka UI for
-            topic and consumer-lag inspection.
+            consumers), the FastAPI backend, and the Next.js frontend, with Kafka UI for topic and
+            consumer-lag inspection.
           </p>
 
           <h2>The Kafka pipeline</h2>
@@ -120,13 +113,13 @@ export default function SocialSentimentDashboardPage() {
           </p>
           <p>
             Delivery is at-least-once: consumers commit offsets only after the database transaction
-            commits, and every write is idempotent under redelivery via unique constraints &mdash;
-            so a crash between commit and offset advance never duplicates data.
+            commits, and every write is idempotent under redelivery via unique constraints, so a
+            crash between commit and offset advance never duplicates data.
           </p>
 
           <h2>Data sources</h2>
           <p>
-            Sources are pluggable behind a small <code>Source</code> ABC &mdash; adding one means
+            Sources are pluggable behind a small <code>Source</code> ABC, so adding one means
             implementing a fetch method and registering it. Current sources: Reddit (public JSON
             with RSS fallback), NHTSA complaints, Apple App Store reviews (RSS), and X/Twitter via
             an Apify scraper with owner-voice queries and a promo filter (kept inert unless a token
