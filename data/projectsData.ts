@@ -22,6 +22,13 @@ const projectsData: Project[] = [
     href: 'https://github.com/ashimsharma10/PR_warden',
     imageContain: true,
   },
+  {
+    title: 'Social Sentiment Dashboard',
+    description:
+      'An event-driven sentiment monitor for Rivian: Reddit, App Store reviews, X/Twitter, and NHTSA complaints flow through a Kafka pipeline with HuggingFace sentiment analysis into a FastAPI + Next.js dashboard, backed by a Slack-integrated safety-triage queue.',
+    imgSrc: '/static/images/social-sentiment-dashboard/card-thumbnail.png',
+    href: '/projects/social-sentiment-dashboard',
+  },
 ]
 
 export default projectsData
