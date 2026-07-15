@@ -38,8 +38,12 @@ if (!CHAT_API_URL || !INGEST_SECRET) {
   process.exit(1)
 }
 
-const CHUNK_SIZE = 1200 // chars
-const CHUNK_OVERLAP = 200
+// ~2000 chars ≈ 500 tokens, which fills bge-base's 512-token window without
+// wasting most of a chunk to truncation, and keeps the total chunk count under
+// the Workers AI free-tier embedding rate limit (~300/window) so a full ingest
+// completes in one pass.
+const CHUNK_SIZE = 2000 // chars
+const CHUNK_OVERLAP = 250
 
 /** Split text into overlapping chunks on paragraph/sentence boundaries. */
 function chunk(text) {
@@ -401,26 +405,41 @@ if (!process.argv.includes('--no-purge')) {
 
 console.log(`Uploading to ${CHAT_API_URL}/ingest ...`)
 
-// Upload in batches to stay well within request limits.
-const BATCH = 20
+// Upload in batches. Each /ingest call embeds its batch via Workers AI, which
+// throttles (5xx) under sustained bursty load. Single embeds are fine, so the
+// cure is to keep batches small, PACE them so the sustained rate stays under the
+// limit, and retry with long backoff to ride out any throttling window.
+const BATCH = 10
+const MAX_RETRIES = 5
+const PACE_MS = 1500 // gap between batches — keeps us under the Workers AI burst limit
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
+const totalBatches = Math.ceil(items.length / BATCH)
 let uploaded = 0
 for (let i = 0; i < items.length; i += BATCH) {
   const batch = items.slice(i, i + BATCH)
-  const res = await fetch(`${CHAT_API_URL}/ingest`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${INGEST_SECRET}`,
-    },
-    body: JSON.stringify(batch),
-  })
-  if (!res.ok) {
-    console.error(`Batch ${i / BATCH} failed: ${res.status} ${await res.text()}`)
-    process.exit(1)
+  const n = i / BATCH + 1
+  for (let attempt = 1; ; attempt++) {
+    const res = await fetch(`${CHAT_API_URL}/ingest`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${INGEST_SECRET}` },
+      body: JSON.stringify(batch),
+    })
+    if (res.ok) {
+      const out = await res.json()
+      uploaded += out.upserted || batch.length
+      console.log(`  batch ${n}/${totalBatches}: upserted ${out.upserted}`)
+      break
+    }
+    const body = (await res.text()).slice(0, 120).replace(/\s+/g, ' ')
+    if (attempt > MAX_RETRIES) {
+      console.error(`Batch ${n} failed after ${MAX_RETRIES} retries: ${res.status} ${body}`)
+      process.exit(1)
+    }
+    const wait = Math.min(30000, 3000 * 2 ** (attempt - 1)) // 3s,6s,12s,24s,30s
+    console.warn(`  batch ${n} got ${res.status}; retry ${attempt}/${MAX_RETRIES} in ${wait}ms`)
+    await sleep(wait)
   }
-  const out = await res.json()
-  uploaded += out.upserted || batch.length
-  console.log(`  batch ${i / BATCH + 1}: upserted ${out.upserted}`)
+  await sleep(PACE_MS)
 }
 
 console.log(`Done. Upserted ${uploaded} vectors into the knowledge base.`)
