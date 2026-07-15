@@ -1,0 +1,72 @@
+[
+  {
+    "question": "What projects has Ashim built?",
+    "expectAny": ["gan-sr-pipeline", "pr_warden", "social-sentiment-dashboard", "project:"],
+    "expectText": ["pr warden", "super-resolution", "sentiment"],
+    "note": "Broad projects query — the one that got buried by write-up chunks before."
+  },
+  {
+    "question": "Tell me about PR Warden.",
+    "expectAny": ["pr_warden", "pr warden"],
+    "expectText": ["pull request", "triage"]
+  },
+  {
+    "question": "Explain the GAN super-resolution project.",
+    "expectAny": ["gan-sr-pipeline"],
+    "expectText": ["super-resolution"]
+  },
+  {
+    "question": "What is the Social Sentiment Dashboard?",
+    "expectAny": ["social-sentiment-dashboard"],
+    "expectText": ["sentiment", "rivian"]
+  },
+  {
+    "question": "Has Ashim published any research papers?",
+    "expectAny": ["publications"],
+    "expectText": ["super-resolution"]
+  },
+  {
+    "question": "What did Ashim publish and where?",
+    "expectAny": ["publications"],
+    "expectText": ["super-resolution"]
+  },
+  {
+    "question": "Where does Ashim currently work?",
+    "expectAny": ["experience", "rivian", "volkswagen"],
+    "expectText": ["rivian", "volkswagen"]
+  },
+  {
+    "question": "What is Ashim's educational background?",
+    "expectAny": ["education"],
+    "expectText": ["computer science", "lafayette"]
+  },
+  {
+    "question": "What technical skills does Ashim have?",
+    "expectAny": ["skills"]
+  },
+  {
+    "question": "What certifications does Ashim hold?",
+    "expectAny": ["certifications"],
+    "expectText": ["aws", "stanford"]
+  },
+  {
+    "question": "How can I contact Ashim?",
+    "expectAny": ["about"],
+    "expectText": ["email", "linkedin"]
+  },
+  {
+    "question": "Does Ashim have any writing about RAG or retrieval?",
+    "expectAny": ["/write-up/"],
+    "expectText": ["rag", "retrieval"]
+  },
+  {
+    "question": "What has Ashim written about Docker?",
+    "expectAny": ["docker", "/write-up/"],
+    "expectText": ["docker", "container"]
+  },
+  {
+    "question": "Any content about Linux systems?",
+    "expectAny": ["linux", "/write-up/"],
+    "expectText": ["linux"]
+  }
+]
