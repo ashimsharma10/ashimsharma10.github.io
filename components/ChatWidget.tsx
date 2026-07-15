@@ -16,6 +16,21 @@ interface Message {
   sources?: Source[]
 }
 
+// Minimal, XSS-safe markdown for assistant bubbles: HTML-escape first, then
+// apply a small whitelist of inline transforms (links, bold, inline code).
+// Newlines are preserved by the bubble's `whitespace-pre-wrap`. We escape before
+// transforming and sanitize the href, so model output can't inject markup.
+function renderMarkdown(src: string): string {
+  const escaped = src.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  return escaped
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (_m, text, url) => {
+      const safeUrl = url.replace(/"/g, '%22')
+      return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="underline underline-offset-2">${text}</a>`
+    })
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/`([^`]+)`/g, '<code class="rounded bg-black/10 px-1 dark:bg-white/10">$1</code>')
+}
+
 // --- Suggestion chips (icon + label + the question it asks) ---
 const IconExperience = (p: { className?: string }) => (
   <svg
@@ -287,7 +302,11 @@ export default function ChatWidget() {
                       : 'inline-block max-w-[85%] rounded-2xl bg-gray-100 px-3 py-2 text-sm whitespace-pre-wrap text-gray-800 dark:bg-gray-800 dark:text-gray-100'
                   }
                 >
-                  {m.content || (loading && i === messages.length - 1 ? '…' : '')}
+                  {m.role === 'assistant' && m.content ? (
+                    <span dangerouslySetInnerHTML={{ __html: renderMarkdown(m.content) }} />
+                  ) : (
+                    m.content || (loading && i === messages.length - 1 ? '…' : '')
+                  )}
                 </div>
                 {m.sources && m.sources.length > 0 && (
                   <div className="mt-1 flex flex-wrap gap-1">
