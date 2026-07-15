@@ -44,3 +44,9 @@ yarn-error.log*
 .contentlayer
 CLAUDE.md
 AGENTS.md
+
+# TypeScript incremental build cache
+*.tsbuildinfo
+
+# Claude Code local config
+.claude/
