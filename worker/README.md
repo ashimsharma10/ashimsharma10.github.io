@@ -45,12 +45,26 @@ For production, tighten CORS by setting `ALLOWED_ORIGIN` in `wrangler.toml` to
 
 ## Ingest the knowledge base
 
-From the repo root (not this folder). This upserts into **both** Vectorize and D1:
+The corpus is curated: bio + about sections (experience, education, skills,
+publications, certifications, conferences from `data/aboutData.js`), project
+cards + detail pages, and write-up **titles/summaries/links only** (no full
+bodies — the bot links to the page instead).
+
+Project detail chunks are extracted from the built HTML in `out/`, so **run
+`EXPORT=1 npm run build` first** (plain `npm run build` does not write `out/`).
+The script fails loudly if `out/` is missing or stale.
+
+From the repo root (not this folder). By default the script calls the Worker's
+`POST /purge` first (deletes every chunk from Vectorize + D1 so stale ids never
+linger), then upserts the fresh corpus into **both** stores:
 
 ```bash
+EXPORT=1 npm run build   # required: out/ is an ingest source
+
 CHAT_API_URL="https://ashim-chatbot.<subdomain>.workers.dev" \
 INGEST_SECRET="<same value you set above>" \
-npm run ingest
+npm run ingest              # purge + full re-ingest
+npm run ingest -- --no-purge  # upsert-only (skip the purge)
 ```
 
 Verify:

@@ -73,6 +73,34 @@ const IconMail = (p: { className?: string }) => (
     <path d="m3 7 9 6 9-6" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 )
+const IconBook = (p: { className?: string }) => (
+  <svg
+    className={p.className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.8}
+  >
+    <path
+      d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5v13Z"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+const IconAward = (p: { className?: string }) => (
+  <svg
+    className={p.className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.8}
+  >
+    <circle cx="12" cy="9" r="5.5" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="m8.8 13.7-1.3 7 4.5-2.6 4.5 2.6-1.3-7" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
 
 const CHIPS = [
   {
@@ -81,6 +109,8 @@ const CHIPS = [
     prompt: "What is Ashim's experience in AI and ML?",
   },
   { label: 'Top Projects', Icon: IconRocket, prompt: "What are Ashim's top projects?" },
+  { label: 'Publications', Icon: IconBook, prompt: 'What has Ashim published?' },
+  { label: 'Certifications', Icon: IconAward, prompt: 'What certifications does Ashim have?' },
   { label: 'Why hire him?', Icon: IconBadge, prompt: 'Why should someone hire Ashim?' },
   { label: 'Contact', Icon: IconMail, prompt: 'How can I get in touch with Ashim?' },
 ]

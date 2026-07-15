@@ -2,20 +2,30 @@
  * Build the chatbot knowledge base and push it to the Cloudflare Worker's
  * /ingest endpoint (which embeds + upserts into Vectorize).
  *
- * Sources (all existing site content — nothing new to author):
- *   - Bio       : data/authors/default.mdx
- *   - Projects  : data/projectsData.ts
- *   - Blog posts: data/blog/*.mdx  (full body, chunked)
+ * Curated corpus (NOT the whole site):
+ *   - Bio            : data/authors/default.mdx
+ *   - About sections : data/aboutData.js (experience, education, skills,
+ *                      publications, certifications, conferences)
+ *   - Project cards  : data/projectsData.ts
+ *   - Project details: <article> text of out/projects/<slug>/index.html
+ *                      (requires a fresh `npm run build`)
+ *   - Write-ups      : frontmatter ONLY (title, date, tags, summary, link) —
+ *                      full bodies are intentionally excluded; the bot points
+ *                      visitors at the page instead.
+ *
+ * By default the Worker's /purge endpoint is called first so stale chunks
+ * never linger. Pass --no-purge to skip that (upsert-only).
  *
  * Usage (from repo root):
  *   CHAT_API_URL=https://<worker>.workers.dev \
  *   INGEST_SECRET=<secret> \
- *   npm run ingest
+ *   npm run ingest [-- --no-purge]
  */
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import matter from 'gray-matter'
+import aboutData from '../data/aboutData.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
@@ -59,6 +69,78 @@ function stripMdx(body) {
     .trim()
 }
 
+const NAMED_ENTITIES = {
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: "'",
+  nbsp: ' ',
+  middot: '·',
+  larr: '←',
+  rarr: '→',
+  ldquo: '“',
+  rdquo: '”',
+  lsquo: '‘',
+  rsquo: '’',
+  mdash: '—',
+  ndash: '–',
+  hellip: '…',
+}
+
+/** Dependency-free HTML → text: drop script/style, keep block breaks, decode entities. */
+function stripHtml(html) {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<\/(p|li|h[1-6]|div|section|figure|figcaption)>/gi, '\n\n')
+    .replace(/<(br|hr)\s*\/?>/gi, '\n')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCodePoint(parseInt(h, 16)))
+    .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(Number(d)))
+    .replace(/&([a-z]+);/gi, (m, name) => NAMED_ENTITIES[name.toLowerCase()] ?? m)
+    .replace(/[ \t]+/g, ' ')
+    .replace(/ ?\n ?/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
+/**
+ * Extract the readable text of the first <article> in a built HTML page.
+ * Fails loudly when the page hasn't been built (or is older than its source)
+ * so the knowledge base can never silently miss content.
+ */
+function articleText(htmlPath, sourcePath) {
+  if (!fs.existsSync(htmlPath)) {
+    console.error(`Missing built page: ${htmlPath}\nRun \`EXPORT=1 npm run build\` first.`)
+    process.exit(1)
+  }
+  if (sourcePath && fs.existsSync(sourcePath)) {
+    const htmlM = fs.statSync(htmlPath).mtimeMs
+    const srcM = fs.statSync(sourcePath).mtimeMs
+    if (htmlM < srcM) {
+      console.error(
+        `Stale built page: ${htmlPath} is older than ${sourcePath}.\nRun \`EXPORT=1 npm run build\` first.`
+      )
+      process.exit(1)
+    }
+  }
+  const html = fs.readFileSync(htmlPath, 'utf8')
+  const m = html.match(/<article[\s>][\s\S]*?<\/article>/i)
+  if (!m) {
+    console.error(`No <article> found in ${htmlPath} — cannot extract project details.`)
+    process.exit(1)
+  }
+  const text = stripHtml(m[0])
+  // Drop pure-navigation lines that survive extraction.
+  return text
+    .split('\n')
+    .filter((line) => !/^(←\s*)?Back( to Projects)?$/i.test(line.trim()))
+    .filter((line) => line.trim() !== 'View on GitHub')
+    .join('\n')
+    .trim()
+}
+
 const items = []
 
 // --- Bio ---
@@ -69,55 +151,216 @@ const items = []
     `Ashim Sharma — ${data.occupation || ''}. Email: ${data.email || ''}. ` +
     `LinkedIn: ${data.linkedin || ''}. GitHub: ${data.github || ''}.\n\n${stripMdx(content)}`
   items.push({
-    id: 'bio',
+    id: 'about-bio',
     text,
     metadata: { title: 'About Ashim', url: `${SITE_URL}/about/`, type: 'bio' },
   })
 }
 
-// --- Projects (parsed from projectsData.ts) ---
+// --- About sections (shared with layouts/AuthorLayout.tsx) ---
+{
+  const { experience, education, skillGroups, publications, certifications, conferences } =
+    aboutData
+  const aboutUrl = (hash) => `${SITE_URL}/about/#${hash}`
+
+  experience.forEach((job, i) => {
+    const bullets = job.bullets.map((b) => `- ${stripHtml(b)}`).join('\n')
+    items.push({
+      id: `about-experience-${i}`,
+      text:
+        `Work experience: ${job.role} at ${job.company} (${job.period}, ${job.location}).\n` +
+        bullets,
+      metadata: {
+        title: `Experience: ${job.role} at ${job.company}`,
+        url: aboutUrl('experience'),
+        type: 'about',
+      },
+    })
+  })
+
+  items.push({
+    id: 'about-education',
+    text:
+      `Education:\n` +
+      education
+        .map(
+          (e) =>
+            `- ${e.degree}, ${e.school} (${e.period}, ${e.location})${e.note ? ` — ${e.note}` : ''}`
+        )
+        .join('\n'),
+    metadata: { title: 'Education', url: aboutUrl('education'), type: 'about' },
+  })
+
+  items.push({
+    id: 'about-skills',
+    text:
+      `Skills and technologies Ashim works with:\n` +
+      skillGroups.map((g) => `- ${g.label}: ${g.value}`).join('\n'),
+    metadata: { title: 'Skills', url: aboutUrl('skills'), type: 'about' },
+  })
+
+  items.push({
+    id: 'about-publications',
+    text:
+      `Publications (peer-reviewed research papers Ashim has published):\n` +
+      publications
+        .map((p) => {
+          const citation = p.citationParts.map((part) => part.text).join('')
+          return `- ${citation} ${p.venue}${p.url ? ` Paper: ${p.url}` : ''}`
+        })
+        .join('\n'),
+    metadata: { title: 'Publications', url: aboutUrl('publications'), type: 'about' },
+  })
+
+  items.push({
+    id: 'about-certifications',
+    text:
+      `Certifications Ashim holds:\n` +
+      certifications
+        .map((c) => `- ${c.title} — ${c.issuer}${c.url ? ` (verify: ${c.url})` : ''}`)
+        .join('\n'),
+    metadata: { title: 'Certifications', url: aboutUrl('certifications'), type: 'about' },
+  })
+
+  items.push({
+    id: 'about-conferences',
+    text:
+      `Conferences Ashim has attended or is attending:\n` +
+      conferences.map((c) => `- ${c.name} — ${c.detail}`).join('\n'),
+    metadata: { title: 'Conferences', url: aboutUrl('conferences'), type: 'about' },
+  })
+}
+
+// --- Projects: cards from projectsData.ts + detail pages from built HTML ---
 {
   const src = fs.readFileSync(path.join(ROOT, 'data/projectsData.ts'), 'utf8')
   // Match each { ... } object literal in the array and pull known fields.
   const objects = src.match(/\{[^}]*?title:[\s\S]*?\}/g) || []
-  objects.forEach((obj, i) => {
-    const title = (obj.match(/title:\s*'([^']*)'/) || [])[1]
-    const description = (obj.match(/description:\s*\n?\s*'([^']*)'/) || [])[1]
-    const href = (obj.match(/href:\s*'([^']*)'/) || [])[1] || ''
-    if (!title) return
-    const url = href.startsWith('http') ? href : `${SITE_URL}${href}`
-    items.push({
-      id: `project-${i}`,
-      text: `Project: ${title}. ${description || ''} Link: ${url}`,
-      metadata: { title: `Project: ${title}`, url, type: 'project' },
-    })
-  })
-}
+  const projects = objects
+    .map((obj) => ({
+      title: (obj.match(/title:\s*'([^']*)'/) || [])[1],
+      description: (obj.match(/description:\s*\n?\s*'([^']*)'/) || [])[1],
+      href: (obj.match(/href:\s*'([^']*)'/) || [])[1],
+    }))
+    .filter((p) => p.title)
 
-// --- Blog posts ---
-{
-  const blogDir = path.join(ROOT, 'data/blog')
-  const files = fs.readdirSync(blogDir).filter((f) => f.endsWith('.mdx'))
-  for (const file of files) {
-    const raw = fs.readFileSync(path.join(blogDir, file), 'utf8')
-    const { data, content } = matter(raw)
-    if (data.draft === true) continue
-    const slug = file.replace(/\.mdx$/, '')
-    const url = `${SITE_URL}/write-up/${slug}/`
-    const title = data.title || slug
-    const summary = data.summary ? `${data.summary}\n\n` : ''
-    const parts = chunk(summary + stripMdx(content))
-    parts.forEach((part, i) => {
+  // The regex parse is inherently fragile (e.g. an unescaped quote breaks a
+  // field) — fail loudly rather than silently shipping a partial corpus.
+  if (projects.length < 3 || projects.some((p) => !p.description || !p.href)) {
+    console.error(
+      `projectsData.ts parse failed: got ${projects.length} projects, ` +
+        `some missing description/href. Fix the parser or the data file.`
+    )
+    process.exit(1)
+  }
+
+  for (const p of projects) {
+    const slug = p.href
+      .split('/')
+      .filter(Boolean)
+      .pop()
+      .toLowerCase()
+      .replace(/[^a-z0-9-]+/g, '-')
+    const url = p.href.startsWith('http') ? p.href : `${SITE_URL}${p.href}`
+    items.push({
+      id: `project-${slug}`,
+      text: `Project: ${p.title}. ${p.description} Link: ${url}`,
+      metadata: { title: `Project: ${p.title}`, url, type: 'project' },
+    })
+
+    // Detail pages exist only for internal project routes.
+    if (!p.href.startsWith('/projects/')) continue
+    const pageSlug = p.href.split('/').filter(Boolean).pop()
+    const detailText = articleText(
+      path.join(ROOT, 'out/projects', pageSlug, 'index.html'),
+      path.join(ROOT, 'app/projects', pageSlug, 'page.tsx')
+    )
+    chunk(detailText).forEach((part, i) => {
       items.push({
-        id: `blog-${slug}-${i}`,
-        text: `From the write-up "${title}":\n${part}`,
-        metadata: { title, url, type: 'blog' },
+        id: `project-detail-${slug}-${i}`,
+        text: `From the "${p.title}" project page:\n${part}`,
+        metadata: {
+          title: `Project: ${p.title}`,
+          url: `${url}/`.replace(/\/+$/, '/'),
+          type: 'project',
+        },
       })
     })
   }
 }
 
-console.log(`Prepared ${items.length} chunks. Uploading to ${CHAT_API_URL}/ingest ...`)
+// --- Write-ups: title + summary + link ONLY (bodies intentionally excluded) ---
+{
+  const blogDir = path.join(ROOT, 'data/blog')
+  const files = fs.readdirSync(blogDir).filter((f) => f.endsWith('.mdx'))
+  const writeups = []
+  for (const file of files) {
+    const raw = fs.readFileSync(path.join(blogDir, file), 'utf8')
+    const { data } = matter(raw)
+    if (data.draft === true) continue
+    const slug = file.replace(/\.mdx$/, '')
+    const url = `${SITE_URL}/write-up/${slug}/`
+    const title = data.title || slug
+    const date = data.date ? new Date(data.date).toISOString().slice(0, 10) : ''
+    const tags = Array.isArray(data.tags) ? data.tags.join(', ') : ''
+    const summary = data.summary || ''
+    writeups.push({ slug, url, title, date, tags, summary })
+    items.push({
+      id: `writeup-${slug}`,
+      text:
+        `Write-up: "${title}"${date ? ` (published ${date})` : ''}.` +
+        `${tags ? ` Topics: ${tags}.` : ''}\n${summary}\nFull write-up: ${url}`,
+      metadata: { title, url, type: 'writeup' },
+    })
+  }
+
+  items.push({
+    id: 'writing-overview',
+    text:
+      `Ashim has published ${writeups.length} technical write-ups on his site:\n` +
+      writeups.map((w) => `- "${w.title}" (${w.url}) — ${w.summary}`).join('\n'),
+    metadata: {
+      title: "Ashim's write-ups",
+      url: `${SITE_URL}/write-up/`,
+      type: 'writeup',
+    },
+  })
+}
+
+// --- Sanity checks + summary before touching the remote KB ---
+const counts = {}
+for (const it of items) counts[it.metadata.type] = (counts[it.metadata.type] || 0) + 1
+console.log(`Prepared ${items.length} chunks:`, counts)
+if (items.length < 25) {
+  console.error(`Only ${items.length} chunks built — expected >= 25. Aborting before purge.`)
+  process.exit(1)
+}
+
+// DRY_RUN=1 prints the full corpus and exits without touching the remote KB.
+if (process.env.DRY_RUN) {
+  for (const it of items) {
+    console.log(`\n=== ${it.id} (${it.metadata.type}) → ${it.metadata.url}\n${it.text}`)
+  }
+  process.exit(0)
+}
+
+// --- Purge stale chunks (default), then upload ---
+if (!process.argv.includes('--no-purge')) {
+  const res = await fetch(`${CHAT_API_URL}/purge`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${INGEST_SECRET}` },
+  })
+  if (!res.ok) {
+    console.error(`Purge failed: ${res.status} ${await res.text()}`)
+    process.exit(1)
+  }
+  const out = await res.json()
+  console.log(`Purged ${out.purged} stale chunks.`)
+} else {
+  console.log('Skipping purge (--no-purge).')
+}
+
+console.log(`Uploading to ${CHAT_API_URL}/ingest ...`)
 
 // Upload in batches to stay well within request limits.
 const BATCH = 20
