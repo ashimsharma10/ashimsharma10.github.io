@@ -49,6 +49,16 @@ interface Stats {
       avg_score: number
     }
     topSources: { title: string; url: string; uses: number }[]
+    latestEval: {
+      ts: number
+      total: number
+      cand_ok: number
+      ctx_ok: number
+      ground_ok: number | null
+      ground_total: number | null
+      threshold: number
+      passed: number
+    } | null
   }
   recent: Trace[]
 }
@@ -64,7 +74,7 @@ export default function OpsPage() {
   const [tab, setTab] = useState<Tab>('overview')
 
   useEffect(() => {
-    const saved = localStorage.getItem('ops_token')
+    const saved = sessionStorage.getItem('ops_token')
     if (saved) {
       setToken(saved)
       void load(saved)
@@ -84,7 +94,7 @@ export default function OpsPage() {
       if (!res.ok) throw new Error(`Request failed (${res.status})`)
       const data = (await res.json()) as Stats
       setStats(data)
-      localStorage.setItem('ops_token', t)
+      sessionStorage.setItem('ops_token', t)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load stats.')
       setStats(null)
@@ -490,8 +500,49 @@ function CostsTab({ costs }: { costs: Stats['costs'] }) {
 
 function RagTab({ rag }: { rag: Stats['rag'] }) {
   const a = rag.averages
+  const e = rag.latestEval
+  const pctOf = (num: number, den: number) => (den ? `${Math.round((num / den) * 100)}%` : '—')
   return (
     <div className="mt-6 space-y-8">
+      <section>
+        <h2 className="mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100">
+          Retrieval eval (regression gate)
+        </h2>
+        {e ? (
+          <div className="rounded-xl border border-gray-200 p-4 dark:border-gray-700">
+            <div className="flex items-center justify-between gap-3">
+              <span
+                className={
+                  e.passed
+                    ? 'rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300'
+                    : 'rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-800 dark:bg-red-900/40 dark:text-red-300'
+                }
+              >
+                {e.passed ? 'PASS' : 'FAIL'}
+              </span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {new Date(e.ts).toLocaleString()} · gate ≥ {Math.round(e.threshold * 100)}%
+              </span>
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
+              <Stat label="recall@candidate" value={pctOf(e.cand_ok, e.total)} />
+              <Stat label="recall@context" value={pctOf(e.ctx_ok, e.total)} />
+              {e.ground_total != null && e.ground_ok != null && (
+                <Stat label="answer grounding" value={pctOf(e.ground_ok, e.ground_total)} />
+              )}
+            </div>
+            <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+              {e.total} golden questions · recall@candidate = made the fused set, recall@context =
+              survived rerank. Run <code>npm run eval</code> to refresh.
+            </p>
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            No eval run recorded yet. Run <code>npm run eval</code> to populate this.
+          </p>
+        )}
+      </section>
+
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         <Stat label="Avg vector hits" value={a.vector_hits.toFixed(1)} />
         <Stat label="Avg keyword hits" value={a.keyword_hits.toFixed(1)} />

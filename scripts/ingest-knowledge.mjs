@@ -9,9 +9,9 @@
  *   - Project cards  : data/projectsData.ts
  *   - Project details: <article> text of out/projects/<slug>/index.html
  *                      (requires a fresh `npm run build`)
- *   - Write-ups      : frontmatter ONLY (title, date, tags, summary, link) —
- *                      full bodies are intentionally excluded; the bot points
- *                      visitors at the page instead.
+ *   - Write-ups      : summary card (title, date, tags, summary, link) PLUS the
+ *                      full body, chunked, so the bot can answer deep questions
+ *                      from the actual content, not just link out.
  *
  * By default the Worker's /purge endpoint is called first so stale chunks
  * never linger. Pass --no-purge to skip that (upsert-only).
@@ -66,6 +66,30 @@ function stripMdx(body) {
     .replace(/^import .*$/gm, '')
     .replace(/^export .*$/gm, '')
     .replace(/&nbsp;/g, ' ')
+    .trim()
+}
+
+/**
+ * Markdown body -> clean prose for embedding. Drops the anchor-link table of
+ * contents and fenced code blocks (both are noise that dilutes semantic search;
+ * the surrounding prose carries the meaning), flattens links/emphasis/tables to
+ * their text, and keeps heading text. Used to ingest full write-up bodies.
+ */
+function mdToText(md) {
+  return stripMdx(md)
+    .replace(/^\s*\d+\.\s*\[[^\]]+\]\(#[^)]*\)\s*$/gm, '') // TOC anchor entries
+    .replace(/```[\s\S]*?```/g, ' ') // fenced code blocks
+    .replace(/`([^`]+)`/g, '$1') // inline code
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ') // images
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1') // links -> link text
+    .replace(/^#{1,6}\s+/gm, '') // heading markers (keep text)
+    .replace(/^\s*>\s?/gm, '') // blockquotes
+    .replace(/^\s*[-*+]\s+/gm, '') // bullet markers
+    .replace(/\*\*|__|~~|\*|_/g, '') // emphasis
+    .replace(/<[^>]+>/g, ' ') // stray HTML/JSX tags
+    .replace(/\|/g, ' ') // table pipes
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
     .trim()
 }
 
@@ -289,14 +313,14 @@ const items = []
   }
 }
 
-// --- Write-ups: title + summary + link ONLY (bodies intentionally excluded) ---
+// --- Write-ups: summary card + full body (chunked) for deep Q&A ---
 {
   const blogDir = path.join(ROOT, 'data/blog')
   const files = fs.readdirSync(blogDir).filter((f) => f.endsWith('.mdx'))
   const writeups = []
   for (const file of files) {
     const raw = fs.readFileSync(path.join(blogDir, file), 'utf8')
-    const { data } = matter(raw)
+    const { data, content } = matter(raw)
     if (data.draft === true) continue
     const slug = file.replace(/\.mdx$/, '')
     const url = `${SITE_URL}/write-up/${slug}/`
@@ -305,12 +329,27 @@ const items = []
     const tags = Array.isArray(data.tags) ? data.tags.join(', ') : ''
     const summary = data.summary || ''
     writeups.push({ slug, url, title, date, tags, summary })
+
+    // Summary card — the high-level overview + link (answers "what is X about").
     items.push({
       id: `writeup-${slug}`,
       text:
         `Write-up: "${title}"${date ? ` (published ${date})` : ''}.` +
         `${tags ? ` Topics: ${tags}.` : ''}\n${summary}\nFull write-up: ${url}`,
       metadata: { title, url, type: 'writeup' },
+    })
+
+    // Full body, chunked — lets the bot answer deep questions from the actual
+    // content instead of only linking out. Client-rendered posts (e.g. the
+    // interactive Riemann piece) have little prose in source and simply yield
+    // no body chunks, which is fine.
+    const body = mdToText(content)
+    chunk(body).forEach((part, i) => {
+      items.push({
+        id: `writeup-${slug}-body-${i}`,
+        text: `From the write-up "${title}":\n${part}`,
+        metadata: { title, url, type: 'writeup' },
+      })
     })
   }
 

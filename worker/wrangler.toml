@@ -32,9 +32,10 @@ database_id = "6f13f858-3534-4ee1-b40f-e999024590a2"
 # worker/.dev.vars — see .dev.vars.example — which `wrangler dev` loads and which
 # is gitignored, so the dev origin never ships to production.
 ALLOWED_ORIGIN = "https://ashimsharma10.github.io"
-# Generation model. Sonnet gives noticeably better answer quality; switch to
-# "claude-haiku-4-5-20251001" if you want lower cost/latency.
-CHAT_MODEL = "claude-sonnet-5"
+# Generation model. Haiku keeps cost/latency low, which is plenty for this
+# short-answer, grounded-retrieval bot; switch to "claude-sonnet-5" if you want
+# noticeably higher answer quality at higher cost.
+CHAT_MODEL = "claude-haiku-4-5-20251001"
 # Reranker model — cheap Haiku is plenty for scoring retrieved chunks.
 RERANK_MODEL = "claude-haiku-4-5-20251001"
 # Set to "false" to skip the rerank step (pure semantic order).

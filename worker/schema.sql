@@ -70,3 +70,18 @@ CREATE TABLE IF NOT EXISTS trace_sources (
   title    TEXT
 );
 CREATE INDEX IF NOT EXISTS trace_sources_url ON trace_sources (url);
+
+-- One row per `npm run eval` run (retrieval-recall regression gate). The /ops
+-- RAG tab shows the latest row so the eval result is visible on the dashboard.
+CREATE TABLE IF NOT EXISTS eval_runs (
+  id           TEXT PRIMARY KEY,
+  ts           INTEGER,
+  total        INTEGER,
+  cand_ok      INTEGER,   -- recall@candidate numerator
+  ctx_ok       INTEGER,   -- recall@context numerator
+  ground_ok    INTEGER,   -- answer-grounding numerator (null if not run)
+  ground_total INTEGER,   -- answer-grounding denominator (null if not run)
+  threshold    REAL,
+  passed       INTEGER
+);
+CREATE INDEX IF NOT EXISTS eval_runs_ts ON eval_runs (ts DESC);

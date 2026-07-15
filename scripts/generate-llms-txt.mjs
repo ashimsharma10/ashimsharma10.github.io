@@ -35,9 +35,7 @@ async function generateLlmsTxt() {
 
   writeFileSync(`${outputFolder}/llms.txt`, lines.join('\n'))
 
-  const full = published
-    .map((post) => `# ${post.title}\n\n${post.body.raw}`)
-    .join('\n\n---\n\n')
+  const full = published.map((post) => `# ${post.title}\n\n${post.body.raw}`).join('\n\n---\n\n')
   writeFileSync(`${outputFolder}/llms-full.txt`, full)
 
   console.log('llms.txt generated...')

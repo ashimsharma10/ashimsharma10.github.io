@@ -115,7 +115,6 @@ export default function ImageLightbox() {
       ) : (
         <div
           className="flex max-h-[88vh] max-w-[92vw] items-center justify-center overflow-auto"
-          // eslint-disable-next-line react/no-danger
           dangerouslySetInnerHTML={{ __html: view.html }}
         />
       )}
