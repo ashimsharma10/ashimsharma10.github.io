@@ -476,6 +476,14 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
     const camUp = (): [number, number, number] => [-sx * sy, cx, -sx * cy]
 
     const onDown = (e: PointerEvent) => {
+      // A second finger (non-primary pointer) means a pinch-zoom is starting:
+      // drop any in-progress drag/orbit so the browser can zoom the page natively.
+      if (!e.isPrimary) {
+        drag = null
+        orbit = null
+        canvas.style.cursor = 'grab'
+        return
+      }
       const p = localXY(e)
       const n = pick(p.x, p.y)
       moved = false
@@ -567,6 +575,18 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
         /* no-op */
       }
     }
+    // The browser fires pointercancel when it takes over a gesture (e.g. a
+    // pinch-zoom); reset drag/orbit state so the graph isn't left stuck.
+    const onCancel = (e: PointerEvent) => {
+      drag = null
+      orbit = null
+      canvas.style.cursor = 'grab'
+      try {
+        canvas.releasePointerCapture(e.pointerId)
+      } catch {
+        /* no-op */
+      }
+    }
     const onLeave = () => {
       if (!drag && !orbit) {
         hover = null
@@ -582,6 +602,7 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
     canvas.addEventListener('pointerdown', onDown)
     canvas.addEventListener('pointermove', onMove)
     canvas.addEventListener('pointerup', onUp)
+    canvas.addEventListener('pointercancel', onCancel)
     canvas.addEventListener('pointerleave', onLeave)
     canvas.addEventListener('wheel', onWheel, { passive: false })
     const ro = new ResizeObserver(resize)
@@ -615,6 +636,7 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
       canvas.removeEventListener('pointerdown', onDown)
       canvas.removeEventListener('pointermove', onMove)
       canvas.removeEventListener('pointerup', onUp)
+      canvas.removeEventListener('pointercancel', onCancel)
       canvas.removeEventListener('pointerleave', onLeave)
       canvas.removeEventListener('wheel', onWheel)
       resetBtn?.removeEventListener('click', onReset)
@@ -640,7 +662,7 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
         ref={wrapRef}
         className="relative h-[82vh] max-h-[820px] min-h-[480px] w-full overflow-hidden rounded-xl border border-gray-200 bg-[#f7f8fa] dark:border-gray-700 dark:bg-[#0e1117]"
       >
-        <canvas ref={canvasRef} className="block h-full w-full cursor-grab touch-none" />
+        <canvas ref={canvasRef} className="block h-full w-full cursor-grab touch-pinch-zoom" />
         <div
           ref={tipRef}
           className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-[140%] rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs whitespace-nowrap text-gray-900 opacity-0 shadow-sm transition-opacity dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
