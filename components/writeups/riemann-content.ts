@@ -103,7 +103,7 @@ export const css = `@import url('https://fonts.googleapis.com/css2?family=Space+
   .plot-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; font-size: 12px; color: var(--text-muted); }
   .plot-toolbar .hint { opacity: .9; }
   .plot-canvas-wrap { position: relative; }
-  canvas.plot { display: block; width: 100%; border-radius: 8px; cursor: grab; touch-action: none; background: var(--canvas-bg); border: 1px solid var(--border); }
+  canvas.plot { display: block; width: 100%; border-radius: 8px; cursor: grab; touch-action: pinch-zoom; background: var(--canvas-bg); border: 1px solid var(--border); }
   canvas.plot:active { cursor: grabbing; }
   .polar-canvas-col { width: 100%; }
   .readout { position: absolute; top: 8px; right: 10px; font-family: 'Source Code Pro', monospace; font-size: 11.5px; color: var(--text); background: var(--readout-bg); border: 1px solid var(--border); padding: 2px 7px; border-radius: 5px; pointer-events: none; opacity: 0; transition: opacity .15s; }

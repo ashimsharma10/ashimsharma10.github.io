@@ -165,8 +165,9 @@ class Plot{
   iy(p){const {t,b}=this.m; return this.view.y0+(1-(p-t)/(this.H-t-b))*(this.view.y1-this.view.y0);}
   _bind(){
     const cv=this.cv; let drag=null;
-    cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId); drag={x:e.offsetX,y:e.offsetY};});
+    cv.addEventListener('pointerdown',e=>{if(!e.isPrimary){drag=null;return;} cv.setPointerCapture(e.pointerId); drag={x:e.offsetX,y:e.offsetY};});
     cv.addEventListener('pointerup',()=>drag=null);
+    cv.addEventListener('pointercancel',()=>drag=null);
     cv.addEventListener('pointerleave',()=>{if(this.readout)this.readout.style.opacity=0;});
     cv.addEventListener('pointermove',e=>{
       if(drag){
@@ -539,8 +540,9 @@ function lerpCol(a,b,f){const pa=hexToRgb(a),pb=hexToRgb(b);return 'rgb('+Math.r
   playBtn.onclick=()=>{ if(playing){stop();} else {playing=true;playBtn.textContent='❚❚ Pause';playBtn.classList.remove('primary');step();} };
   sl.addEventListener('input',()=>{stop();morph=+sl.value;draw();});
   let drag=null;
-  cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);drag={x:e.offsetX,y:e.offsetY,v:{...view}};});
+  cv.addEventListener('pointerdown',e=>{if(!e.isPrimary){drag=null;return;} cv.setPointerCapture(e.pointerId);drag={x:e.offsetX,y:e.offsetY,v:{...view}};});
   cv.addEventListener('pointerup',()=>drag=null);
+  cv.addEventListener('pointercancel',()=>drag=null);
   cv.addEventListener('pointerleave',()=>ro.style.opacity=0);
   cv.addEventListener('pointermove',e=>{
     if(drag){ const ddx=(e.offsetX-drag.x)/PW()*(drag.v.x1-drag.v.x0), ddy=(e.offsetY-drag.y)/PH()*(drag.v.y1-drag.v.y0);
@@ -752,8 +754,9 @@ function lerpCol(a,b,f){const pa=hexToRgb(a),pb=hexToRgb(b);return 'rgb('+Math.r
   playBtn.onclick=()=>{ if(playing){stop();} else {playing=true;playBtn.textContent='❚❚ Pause';playBtn.classList.remove('primary');head=1;step();} };
   sl.addEventListener('input',()=>{ stop(); tmax=+sl.value; lab.textContent=tmax.toFixed(0); pts=computeCurve(tmax); head=pts.length; draw(); });
   let drag=null;
-  cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);drag={x:e.offsetX,y:e.offsetY,v:{...view}};});
+  cv.addEventListener('pointerdown',e=>{if(!e.isPrimary){drag=null;return;} cv.setPointerCapture(e.pointerId);drag={x:e.offsetX,y:e.offsetY,v:{...view}};});
   cv.addEventListener('pointerup',()=>drag=null);
+  cv.addEventListener('pointercancel',()=>drag=null);
   cv.addEventListener('pointerleave',()=>ro.style.opacity=0);
   cv.addEventListener('pointermove',e=>{
     if(drag){ const ddx=(e.offsetX-drag.x)/PW()*(drag.v.x1-drag.v.x0), ddy=(e.offsetY-drag.y)/PH()*(drag.v.y1-drag.v.y0);
