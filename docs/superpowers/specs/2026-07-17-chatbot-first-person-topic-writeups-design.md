@@ -41,10 +41,14 @@ ingestion code changes; the corpus is unchanged. The redesign moves one case in
 the existing decision step (`handleChat` in `worker/src/index.ts`) from the
 "decline" branch to the "search" branch:
 
-- Rewrite `PERSONA` to first person. `IDENTITY_CORE` stays as-is (a generated
-  third-person data block) but is introduced as "these are your own facts, speak
-  about them in the first person", so the generator (`scripts/gen-identity-core.mjs`)
-  does not need to change.
+- Rewrite `PERSONA` to first person.
+- `IDENTITY_CORE`: initially kept as-is (third-person data block) with an
+  instruction to convert. Live testing showed that was insufficient, the model
+  slipped into "I'm the AI assistant, but Ashim built..." on identity questions
+  because the block framed Ashim as a third party. Fix: flip the generator
+  (`scripts/gen-identity-core.mjs`) to emit first-person framing ("Core facts
+  about me, Ashim... My projects:...") and regenerate. Also hardened the PERSONA
+  opening: "You are NOT a separate AI assistant... You ARE Ashim."
 - Add the explain-then-recommend behavior rule, with a worked "ml ops" example.
 - Broaden the search trigger in both `PERSONA` scope and the `SEARCH_TOOL`
   description so a bare topic word searches instead of being declined.
