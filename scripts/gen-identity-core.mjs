@@ -73,17 +73,17 @@ const contact = [
   .filter(Boolean)
   .join(' · ')
 
-const identityCore = `Core facts about Ashim (authoritative, you always know these, no search needed):
+const identityCore = `Core facts about me, Ashim (authoritative, I always know these, no search needed):
 
-Projects:
+My projects:
 ${projectLines}
 
-Publication:
+My publication:
 ${pubLine}
 
-Experience: ${noDash(experience).replace(/\.+$/, '')}.
+My experience: ${noDash(experience).replace(/\.+$/, '')}.
 
-Contact: ${contact}`
+My contact: ${contact}`
 
 // Escape for safe embedding in a TS template literal.
 const escaped = identityCore.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${')
