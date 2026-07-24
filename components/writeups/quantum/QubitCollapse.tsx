@@ -13,20 +13,20 @@ export default function QubitCollapse() {
   const [last, setLast] = useState<0 | 1 | null>(null)
 
   const theta = (thetaDeg * Math.PI) / 180
-  const prob0 = Math.cos(theta / 2) ** 2
-  const prob1 = 1 - prob0
+  const probHeads = Math.cos(theta / 2) ** 2
+  const probTails = 1 - probHeads
   const total = count0 + count1
 
   const measure = (n: number) => {
-    let zeros = 0
+    let heads = 0
     let final: 0 | 1 = 0
     for (let i = 0; i < n; i++) {
-      const outcome: 0 | 1 = Math.random() < prob0 ? 0 : 1
-      if (outcome === 0) zeros++
+      const outcome: 0 | 1 = Math.random() < probHeads ? 0 : 1
+      if (outcome === 0) heads++
       final = outcome
     }
-    setCount0((c) => c + zeros)
-    setCount1((c) => c + (n - zeros))
+    setCount0((c) => c + heads)
+    setCount1((c) => c + (n - heads))
     setLast(final)
   }
 
@@ -37,7 +37,7 @@ export default function QubitCollapse() {
     setLast(null)
   }
 
-  // State arrow tip: |0> points up, |1> points down.
+  // Mix arrow: heads points up, tails points down.
   const cx = 95
   const cy = 95
   const r = 68
@@ -52,11 +52,11 @@ export default function QubitCollapse() {
       >
         <span style={{ fontWeight: 600 }}>{label}</span>
         <span>
-          predicted {(prob * 100).toFixed(0)}%
+          set to {(prob * 100).toFixed(0)}%
           {total > 0 && (
             <span style={{ color: p.muted }}>
               {' '}
-              · observed {((count / total) * 100).toFixed(1)}% ({count})
+              · seen {((count / total) * 100).toFixed(1)}% ({count})
             </span>
           )}
         </span>
@@ -76,20 +76,20 @@ export default function QubitCollapse() {
 
   return (
     <DemoFrame
-      title="Superposition: measure a qubit"
+      title="A quantum coin: choose the mix, then look"
       isDark={isDark}
-      caption="Slide to mix the two states, then measure. Each measurement returns exactly one answer, never the mixture. Only the statistics of many measurements reveal the weights you dialed in. Moving the slider prepares a new state, so the tally resets."
+      caption="An ordinary coin is heads OR tails. This one holds both at once, in the mix you choose with the slider. Press Measure to look: you always get one face, never a blend. But the blend was real. Try setting it to 70/30 and pressing Measure ×100: the totals land where you set the slider. Moving the slider makes a fresh coin, so the tally resets."
     >
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center' }}>
         <svg width="190" height="190" viewBox="0 0 190 190" style={{ flexShrink: 0 }}>
           <circle cx={cx} cy={cy} r={r} fill="none" stroke={p.border} strokeWidth="1.5" />
           <text x={cx} y={16} textAnchor="middle" fill={p.text} fontSize="13" fontWeight="600">
-            state 0
+            heads
           </text>
           <text x={cx} y={184} textAnchor="middle" fill={p.text} fontSize="13" fontWeight="600">
-            state 1
+            tails
           </text>
-          {/* Prepared state arrow (ghosted once a measurement collapsed it) */}
+          {/* Mix arrow (ghosted once a look collapses it) */}
           <line
             x1={cx}
             y1={cy}
@@ -123,7 +123,7 @@ export default function QubitCollapse() {
             htmlFor={sliderId}
             style={{ fontSize: 12, color: p.muted, display: 'block', marginBottom: 4 }}
           >
-            Mix the state: how much of each possibility
+            The mix: all heads ← → all tails
           </label>
           <input
             id={sliderId}
@@ -135,8 +135,8 @@ export default function QubitCollapse() {
             style={{ width: '100%', accentColor: p.accent }}
           />
           <div style={{ margin: '10px 0 14px' }}>
-            {bar('state 0', prob0, count0)}
-            {bar('state 1', prob1, count1)}
+            {bar('heads', probHeads, count0)}
+            {bar('tails', probTails, count1)}
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
             <DemoButton isDark={isDark} primary onClick={() => measure(1)}>
@@ -156,7 +156,7 @@ export default function QubitCollapse() {
               Reset
             </DemoButton>
             <span style={{ fontSize: 12, color: p.muted }}>
-              {last === null ? 'not measured yet' : `last result: state ${last}`}
+              {last === null ? 'no looks yet' : `last look: ${last === 0 ? 'heads' : 'tails'}`}
             </span>
           </div>
         </div>

@@ -1,17 +1,19 @@
 ---
-title: "Quantum Physics, 100 Years In: What's Real, What's Weird, and What's Missing"
+title: 'Quantum Physics, 100 Years In'
 date: '2026-07-23'
 lastmod: '2026-07-24'
 tags: ['physics', 'quantum-mechanics', 'particle-physics', 'standard-model']
 draft: false
-summary: 'A tour of quantum physics a century after Heisenberg: superposition, spin, tunneling, entanglement, the 17 particles everything is made of, the quantum devices already in your pocket, and the 95% of the universe nobody can explain. Three interactive demos and one animation included.'
+summary: 'A plain-language tour of quantum physics a century after it was born: light and photons, superposition, the double slit, spin, tunneling, entanglement, all 17 particles on one card, the quantum devices in your pocket, and the mysteries still open. With interactive demos and animations.'
 ---
 
-*A hundred years ago a 23-year-old with terrible hay fever invented the strangest theory in science. It has never once been wrong, it built the device you are reading this on, and physicists still argue about what it means.*
+*The physics of atoms turned 100 last year. It has never failed a test, it built the device you are reading this on, and nobody agrees on what it means. Here is the whole story, in plain language.*
 
-In June 1925, Werner Heisenberg's allergies got so bad he fled to Helgoland, a bare rock in the North Sea with almost no pollen. Two weeks later he came back with quantum mechanics. He was 23. He later said that on the island, staring at the math at three in the morning, he felt he was "looking through the surface of atomic phenomena into a strangely beautiful interior," and became almost dizzy.
+**Quantum mechanics is the rulebook for very small things**: atoms, and the particles inside them. At that scale, the comfortable rules of everyday objects stop working. Things can be in several states at once, walls can be crossed without climbing, and looking at something changes what it does. None of this is speculation. It is the most rigorously confirmed science humans have ever produced, with some predictions checked to eleven decimal places.
 
-He was right to be dizzy. A century on, the theory he started has passed every test we have ever thrown at it, some to eleven decimal places. It also still refuses to tell us what it is actually saying about reality. This post is the full tour: the ideas, the complete parts list of the universe, the gadgets in your pocket that secretly run on the weirdness, and the mysteries that are still wide open.
+The story starts with a sneeze. In the summer of 1925, a 23-year-old German physicist named Werner Heisenberg had hay fever so severe he retreated to Helgoland, a tiny treeless island in the North Sea where nothing pollinates. With nothing else to do, he spent two weeks working on the puzzle of how atoms emit light. One night, around 3 a.m., his new math suddenly clicked into place, and he later wrote that he was so excited he could not sleep, so he climbed a rock and waited for the sunrise. What he built during those two weeks became quantum mechanics.
+
+This post is the tour of what those hundred years taught us: what light really is, the handful of core ideas, the complete parts list of the universe, the gadgets in your pocket that secretly run on all this, and the mysteries that are still wide open.
 
 ```mermaid
 flowchart TD
@@ -23,48 +25,67 @@ flowchart TD
     F --> G["2025 · Quantum mechanics turns 100, still undefeated"]
 ```
 
-## Superposition: the chord, not the note
+## Light: the argument that started everything
 
-A quantum object does not have to make up its mind. Before you measure it, it holds several possibilities at once, each with its own weight. The best everyday analogy is a chord: press three piano keys and the air carries all three notes at the same time, as one sound.
+For 200 years, physics argued about what light is. Newton said particles. Everyone after him said waves, and they had proof: light spreads, bends around corners, and when two beams overlap they make stripes of bright and dark, exactly like ripples on a pond crossing each other. Crest meets crest: extra bright. Crest meets trough: they cancel, darkness. Only waves do that.
+
+Then the 1900s ruined it. Light also arrives in indivisible packets of energy, now called **photons**. You cannot receive half a photon. And each photon's energy depends only on the light's color, not its brightness.
+
+The animation below shows both faces of light, and the compromise nature actually runs on:
+
+<WaveParticleAnimation />
+
+The middle scene is worth a second look, because it is the everyday proof. A violet photon carries enough energy to knock an electron out of a metal, or to damage a molecule in your skin. A red photon carries less, and photons do not pool their energy: a million weak packets are still a million individual failures. **That is why ultraviolet light sunburns you in minutes while a red heat lamp, run at any brightness for any length of time, never will.** Einstein explained this in 1905, and it is what his Nobel Prize was actually for, not relativity.
+
+One more twist, and it is the big one: this dual behavior is not special to light. Electrons, whole atoms, even molecules of thousands of atoms have all been caught traveling like waves and arriving like particles. **Everything is like this.** The universe runs on wave-particle duality all the way down; big objects just hide it well (we will see why later).
+
+## Superposition: a coin that is both
+
+Now take that seriously. If an electron travels as a spread-out wave, then before you detect it, it does not have one position. It has a *blend* of positions, each carrying its own weight. Physicists call a blend like that a **superposition**, and it is not limited to position. Any property can be blended.
+
+The cleanest way to feel it is a coin. An ordinary coin is heads or tails. A quantum coin can be genuinely both at once, in whatever proportions you choose: 50/50, 70/30, anything. Here is one you can play with:
 
 <QubitCollapse />
 
-**Where the analogy breaks:** you can hear every note in a chord. A measurement never gives you the chord. It returns exactly one note, at random, with odds set by the weights, and it does this every single time. Worse, quantum possibilities can interfere and *cancel*, which no mixture of ordinary things can do. Two ways of happening can add up to not happening at all.
+Two rules, and you have the whole idea:
 
-The full list of weights is called the **wavefunction**, and it is best understood as the universe's probability bookkeeping. One famous equation says how the bookkeeping flows:
+1. **Looking always gives one answer.** You never see the blend itself. The coin shows heads or tails, complete, every time.
+2. **The blend was still real.** Look a hundred times (make a fresh coin each time) and the percentages come out exactly where the slider was set. The weights were really there; only statistics can reveal them.
+
+The complete list of weights for a system is called its **wavefunction**: the universe's probability bookkeeping. One famous equation runs the books:
 
 $$i\hbar\,\frac{\partial}{\partial t}\,\Psi \;=\; \hat{H}\,\Psi$$
 
-That is the Schrödinger equation. Read it as a sentence: "the possibilities change from moment to moment according to the system's energy." Notice what is missing: dice. The equation is perfectly deterministic. Randomness only shows up when you look. Why looking is special is, no exaggeration, still an open question, and we will get to it.
+That is the Schrödinger equation. In words: "the weights flow smoothly from moment to moment, steered by the system's energy." Notice something odd: there are no dice in it. The evolution is perfectly predictable. Randomness enters only when you look. Why looking is special is a genuinely open question, a century later.
 
-## The double slit: reality checks whether you're looking
+## The double slit: the experiment with everything in it
 
-Here is the experiment Feynman said contains the *only* mystery. Fire particles one at a time at a wall with two openings and record where each lands. Each particle arrives as a single dot, like a tiny bullet. But let the dots pile up and they organize into stripes: the unmistakable signature of a wave that went through both openings at once and interfered with itself.
+Feynman called this the experiment that contains the *only* mystery of quantum mechanics. You now have all the pieces to enjoy it.
 
-So which slit did the particle really use? Try to find out, and the universe calls your bluff.
+Fire electrons one at a time at a wall with two openings, and record where each lands on a screen behind it. Each electron lands as a single dot (particle). But the dots slowly build up stripes (wave interference), which means each electron's wave went through **both slits at once** and interfered with itself.
+
+So far, that is duality and superposition doing their thing. The shock is the detector. Try it below:
 
 <DoubleSlit />
 
+**What the detector button actually does.** "Which-slit detector: ON" places a tiny sensor at the openings. It does not block anything, deflect anything, or slow anything down. It only *records* which slit each electron used.
+
+- **Detector OFF:** no record of the path exists anywhere. The electron's wave uses both slits, interferes with itself, and the stripes build up.
+- **Detector ON:** a record now exists. Each electron behaves as if it went through exactly one slit. The stripes vanish, leaving two plain heaps, one behind each opening.
+
 | What you see                  | What it means                                                                     |
 | ----------------------------- | --------------------------------------------------------------------------------- |
-| Dots arrive one at a time     | Each particle is detected whole, at one point                                      |
-| Stripes emerge from many dots | Each particle travelled as a wave, through both slits, and interfered with itself  |
+| Dots arrive one at a time     | Each electron is detected whole, at one point                                      |
+| Stripes emerge from many dots | Each electron travelled as a wave, through both slits, and interfered with itself  |
 | Detector on: stripes vanish   | Recording the path makes "which slit" a fact, and facts do not interfere           |
 
-**Where the analogy breaks:** this is not a water wave made of stuff. It is a wave of probability. Nothing splashes. Each particle still lands whole, in one spot; only the *odds* of where it lands behave like a wave.
+Here is the part people get wrong: nobody has to *read* the record. There is no role for human eyes or consciousness anywhere in this. An "observation," in quantum mechanics, just means any interaction that leaves a trace of the outcome somewhere in the universe. A stray photon bouncing off the electron counts. The universe keeping a receipt is enough to kill the stripes.
 
-## What quantum words don't mean
+## Spin: seeing is misbelieving
 
-Quantum mechanics suffers more from its vocabulary than from its math. Four corrections worth pinning to the wall:
+Particles carry a property called **spin**, and the name is a 100-year-old marketing accident. An electron has real, measurable angular momentum, the same quantity a gyroscope or a figure skater has. Physicists even draw it as a little arrow that wobbles (*precesses*) around magnetic fields, exactly like a tilted spinning top. But an electron, as far as anyone can tell, has no size and no surface. There is nothing there that *can* rotate. The angular momentum is just... built in, like its charge.
 
-| Term                  | What people think                              | What it actually is                                                                                                   |
-| --------------------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| Uncertainty principle | Our instruments are too clumsy                 | A hard limit built into nature: the sharper a particle's position, the blurrier its momentum, with any equipment, ever |
-| Spin                  | The particle rotates like a tiny top           | An intrinsic label, like charge. Nothing is rotating                                                                   |
-| "Observation"         | A conscious mind has to watch                  | Any interaction that records the outcome. A stray photon counts; no eyes required                                      |
-| Collapse              | The particle secretly knew its state all along | Before measurement there was no hidden answer. Bell's theorem rules that out (see below)                               |
-
-"Spin" is the most misleading word in that table, and also the most fun to fix. Electrons carry real, measurable angular momentum, the same quantity a gyroscope has, and physicists genuinely draw it as an arrow that wobbles (the technical word is *precesses*) around magnetic fields. What electrons do not have is a surface, so there is nothing that can be turning. And then it gets properly strange: rotate a spin-½ state by a full 360° and it comes back subtly wrong, its sign flipped. You need 720°, two complete turns, to get it truly back. Nothing in your kitchen behaves like this. Watch:
+And spin saves its best trick for last: rotate a spin-½ particle's state one full turn, 360°, and it does not come back to itself. It comes back with its sign flipped. You need **two full turns, 720°,** to truly return it. Nothing in your kitchen behaves like this. Watch all four pictures:
 
 <SpinAnimation />
 
@@ -72,7 +93,7 @@ That precessing arrow is not just a cartoon, by the way. Hospitals photograph th
 
 ## Tunneling: how to be on the other side of a wall you can't climb
 
-Because a particle is a smeared cloud of probability rather than a point, the cloud does not stop dead at a barrier. A faint tail of it leaks *into* the wall, and if the wall is thin enough, out the other side. Which means the particle has a small but real chance of simply being past an obstacle it absolutely does not have the energy to cross. No hole is made. It does not "break through." It is just, occasionally, over there.
+Because a particle is a smeared cloud of probability rather than a point, the cloud does not stop dead at a barrier. A faint tail of it leaks *into* the wall, and if the wall is thin enough, out the other side. Which means the particle has a small but real chance of simply being past an obstacle it absolutely does not have the energy to cross. No hole is made. Nothing "breaks through." It is just, occasionally, over there.
 
 This sounds like a party trick. It is why you exist:
 
@@ -98,44 +119,26 @@ Prepare two particles together in the right way, then ship them to labs on oppos
 
 ## Why you never catch a chair being in two places
 
-Fair question: if atoms can be in superpositions and chairs are made of atoms, where are the two-places-at-once chairs?
+Fair question: if electrons can be in superpositions and chairs are made of electrons, where are the two-places-at-once chairs?
 
-The answer is that the chair is being watched, relentlessly, and not by you. Remember the table above: an "observation" is any interaction that records which-path information. Every air molecule that bounces off the chair, every photon of lamplight, carries away a tiny record of exactly where the chair is. Trillions of these micro-measurements happen every nanosecond. Any budding superposition is exposed almost before it starts. Physicists call the process **decoherence**, and its speed scales brutally with size: an electron can stay quantum for ages, a dust grain for a trifling fraction of a second, a chair for effectively no time at all.
+The answer is that the chair is being watched, relentlessly, and not by you. Remember the double-slit lesson: an "observation" is any interaction that leaves a record, and eyes are optional. Every air molecule that bounces off the chair, every photon of lamplight, carries away a tiny record of exactly where the chair is. Trillions of these micro-measurements happen every nanosecond. Any budding superposition is exposed almost before it starts. Physicists call the process **decoherence**, and its speed scales brutally with size: an electron can stay quantum for ages, a dust grain for a trifling fraction of a second, a chair for effectively no time at all.
 
 This is also why quantum computers are kept in vacuum chambers colder than deep space: not to make them quantum, but to keep the universe from peeking.
 
 ## The Standard Model: the universe's complete parts list
 
-Zoom in far enough and everything you have ever touched, eaten, or been is built from **17 kinds of particle**. That is the entire inventory. The catalog is called the Standard Model, and it splits cleanly in two: matter particles (**fermions**) and force carriers (**bosons**).
+Zoom in far enough and everything you have ever touched, eaten, or been is built from **17 kinds of particle**. That is the entire inventory. Here it is on one card:
 
-```mermaid
-flowchart TD
-    U["Everything we know"] --> F["Fermions - the matter particles"]
-    U --> B["Bosons - the force carriers"]
-    F --> Q["6 quarks"]
-    F --> L["6 leptons"]
-    B --> G["photon, gluon, W and Z"]
-    B --> HB["Higgs - gives particles mass"]
-    U -.-> X["Gravity: not included"]
-```
+<StandardModelChart />
 
-The fermions come in three "generations," each a heavier photocopy of the last. Everything you are made of uses only the first column:
+How to read it, and remember it:
 
-|                     | Generation 1      | Generation 2   | Generation 3  |
-| ------------------- | ----------------- | -------------- | ------------- |
-| **Quarks**          | up, down          | charm, strange | top, bottom   |
-| **Charged leptons** | electron          | muon           | tau           |
-| **Neutrinos**       | electron neutrino | muon neutrino  | tau neutrino  |
+- **You are the dashed column.** Up and down quarks build protons (two ups, one down) and neutrons (two downs, one up). Electrons wrap around them and do all of chemistry. That is the whole recipe for the periodic table, and for you.
+- **Columns 2 and 3 are photocopies.** Same charges, same behavior, just heavier, and they decay almost instantly. When the muon (a heavy electron) was discovered, physicist I. I. Rabi's entire review was: "Who ordered that?" Seventy years later, still no answer.
+- **Neutrinos are the ghosts.** About a hundred trillion of them, mostly from the Sun, will pass through your body while you read this sentence. In your entire life, roughly one will actually hit you.
+- **Fermions are antisocial, and it matters.** No two matter particles can share the same quantum state (the Pauli exclusion principle). That refusal is why atoms have electron shells, why chemistry exists, and why your hand does not pass through the table. Solidity is not atoms touching. It is electrons declining to share.
 
-A proton is two ups and a down. A neutron is two downs and an up. Add electrons and you have the whole periodic table, every element, every molecule, you. Generations 2 and 3 are made routinely in colliders and cosmic-ray showers and decay almost instantly. Nobody knows why nature ordered three of everything. When the muon was discovered, physicist I. I. Rabi's entire review was: "Who ordered that?" Seventy years later, still no answer.
-
-Some inventory items worth knowing personally:
-
-- **The top quark** weighs about as much as an entire gold atom, 173 protons' worth of heft in a single supposedly fundamental particle. It survives for 5×10⁻²⁵ seconds.
-- **Neutrinos** barely interact with anything. Around a hundred trillion of them, mostly from the Sun, will pass through your body while you read this sentence. In your entire life, roughly one will actually hit you.
-- **Fermions are antisocial**, and it matters: no two can share the same quantum state (the Pauli exclusion principle). That refusal is why atoms have electron shells, why chemistry exists, and why your hand does not pass through the table. Solidity is not atoms touching. It is electrons declining to share.
-
-The forces are what the bosons carry:
+The four tiles on the right carry the forces:
 
 | Force           | Carrier        | Relative strength | Range         | Where you feel it                              |
 | --------------- | -------------- | ----------------- | ------------- | ---------------------------------------------- |
@@ -144,9 +147,9 @@ The forces are what the bosons carry:
 | Weak            | W and Z bosons | ~10⁻⁶             | sub-nuclear   | radioactive decay, the fusion powering the Sun |
 | Gravity         | none found     | ~10⁻³⁸            | infinite      | falling. Not part of the Standard Model        |
 
-**Where the analogy breaks:** the Standard Model gets called the periodic table of physics, but its entries are not tiny balls. Each particle is a ripple in a field that fills all of space. Every electron in the universe is a ripple in the *same* electron field, which is why they are all perfectly identical: same product, same factory.
+One caution about the card: the tiles are not tiny balls. Each particle is a ripple in a field that fills all of space. Every electron in the universe is a ripple in the *same* electron field, which is why they are all perfectly identical: same product, same factory.
 
-And the 17th particle, the **Higgs boson**, is the odd one out: it carries no force. Its field fills space like a crowd fills a room, and particles get mass from how much the crowd tugs at them as they cross. A celebrity (the top quark) gets mobbed and can barely move: that is what "heavy" means. A nobody (the photon) strolls through untouched and stays massless. **Where this breaks:** the Higgs only prices the fundamental particles. About 99% of *your* mass is not Higgs at all. It is the raw energy of the strong force thrashing around inside your protons and neutrons, wearing mass as a disguise, courtesy of the second famous equation:
+And the odd tile out, the **Higgs boson**, carries no force. Its field fills space like a crowd fills a room, and particles get mass from how much the crowd tugs at them as they cross. A celebrity (the top quark) gets mobbed and can barely move: that is what "heavy" means. A nobody (the photon) strolls through untouched and stays massless. **The fine print:** the Higgs only prices the fundamental particles. About 99% of *your* mass is not Higgs at all. It is the raw energy of the strong force thrashing around inside your protons and neutrons, wearing mass as a disguise, courtesy of the second famous equation:
 
 $$E = mc^2$$
 
@@ -183,7 +186,7 @@ pie
 | Problem             | What we know                                                                 | Leading ideas                                                | Status                                                            |
 | ------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------- |
 | Dark matter         | Galaxies spin too fast for their visible mass; something unseen adds gravity | Undiscovered particles (axions, WIMPs), or modified gravity  | Decades of underground detectors, no direct catch yet              |
-| Dark energy         | The universe's expansion is speeding up                                      | An energy of empty space itself                              | DESI's 15-million-galaxy map hints it may be *weakening* over time |
+| Dark energy         | The universe's expansion is speeding up                                      | An energy of empty space itself                              | DESI's 15-million-galaxy map hints it may be *weakening* over time ⁷ |
 | Missing antimatter  | The Big Bang should have minted matter and antimatter 50/50, then annihilated both | A small bias in the laws (CP violation), so far far too small | Why anything exists is, technically, unexplained                   |
 | Quantum gravity     | Quantum theory and general relativity both work flawlessly, and refuse to combine | String theory, loop quantum gravity                          | No experimental test of either. A century of trying                |
 | Measurement problem | The math never says when "collapse" actually happens, or why                 | Copenhagen, many-worlds, other interpretations               | The 2025 centennial conference argued about it. Still.             |
@@ -196,14 +199,21 @@ The second quantum century opened with a hot streak:
 
 | Result                                                        | Who and where                          | Why it matters                                                                                                     |
 | ------------------------------------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| Nobel Prize 2025: quantum tunneling in a circuit you can hold | Clarke, Devoret, Martinis              | Quantum rules survive at chip scale; the founding trick behind superconducting qubits                               |
-| First coherent spin spectroscopy of a single antiproton       | BASE collaboration, CERN               | A 16× sharper test of matter-antimatter symmetry (see "missing antimatter," above)                                  |
-| Muon g-2 mystery resolved                                     | Fermilab plus new lattice calculations | The theory prediction moved, the "anomaly" evaporated, and the Standard Model now matches experiment to remarkable precision |
-| First one-dimensional anyons observed                         | Cold-atom labs                         | A third family of particle behavior beyond fermions and bosons                                                      |
-| Superfluid molecular hydrogen                                 | Cluster experiments                    | Frictionless quantum flow, now seen in a molecule                                                                   |
-| A protein qubit grown inside living cells                     | Quantum biosensing teams               | Quantum sensors assembled by biology itself                                                                         |
+| Nobel Prize 2025: quantum tunneling in a circuit you can hold ¹ | Clarke, Devoret, Martinis              | Quantum rules survive at chip scale; the founding trick behind superconducting qubits                               |
+| First coherent spin spectroscopy of a single antiproton ²     | BASE collaboration, CERN               | A 16× sharper test of matter-antimatter symmetry (see "missing antimatter," above)                                  |
+| Muon g-2 mystery resolved ³                                   | Fermilab plus new lattice calculations | The final measurement (127 parts per billion) agrees with the updated theory: the famous "anomaly" evaporated       |
+| First one-dimensional anyons observed ⁴                       | University of Innsbruck and collaborators | A third family of particle behavior beyond fermions and bosons                                                      |
+| Superfluid molecular hydrogen ⁵                               | Cluster experiments                    | Frictionless quantum flow, now seen in a molecule                                                                   |
+| A protein qubit grown inside living cells ⁶                   | Quantum biosensing teams               | Quantum sensors assembled by biology itself                                                                         |
 
 Notice the pattern: almost every entry is the weirdness becoming *machinery*. Superposition, tunneling, entanglement, and spin spent their first century as philosophical scandals. They are spending their second as components: in qubits, in clocks, in sensors threaded into living cells.
+
+**Sources:**
+1. [The Nobel Prize in Physics 2025](https://www.nobelprize.org/prizes/physics/2025/) — Clarke, Devoret, and Martinis, macroscopic quantum tunneling.
+2. [Physics World: Top 10 breakthroughs of 2025](https://physicsworld.com/a/top-10-breakthroughs-of-the-year-in-physics-for-2025-revealed/) — also the source for the superfluid hydrogen ⁵ and protein qubit ⁶ entries.
+3. [Fermilab: Muon g-2 announces its most precise measurement](https://news.fnal.gov/2025/06/muon-g-2-most-precise-measurement-of-muon-magnetic-anomaly/)
+4. [University of Innsbruck: Observing one-dimensional anyons](https://www.uibk.ac.at/en/newsroom/2025/observing-one-dimensional-anyons/) — published in Nature.
+7. [Quanta Magazine: The Year in Physics](https://www.quantamagazine.org/the-year-in-physics-20251217/) — DESI's dark-energy hints and the quantum centennial.
 
 A hundred years ago, the question was whether nature could really work like this. That one is settled; the experiments have been merciless. The question Heisenberg left on that island is still open, though, and it is a good one to end on: between one measurement and the next, what exactly is the universe keeping in its books?
 

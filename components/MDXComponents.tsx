@@ -12,6 +12,8 @@ import QubitCollapse from './writeups/quantum/QubitCollapse'
 import DoubleSlit from './writeups/quantum/DoubleSlit'
 import EntangledPair from './writeups/quantum/EntangledPair'
 import SpinAnimation from './writeups/quantum/SpinAnimation'
+import WaveParticleAnimation from './writeups/quantum/WaveParticleAnimation'
+import StandardModelChart from './writeups/quantum/StandardModelChart'
 
 export const components: MDXComponents = {
   Image,
@@ -23,6 +25,8 @@ export const components: MDXComponents = {
   DoubleSlit,
   EntangledPair,
   SpinAnimation,
+  WaveParticleAnimation,
+  StandardModelChart,
   a: CustomLink,
   pre: Pre,
   table: TableWrapper,
