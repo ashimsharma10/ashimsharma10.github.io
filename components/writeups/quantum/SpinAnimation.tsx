@@ -61,7 +61,7 @@ export default function SpinAnimation() {
     <DemoFrame
       title="Spin: what is actually rotating (nothing)"
       isDark={isDark}
-      caption="Spin is an intrinsic label with rotation-like consequences and no rotating parts: measurements return only two values, and the state needs 720° of rotation to come back to itself. Scrub the timeline to compare the three pictures."
+      caption="Four pictures of spin: the spinning-ball myth, the precessing arrow physicists actually draw, the two-and-only-two answers a measurement gives, and the 720° twist that makes spin-½ genuinely alien. Scrub the timeline to compare them."
     >
       {loaded ? (
         <loaded.Player

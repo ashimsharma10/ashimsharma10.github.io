@@ -4,9 +4,10 @@ import { AbsoluteFill, Sequence, interpolate, random, useCurrentFrame } from 're
 import { palette } from './shared'
 import {
   SPIN_HEIGHT,
-  SPIN_SCENE_1 as SCENE_1,
-  SPIN_SCENE_2 as SCENE_2,
-  SPIN_SCENE_3 as SCENE_3,
+  SPIN_SCENE_MAGNET,
+  SPIN_SCENE_MYTH,
+  SPIN_SCENE_PRECESS,
+  SPIN_SCENE_TURNS,
   SPIN_WIDTH,
 } from './spinConstants'
 
@@ -45,7 +46,7 @@ function MythScene({ isDark }: { isDark: boolean }) {
   const angle = frame * 6
   const orbitX = 320 + 46 * Math.cos((angle * Math.PI) / 180)
   const orbitY = 158 + 46 * Math.sin((angle * Math.PI) / 180)
-  const xScale = interpolate(frame, [66, 78], [0, 1], {
+  const xScale = interpolate(frame, [56, 68], [0, 1], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   })
@@ -87,7 +88,7 @@ function MythScene({ isDark }: { isDark: boolean }) {
           />
         </g>
       </svg>
-      {frame < 66 ? (
+      {frame < 56 ? (
         <Caption
           text="The picture in your head: a tiny ball, spinning."
           color={p.text}
@@ -97,14 +98,133 @@ function MythScene({ isDark }: { isDark: boolean }) {
         <Caption
           text="Wrong. Nothing is rotating. An electron has no surface to turn."
           color={p.secondary}
-          fadeAt={68}
+          fadeAt={58}
         />
       )}
     </AbsoluteFill>
   )
 }
 
-/** Scene 2: Stern-Gerlach — particles through a magnet, only two exits. */
+/** One precessing spin arrow: axis, cone rim, and an arrow sweeping around it. */
+function PrecessingArrow({
+  cx,
+  cy,
+  phaseDeg,
+  down,
+  label,
+  isDark,
+}: {
+  cx: number
+  cy: number
+  phaseDeg: number
+  down: boolean
+  label: string
+  isDark: boolean
+}) {
+  const p = palette(isDark)
+  const L = 92
+  const tilt = (28 * Math.PI) / 180
+  const dir = down ? 1 : -1
+  const phi = (phaseDeg * Math.PI) / 180
+  const rimX = L * Math.sin(tilt)
+  const rimY = L * Math.sin(tilt) * 0.32
+  const rimCy = cy + dir * L * Math.cos(tilt)
+  const tipX = cx + rimX * Math.cos(phi)
+  const tipY = rimCy + rimY * Math.sin(phi)
+  const behind = Math.sin(phi) < 0
+  return (
+    <g>
+      <line
+        x1={cx}
+        y1={cy - 120}
+        x2={cx}
+        y2={cy + 120}
+        stroke={p.border}
+        strokeWidth={1.5}
+        strokeDasharray="4 6"
+      />
+      <ellipse
+        cx={cx}
+        cy={rimCy}
+        rx={rimX}
+        ry={rimY}
+        fill="none"
+        stroke={p.muted}
+        strokeWidth={1.5}
+        strokeDasharray="3 5"
+      />
+      <circle cx={cx} cy={cy} r={20} fill={p.accentSoft} stroke={p.accent} strokeWidth={1.5} />
+      <g opacity={behind ? 0.45 : 1}>
+        <line
+          x1={cx}
+          y1={cy}
+          x2={tipX}
+          y2={tipY}
+          stroke={p.secondary}
+          strokeWidth={5}
+          strokeLinecap="round"
+        />
+        <circle cx={tipX} cy={tipY} r={7} fill={p.secondary} />
+      </g>
+      <text
+        x={cx}
+        y={cy - 136}
+        textAnchor="middle"
+        fontFamily={FONT}
+        fontSize={14}
+        fontWeight={700}
+        fill={p.text}
+      >
+        {label}
+      </text>
+    </g>
+  )
+}
+
+/** Scene 2: the real picture — spin as an arrow that visibly precesses. */
+function PrecessionScene({ isDark }: { isDark: boolean }) {
+  const p = palette(isDark)
+  const frame = useCurrentFrame()
+  const fade = interpolate(frame, [0, 8], [0, 1], { extrapolateRight: 'clamp' })
+  const phase = frame * 5
+  return (
+    <AbsoluteFill style={{ opacity: fade }}>
+      <svg width={SPIN_WIDTH} height={SPIN_HEIGHT}>
+        <PrecessingArrow
+          cx={200}
+          cy={168}
+          phaseDeg={phase}
+          down={false}
+          label="spin up"
+          isDark={isDark}
+        />
+        <PrecessingArrow
+          cx={440}
+          cy={168}
+          phaseDeg={-phase + 180}
+          down
+          label="spin down"
+          isDark={isDark}
+        />
+      </svg>
+      {frame < 75 ? (
+        <Caption
+          text="The picture physicists draw: an arrow of angular momentum, wobbling like a tilted gyroscope."
+          color={p.text}
+          fadeAt={10}
+        />
+      ) : (
+        <Caption
+          text="The arrow and its precession are real, measurable physics. The spinning surface never was."
+          color={p.text}
+          fadeAt={77}
+        />
+      )}
+    </AbsoluteFill>
+  )
+}
+
+/** Scene 3: Stern-Gerlach — particles through a magnet, only two exits. */
 function TwoAnswersScene({ isDark }: { isDark: boolean }) {
   const p = palette(isDark)
   const frame = useCurrentFrame()
@@ -201,7 +321,7 @@ function TwoAnswersScene({ isDark }: { isDark: boolean }) {
   )
 }
 
-/** Scene 3: the 720° twist — one turn flips the state's sign, two turns restore it. */
+/** Scene 4: the 720° twist — one turn flips the state's sign, two turns restore it. */
 function TwoTurnsScene({ isDark }: { isDark: boolean }) {
   const p = palette(isDark)
   const frame = useCurrentFrame()
@@ -280,7 +400,7 @@ function TwoTurnsScene({ isDark }: { isDark: boolean }) {
           {Math.round(deg)}°
         </text>
       </svg>
-      <Caption text={caption} color={deg >= 355 && deg < 715 ? p.secondary : p.text} fadeAt={4} />
+      <Caption text={caption} color={flipped ? p.secondary : p.text} fadeAt={4} />
     </AbsoluteFill>
   )
 }
@@ -289,13 +409,19 @@ export default function SpinComposition({ isDark }: { isDark: boolean }) {
   const p = palette(isDark)
   return (
     <AbsoluteFill style={{ background: p.bg }}>
-      <Sequence from={0} durationInFrames={SCENE_1}>
+      <Sequence from={0} durationInFrames={SPIN_SCENE_MYTH}>
         <MythScene isDark={isDark} />
       </Sequence>
-      <Sequence from={SCENE_1} durationInFrames={SCENE_2}>
+      <Sequence from={SPIN_SCENE_MYTH} durationInFrames={SPIN_SCENE_PRECESS}>
+        <PrecessionScene isDark={isDark} />
+      </Sequence>
+      <Sequence from={SPIN_SCENE_MYTH + SPIN_SCENE_PRECESS} durationInFrames={SPIN_SCENE_MAGNET}>
         <TwoAnswersScene isDark={isDark} />
       </Sequence>
-      <Sequence from={SCENE_1 + SCENE_2} durationInFrames={SCENE_3}>
+      <Sequence
+        from={SPIN_SCENE_MYTH + SPIN_SCENE_PRECESS + SPIN_SCENE_MAGNET}
+        durationInFrames={SPIN_SCENE_TURNS}
+      >
         <TwoTurnsScene isDark={isDark} />
       </Sequence>
     </AbsoluteFill>
