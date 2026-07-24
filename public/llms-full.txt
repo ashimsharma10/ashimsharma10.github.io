@@ -55,6 +55,10 @@ Quantum mechanics suffers more from its vocabulary than from its math. Four corr
 | "Observation"         | A conscious mind has to watch                | Any interaction that records the outcome. A stray photon counts; no eyes required   |
 | Collapse              | The particle secretly knew its state all along | Before measurement there was no hidden answer. Bell's theorem rules that out (see below) |
 
+"Spin" is the most misleading word in that table, so it gets its own animation: the myth, what measurement actually shows, and the genuinely strange part nobody's analogy survives.
+
+<SpinAnimation />
+
 ## Entanglement: the coins that always agree
 
 Prepare two particles together in the right way, ship them to labs light-years apart, and their measurement results stay perfectly correlated: like two coins that always land the same way, no matter how far apart they are flipped.
