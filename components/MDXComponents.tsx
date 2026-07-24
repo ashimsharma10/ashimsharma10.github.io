@@ -10,10 +10,10 @@ import LinuxFSHierarchy from './LinuxFSHierarchy'
 import RiemannZeta from './writeups/RiemannZeta'
 import QubitCollapse from './writeups/quantum/QubitCollapse'
 import DoubleSlit from './writeups/quantum/DoubleSlit'
-import EntangledPair from './writeups/quantum/EntangledPair'
 import SpinAnimation from './writeups/quantum/SpinAnimation'
 import WaveParticleAnimation from './writeups/quantum/WaveParticleAnimation'
-import StandardModelChart from './writeups/quantum/StandardModelChart'
+import StandardModelAnimation from './writeups/quantum/StandardModelAnimation'
+import EntanglementAnimation from './writeups/quantum/EntanglementAnimation'
 
 export const components: MDXComponents = {
   Image,
@@ -23,10 +23,10 @@ export const components: MDXComponents = {
   RiemannZeta,
   QubitCollapse,
   DoubleSlit,
-  EntangledPair,
   SpinAnimation,
   WaveParticleAnimation,
-  StandardModelChart,
+  StandardModelAnimation,
+  EntanglementAnimation,
   a: CustomLink,
   pre: Pre,
   table: TableWrapper,
