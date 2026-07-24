@@ -8,9 +8,10 @@ import TableWrapper from './TableWrapper'
 import MermaidChart from './MermaidChart'
 import LinuxFSHierarchy from './LinuxFSHierarchy'
 import RiemannZeta from './writeups/RiemannZeta'
+import QuantumTimeline from './writeups/quantum/QuantumTimeline'
 import QubitCollapse from './writeups/quantum/QubitCollapse'
 import DoubleSlit from './writeups/quantum/DoubleSlit'
-import SpinAnimation from './writeups/quantum/SpinAnimation'
+import SpinExplainer from './writeups/quantum/SpinExplainer'
 import WaveParticleAnimation from './writeups/quantum/WaveParticleAnimation'
 import ParticleBuilder from './writeups/quantum/ParticleBuilder'
 import EntanglementAnimation from './writeups/quantum/EntanglementAnimation'
@@ -21,9 +22,10 @@ export const components: MDXComponents = {
   MermaidChart,
   LinuxFSHierarchy,
   RiemannZeta,
+  QuantumTimeline,
   QubitCollapse,
   DoubleSlit,
-  SpinAnimation,
+  SpinExplainer,
   WaveParticleAnimation,
   ParticleBuilder,
   EntanglementAnimation,

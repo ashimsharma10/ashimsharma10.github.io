@@ -1,9 +1,0 @@
-export const SPIN_FPS = 30
-export const SPIN_WIDTH = 640
-export const SPIN_HEIGHT = 360
-export const SPIN_SCENE_MYTH = 100
-export const SPIN_SCENE_PRECESS = 150
-export const SPIN_SCENE_MAGNET = 140
-export const SPIN_SCENE_TURNS = 140
-export const SPIN_DURATION =
-  SPIN_SCENE_MYTH + SPIN_SCENE_PRECESS + SPIN_SCENE_MAGNET + SPIN_SCENE_TURNS

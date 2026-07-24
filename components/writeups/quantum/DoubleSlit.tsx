@@ -181,7 +181,14 @@ export default function DoubleSlit() {
     >
       <canvas
         ref={canvasRef}
-        style={{ width: '100%', maxWidth: W, height: 'auto', display: 'block', borderRadius: 6 }}
+        style={{
+          width: '100%',
+          maxWidth: W,
+          height: 'auto',
+          display: 'block',
+          margin: '0 auto',
+          borderRadius: 6,
+        }}
         role="img"
         aria-label="Simulated double-slit detection screen"
       />

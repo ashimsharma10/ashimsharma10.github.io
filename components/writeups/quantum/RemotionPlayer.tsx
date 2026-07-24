@@ -40,6 +40,7 @@ export default function RemotionPlayer({
   const [loaded, setLoaded] = useState<Loaded | null>(null)
   const [reducedMotion, setReducedMotion] = useState(false)
   const playerRef = useRef<PlayerRef>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setReducedMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches)
@@ -53,63 +54,81 @@ export default function RemotionPlayer({
     }
   }, [load])
 
+  // Autoplay once the player scrolls into view (and the tab is visible). A bare
+  // autoPlay never engages if the demo is below the fold or the page loaded
+  // hidden, so drive play() from an IntersectionObserver instead.
   useEffect(() => {
     if (!loaded || reducedMotion) return
+    const el = containerRef.current
+    if (!el) return
+    let started = false
     const tryPlay = () => {
       const player = playerRef.current
-      if (!player) return
-      if (player.isPlaying()) {
-        document.removeEventListener('visibilitychange', tryPlay)
-        return
+      if (!player || started) return
+      if (
+        document.visibilityState === 'visible' &&
+        el.getBoundingClientRect().top < window.innerHeight
+      ) {
+        player.play()
+        started = true
       }
-      if (document.visibilityState === 'visible') player.play()
     }
-    const timer = setTimeout(tryPlay, 300)
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) tryPlay()
+      },
+      { threshold: 0.25 }
+    )
+    observer.observe(el)
     document.addEventListener('visibilitychange', tryPlay)
+    const timer = setTimeout(tryPlay, 300)
     return () => {
-      clearTimeout(timer)
+      observer.disconnect()
       document.removeEventListener('visibilitychange', tryPlay)
+      clearTimeout(timer)
     }
   }, [loaded, reducedMotion])
 
   return (
     <DemoFrame title={title} caption={caption} isDark={isDark}>
-      {loaded ? (
-        <loaded.Player
-          ref={playerRef}
-          component={loaded.Composition}
-          inputProps={{ isDark }}
-          durationInFrames={durationInFrames}
-          fps={fps}
-          compositionWidth={width}
-          compositionHeight={height}
-          style={{ width: '100%', borderRadius: 8, border: `1px solid ${p.border}` }}
-          autoPlay={!reducedMotion}
-          loop
-          controls
-          clickToPlay
-          allowFullscreen={false}
-          showVolumeControls={false}
-        />
-      ) : (
-        <div
-          style={{
-            width: '100%',
-            aspectRatio: `${width} / ${height}`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            border: `1px solid ${p.border}`,
-            borderRadius: 8,
-            background: p.panel,
-            color: p.muted,
-            fontSize: 13,
-            fontFamily: 'system-ui, sans-serif',
-          }}
-        >
-          loading animation…
-        </div>
-      )}
+      <div ref={containerRef}>
+        {loaded ? (
+          <loaded.Player
+            ref={playerRef}
+            component={loaded.Composition}
+            inputProps={{ isDark }}
+            durationInFrames={durationInFrames}
+            fps={fps}
+            compositionWidth={width}
+            compositionHeight={height}
+            style={{ width: '100%', borderRadius: 8, border: `1px solid ${p.border}` }}
+            autoPlay={!reducedMotion}
+            loop
+            controls
+            clickToPlay
+            allowFullscreen={false}
+            showVolumeControls={false}
+          />
+        ) : (
+          <div
+            style={{
+              width: '100%',
+              aspectRatio: `${width} / ${height}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: `1px solid ${p.border}`,
+              borderRadius: 8,
+              background: p.panel,
+              color: p.muted,
+              fontSize: 13,
+              fontFamily: 'system-ui, sans-serif',
+            }}
+          >
+            loading animation…
+          </div>
+        )}
+      </div>
     </DemoFrame>
   )
 }

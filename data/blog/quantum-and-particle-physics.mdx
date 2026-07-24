@@ -13,15 +13,7 @@ It began in June 1925, when 23-year-old Werner Heisenberg, half-blinded by hay f
 
 This post is the tour of the hundred years since: what light really is, the handful of core ideas, the complete parts list of the universe, the gadgets in your pocket that secretly run on all this, and the mysteries still wide open.
 
-```mermaid
-flowchart TD
-    A["1900 · Planck admits energy comes in packets. He hates it."] --> B["1925 · Heisenberg, 23, builds quantum mechanics on hay-fever exile"]
-    B --> C["1926 · Schrödinger finds the wave equation"]
-    C --> D["1935 · Einstein calls entanglement spooky, insists it must be wrong"]
-    D --> E["1964 · Bell turns the argument into an experiment. Einstein loses."]
-    E --> F["2012 · Higgs boson found: the parts list is complete"]
-    F --> G["2025 · Quantum mechanics turns 100, still undefeated"]
-```
+<QuantumTimeline />
 
 ## Light: the argument that started everything
 
@@ -85,7 +77,7 @@ Particles carry a property called **spin**, and the name is a 100-year-old marke
 
 And spin saves its best trick for last: rotate a spin-½ particle's state one full turn, 360°, and it does not come back to itself. It comes back with its sign flipped. You need **two full turns, 720°,** to truly return it. Nothing in your kitchen behaves like this. Watch all four pictures:
 
-<SpinAnimation />
+<SpinExplainer />
 
 That precessing arrow is not just a cartoon, by the way. Hospitals photograph the inside of your body by flipping exactly those arrows in your hydrogen atoms and listening to them wobble back. The machine is called an MRI.
 
@@ -151,6 +143,26 @@ And the odd tile out, the **Higgs boson**, carries no force. Its field fills spa
 $$E = mc^2$$
 
 Mass is concentrated energy. Run it backwards and you get the business model of every particle collider: slam things together hard enough and brand-new, heavier particles condense out of the crash. That is literally how the LHC manufactured Higgs bosons from protons 130 times lighter than a Higgs.
+
+## Antimatter: every particle's mirror twin
+
+The parts list quietly doubles. In 1928, Paul Dirac was combining quantum mechanics with relativity when his equation coughed up an extra solution he could not get rid of: for every particle, a twin with the same mass but the opposite charge. He half-apologized for it. Four years later the **positron**, the electron's positive twin, turned up in a cloud chamber, exactly as the math demanded. It was one of the great "the equations knew before we did" moments in physics.
+
+Every particle in the card has an antiparticle:
+
+| Ordinary            | Antiparticle       | What flips                                          |
+| ------------------- | ------------------ | --------------------------------------------------- |
+| electron (−1)       | positron (+1)      | the charge                                          |
+| up quark (+2/3)     | anti-up (−2/3)     | the charge (so anti-quarks build anti-protons)      |
+| proton (+1)         | antiproton (−1)    | the charge of its quarks                            |
+| neutrino            | antineutrino       | a subtler quantum label, not charge                 |
+| photon              | itself             | nothing, the photon is its own antiparticle         |
+
+So the workbench above has a shadow version. Swap in **antiquarks** (anti-up at −2/3, anti-down at +1/3) and the same combining rules build an **antiproton**, an **antineutron**, and with a positron, a whole atom of anti-hydrogen. CERN makes and traps real anti-hydrogen today, and so far it looks like a perfect mirror of ordinary hydrogen. There is also a third option the builder skips: pair one quark with one *antiquark* and you get a **meson**, the other way nature is allowed to package quarks.
+
+Matter and antimatter cannot coexist. Touch a particle to its antiparticle and both vanish in a flash of pure energy, $E = mc^2$ run at 100% efficiency, the most concentrated energy release known. (This is not science fiction: a PET scan works by detecting the photons from positrons annihilating inside your body.)
+
+Which leaves the single most uncomfortable fact in physics. The Big Bang should have made matter and antimatter in exactly equal amounts, and they should have annihilated each other completely, leaving a universe of nothing but light. Instead, for every billion antimatter particles, there were a billion-and-one of matter. That leftover one-in-a-billion is everything: every star, every planet, you. Nobody knows what tipped the balance. It is why experiments like the single-antiproton measurement in the scoreboard below matter so much: they hunt for the tiniest difference between a particle and its twin.
 
 ## The quantum stuff you already own
 
