@@ -7,19 +7,11 @@ draft: false
 summary: 'A plain-language tour of quantum physics a century after it was born: light and photons, superposition, the double slit, spin, tunneling, entanglement, the 17 particles everything is made of, the quantum devices in your pocket, and the mysteries still open. With interactive demos and animations.'
 ---
 
-*The physics of atoms turned 100 last year. It has never failed a test, it built the device you are reading this on, and nobody agrees on what it means. Here is the whole story, in plain language.*
+**Quantum mechanics is the rulebook for very small things**: atoms, and the particles inside them. At that scale the comfortable rules of everyday objects stop working. Things can be in several states at once, walls can be crossed without climbing, and looking at something changes what it does. None of this is speculation: it is the most rigorously confirmed science humans have ever produced, with some predictions checked to eleven decimal places.
 
-**Quantum mechanics is the rulebook for very small things**: atoms, and the particles inside them. At that scale, the comfortable rules of everyday objects stop working. Things can be in several states at once, walls can be crossed without climbing, and looking at something changes what it does. None of this is speculation. It is the most rigorously confirmed science humans have ever produced, with some predictions checked to eleven decimal places.
+It began in June 1925, when 23-year-old Werner Heisenberg, half-blinded by hay fever, took two weeks off on Helgoland, a bare North Sea island with almost no pollen. There he made one radical decision: stop imagining electron orbits nobody can see, and build the math only from what atoms actually show us, the light they emit. Around 3 a.m. one night the numbers finally clicked. Too excited to sleep, he climbed a rock and watched the sun rise over the sea. Those two weeks became quantum mechanics, and a Nobel Prize before he turned 32.
 
-The story starts with a sneeze. In June 1925, a 23-year-old German physicist named Werner Heisenberg was miserable: his hay fever had swollen his face so badly he could hardly work. He asked his professor for two weeks off and took a boat to Helgoland, a small, rocky island far out in the North Sea where the constant sea wind keeps the air almost free of pollen.
-
-Physics, at that moment, was stuck. The best picture of the atom, tiny electrons circling the nucleus like planets around a sun, kept predicting the wrong answers for the light atoms give off, and after twenty years nobody could repair it. Recovering on the island, with little to do but walk the cliffs and swim, Heisenberg made a daring decision. He would stop trying to imagine the electron's invisible orbit, since nobody can actually watch an electron loop around a nucleus, and build his theory using only quantities you can genuinely measure: the exact colors and brightnesses of the light the atom emits.
-
-That rule led him somewhere strange. To make the numbers work, he had to invent a new way of multiplying grids of measurements, and it had a bizarre feature: A times B did not equal B times A, something no ordinary numbers do. Late one night, around three in the morning, he ran the final test, checking that energy stayed properly conserved in his new scheme, and it passed. Everything fit. He was too electrified to sleep. As he told it years later, he left the house in the dark, walked to the southern tip of the island, climbed a rock jutting out over the sea, and sat there until the sun came up.
-
-Back on the mainland, he showed his messy notes to his mentor Max Born, who stared at the odd multiplication and recognized it: mathematicians already had a name for those grids, matrices, and a whole toolkit for them. Within a few months Born, Heisenberg, and a student named Pascual Jordan had turned two hay-fever weeks on a barren island into the first complete version of quantum mechanics. Heisenberg was 23, and he won the Nobel Prize for it before he turned 32.
-
-This post is the tour of what the hundred years since taught us: what light really is, the handful of core ideas, the complete parts list of the universe, the gadgets in your pocket that secretly run on all this, and the mysteries that are still wide open.
+This post is the tour of the hundred years since: what light really is, the handful of core ideas, the complete parts list of the universe, the gadgets in your pocket that secretly run on all this, and the mysteries still wide open.
 
 ```mermaid
 flowchart TD
@@ -133,11 +125,11 @@ This is also why quantum computers are kept in vacuum chambers colder than deep 
 
 ## The Standard Model: the universe's complete parts list
 
-Zoom in far enough and everything you have ever touched, eaten, or been is built from **17 kinds of particle**. That is the entire inventory. The animation below assembles them the way nature does, starting from the parts that make you, then fading in the full set:
+Zoom in far enough and everything you have ever touched, eaten, or been is built from **17 kinds of particle**. That is the entire inventory. Here are the parts, and a workbench to combine them on. Build a proton yourself:
 
-<StandardModelAnimation />
+<ParticleBuilder />
 
-What the animation shows, worth remembering:
+Worth remembering:
 
 - **You are the dashed column.** Up and down quarks build protons (two ups, one down) and neutrons (two downs, one up). Electrons wrap around them and do all of chemistry. That is the whole recipe for the periodic table, and for you.
 - **Columns 2 and 3 are photocopies.** Same charges, same behavior, just heavier, and they decay almost instantly. When the muon (a heavy electron) was discovered, physicist I. I. Rabi's entire review was: "Who ordered that?" Seventy years later, still no answer.

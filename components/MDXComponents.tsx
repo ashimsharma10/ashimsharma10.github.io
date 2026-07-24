@@ -12,7 +12,7 @@ import QubitCollapse from './writeups/quantum/QubitCollapse'
 import DoubleSlit from './writeups/quantum/DoubleSlit'
 import SpinAnimation from './writeups/quantum/SpinAnimation'
 import WaveParticleAnimation from './writeups/quantum/WaveParticleAnimation'
-import StandardModelAnimation from './writeups/quantum/StandardModelAnimation'
+import ParticleBuilder from './writeups/quantum/ParticleBuilder'
 import EntanglementAnimation from './writeups/quantum/EntanglementAnimation'
 
 export const components: MDXComponents = {
@@ -25,7 +25,7 @@ export const components: MDXComponents = {
   DoubleSlit,
   SpinAnimation,
   WaveParticleAnimation,
-  StandardModelAnimation,
+  ParticleBuilder,
   EntanglementAnimation,
   a: CustomLink,
   pre: Pre,
