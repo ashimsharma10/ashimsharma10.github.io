@@ -68,5 +68,10 @@
     "question": "Any content about Linux systems?",
     "expectAny": ["linux", "/write-up/"],
     "expectText": ["linux"]
+  },
+  {
+    "question": "Has Ashim written anything about quantum physics?",
+    "expectAny": ["quantum", "/write-up/"],
+    "expectText": ["quantum"]
   }
 ]

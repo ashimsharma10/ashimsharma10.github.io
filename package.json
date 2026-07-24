@@ -17,6 +17,7 @@
   "dependencies": {
     "@headlessui/react": "2.2.9",
     "@next/bundle-analyzer": "15.5.12",
+    "@remotion/player": "^4.0.499",
     "@tailwindcss/forms": "^0.5.11",
     "@tailwindcss/postcss": "^4.1.18",
     "@tailwindcss/typography": "^0.5.19",
@@ -47,6 +48,7 @@
     "remark-gfm": "^4.0.1",
     "remark-github-blockquote-alert": "^2.0.1",
     "remark-math": "^6.0.0",
+    "remotion": "^4.0.499",
     "tailwindcss": "^4.1.18",
     "unist-util-visit": "^5.1.0"
   },

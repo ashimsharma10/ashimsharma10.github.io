@@ -1,0 +1,7 @@
+export const WAVE_FPS = 30
+export const WAVE_WIDTH = 640
+export const WAVE_HEIGHT = 360
+export const WAVE_SCENE_RIPPLES = 130
+export const WAVE_SCENE_PHOTONS = 170
+export const WAVE_SCENE_DUALITY = 150
+export const WAVE_DURATION = WAVE_SCENE_RIPPLES + WAVE_SCENE_PHOTONS + WAVE_SCENE_DUALITY
