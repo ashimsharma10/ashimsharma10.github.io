@@ -22,39 +22,143 @@ interface RosterTile {
   sym: string
   name: string
   fam: Fam
+  charge: string
+  fact: string
 }
 
 const ROSTER: { label: string; tiles: RosterTile[] }[] = [
   {
     label: 'quarks · pieces of protons and neutrons',
     tiles: [
-      { sym: 'u', name: 'up', fam: 'quark' },
-      { sym: 'd', name: 'down', fam: 'quark' },
-      { sym: 'c', name: 'charm', fam: 'quark' },
-      { sym: 's', name: 'strange', fam: 'quark' },
-      { sym: 't', name: 'top', fam: 'quark' },
-      { sym: 'b', name: 'bottom', fam: 'quark' },
+      {
+        sym: 'u',
+        name: 'up',
+        fam: 'quark',
+        charge: '+2/3',
+        fact: 'Two of these live in every proton. Featherweight: most of a proton’s mass is not its quarks at all.',
+      },
+      {
+        sym: 'd',
+        name: 'down',
+        fam: 'quark',
+        charge: '−1/3',
+        fact: 'One in every proton, two in every neutron. With up and the electron, it builds all lasting matter.',
+      },
+      {
+        sym: 'c',
+        name: 'charm',
+        fam: 'quark',
+        charge: '+2/3',
+        fact: 'A heavier up, about 1.4× a whole proton. Its 1974 discovery shocked physics into accepting quarks.',
+      },
+      {
+        sym: 's',
+        name: 'strange',
+        fam: 'quark',
+        charge: '−1/3',
+        fact: 'A heavier down. Cosmic-ray particles containing it lived “strangely” long, hence the name.',
+      },
+      {
+        sym: 't',
+        name: 'top',
+        fam: 'quark',
+        charge: '+2/3',
+        fact: 'Heavy as an entire gold atom, gone in 10⁻²⁵ seconds: it decays before it can even bind to anything.',
+      },
+      {
+        sym: 'b',
+        name: 'bottom',
+        fam: 'quark',
+        charge: '−1/3',
+        fact: 'Heavier still. The LHC studies its particles for tiny cracks in the Standard Model.',
+      },
     ],
   },
   {
     label: 'leptons · loners, no combining needed',
     tiles: [
-      { sym: 'e', name: 'electron', fam: 'lepton' },
-      { sym: 'μ', name: 'muon', fam: 'lepton' },
-      { sym: 'τ', name: 'tau', fam: 'lepton' },
-      { sym: 'νe', name: 'neutrino', fam: 'neutrino' },
-      { sym: 'νμ', name: 'neutrino', fam: 'neutrino' },
-      { sym: 'ντ', name: 'neutrino', fam: 'neutrino' },
+      {
+        sym: 'e',
+        name: 'electron',
+        fam: 'lepton',
+        charge: '−1',
+        fact: 'Does all of chemistry, carries all your electricity, and never decays. The most useful particle there is.',
+      },
+      {
+        sym: 'μ',
+        name: 'muon',
+        fam: 'lepton',
+        charge: '−1',
+        fact: 'A heavy electron that lives 2.2 microseconds. Cosmic rays are sprinkling them on your head right now.',
+      },
+      {
+        sym: 'τ',
+        name: 'tau',
+        fam: 'lepton',
+        charge: '−1',
+        fact: 'Heavier again, 3500× the electron. Decays so fast it barely travels a millimeter.',
+      },
+      {
+        sym: 'νe',
+        name: 'e-neutrino',
+        fam: 'neutrino',
+        charge: '0',
+        fact: 'Almost massless, almost invisible. The Sun sends 100 trillion through you every second; almost none ever touch you.',
+      },
+      {
+        sym: 'νμ',
+        name: 'μ-neutrino',
+        fam: 'neutrino',
+        charge: '0',
+        fact: 'The muon’s ghost partner. Neutrinos shape-shift between their three kinds mid-flight, a 2015 Nobel discovery.',
+      },
+      {
+        sym: 'ντ',
+        name: 'τ-neutrino',
+        fam: 'neutrino',
+        charge: '0',
+        fact: 'The hardest particle to catch: it took until the year 2000 to detect one directly.',
+      },
     ],
   },
   {
     label: 'force carriers · the glue, not the bricks',
     tiles: [
-      { sym: 'γ', name: 'photon', fam: 'force' },
-      { sym: 'g', name: 'gluon', fam: 'force' },
-      { sym: 'W', name: 'weak force', fam: 'force' },
-      { sym: 'Z', name: 'weak force', fam: 'force' },
-      { sym: 'H', name: 'Higgs', fam: 'higgs' },
+      {
+        sym: 'γ',
+        name: 'photon',
+        fam: 'force',
+        charge: '0',
+        fact: 'Carries light, radio, X-rays, and every electric and magnetic push. Massless, so it travels at, well, light speed.',
+      },
+      {
+        sym: 'g',
+        name: 'gluon',
+        fam: 'force',
+        charge: '0',
+        fact: 'Glues quarks together, and pulls harder the farther they stretch. Its raw energy is ~99% of your body weight.',
+      },
+      {
+        sym: 'W',
+        name: 'weak force',
+        fam: 'force',
+        charge: '±1',
+        fact: 'The alchemist: flips one quark type into another. Every radioactive decay and the Sun’s fusion run through it.',
+      },
+      {
+        sym: 'Z',
+        name: 'weak force',
+        fam: 'force',
+        charge: '0',
+        fact: 'The W’s neutral sibling, 97× a proton’s mass. A force carrier heavier than an iron atom.',
+      },
+      {
+        sym: 'H',
+        name: 'Higgs',
+        fam: 'higgs',
+        charge: '0',
+        fact: 'Not a force, a field with a particle. Fundamental particles get their mass from wading through it. Found in 2012.',
+      },
     ],
   },
 ]
@@ -99,10 +203,26 @@ function chargeLabel(thirds: number): string {
   return `${sign}${abs}/3`
 }
 
+const FAQ: { q: string; a: string }[] = [
+  {
+    q: 'Why exactly three?',
+    a: 'The strong force never lets a quark exist alone: pull one away and the energy you spend snaps a brand-new quark pair into existence before you succeed. Physicists call it confinement. Quarks are only ever found in threes (like your proton) or in quark-antiquark pairs called mesons.',
+  },
+  {
+    q: 'Why only up and down?',
+    a: 'You can combine the other four quarks too, and colliders do: strange, charm, and bottom all form real particles. But those quarks are heavy and unstable, so everything built from them decays in a blink (the top quark decays before it can bind at all). Every atom that lasts long enough to matter is made of up, down, and electrons.',
+  },
+  {
+    q: 'Where are the forces while you build?',
+    a: 'Working, invisibly. Gluons are the glue holding your three quarks together, and their raw energy makes up ~99% of the proton’s mass. The photon then binds electrons to your proton to make atoms. The W can flip a down into an up, which is what radioactive decay is. And the Higgs field sets the quarks’ own small masses.',
+  },
+]
+
 export default function ParticleBuilder() {
   const isDark = useIsDark()
   const p = palette(isDark)
   const [picked, setPicked] = useState<Quark[]>([])
+  const [info, setInfo] = useState<RosterTile | null>(null)
 
   const quarkColor = (isDark ? FAM_COLORS.quark.dark : FAM_COLORS.quark.light).text
   const quarkBg = (isDark ? FAM_COLORS.quark.dark : FAM_COLORS.quark.light).bg
@@ -117,22 +237,32 @@ export default function ParticleBuilder() {
 
   const tile = (t: RosterTile) => {
     const c = isDark ? FAM_COLORS[t.fam].dark : FAM_COLORS[t.fam].light
+    const active = info?.sym === t.sym
     return (
-      <div
-        key={t.sym + t.name}
+      <button
+        key={t.sym}
+        type="button"
+        onMouseEnter={() => setInfo(t)}
+        onFocus={() => setInfo(t)}
+        onClick={() => setInfo(t)}
         style={{
           background: c.bg,
           color: c.text,
+          border: active ? `2px solid ${c.text}` : '2px solid transparent',
           borderRadius: 8,
-          padding: '6px 0 5px',
+          padding: '5px 0 4px',
           textAlign: 'center',
           minWidth: 58,
           flex: '1 1 58px',
+          cursor: 'pointer',
+          fontFamily: FONT,
+          transform: active ? 'translateY(-1px)' : 'none',
+          transition: 'transform 100ms, border-color 100ms',
         }}
       >
         <div style={{ fontSize: 17, fontWeight: 800, lineHeight: 1.1 }}>{t.sym}</div>
         <div style={{ fontSize: 9.5, fontWeight: 600, opacity: 0.85 }}>{t.name}</div>
-      </div>
+      </button>
     )
   }
 
@@ -164,14 +294,14 @@ export default function ParticleBuilder() {
     <DemoFrame
       title="The 17 particles, and how to build with them"
       isDark={isDark}
-      caption="Quarks carry charges in thirds, which looks bizarre until you combine them: three at a time, the thirds always add up to a whole number. That is not a coincidence, it is why atoms work. (Why always three? Quarks are never found alone: pull two apart and the strong force snaps a new pair into existence first. Physicists call it confinement.)"
+      caption="Quarks carry charges in thirds, which looks bizarre until you combine them: three at a time, the thirds always add up to a whole number. That is not a coincidence, it is why atoms work."
     >
       {/* Part 1: the roster */}
       <div style={{ fontFamily: FONT }}>
         <div style={{ fontSize: 12, fontWeight: 800, color: p.text, marginBottom: 8 }}>
           1 · THE PARTS
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 18 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {ROSTER.map((row) => (
             <div key={row.label}>
               <div style={{ fontSize: 10.5, color: p.muted, fontWeight: 600, marginBottom: 4 }}>
@@ -180,6 +310,34 @@ export default function ParticleBuilder() {
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>{row.tiles.map(tile)}</div>
             </div>
           ))}
+        </div>
+        {/* info panel for the hovered/tapped particle */}
+        <div
+          style={{
+            margin: '10px 0 18px',
+            padding: '9px 12px',
+            border: `1.5px solid ${p.border}`,
+            borderRadius: 8,
+            minHeight: 58,
+            fontSize: 12.5,
+            lineHeight: 1.5,
+            color: p.text,
+            background: p.panel,
+          }}
+        >
+          {info ? (
+            <>
+              <span style={{ fontWeight: 800 }}>
+                {info.name} ({info.sym})
+              </span>
+              <span style={{ color: p.muted, fontWeight: 600 }}> · charge {info.charge} · </span>
+              {info.fact}
+            </>
+          ) : (
+            <span style={{ color: p.muted }}>
+              Hover or tap any particle above to see what it does.
+            </span>
+          )}
         </div>
 
         {/* Part 2: the builder */}
@@ -252,6 +410,19 @@ export default function ParticleBuilder() {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Part 3: the questions everyone asks */}
+        <div style={{ fontSize: 12, fontWeight: 800, color: p.text, margin: '18px 0 8px' }}>
+          3 · THE QUESTIONS EVERYONE ASKS
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {FAQ.map((item) => (
+            <div key={item.q} style={{ fontSize: 12.5, lineHeight: 1.55 }}>
+              <span style={{ fontWeight: 800, color: p.text }}>{item.q} </span>
+              <span style={{ color: p.muted }}>{item.a}</span>
+            </div>
+          ))}
         </div>
       </div>
     </DemoFrame>

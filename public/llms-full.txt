@@ -123,14 +123,13 @@ Zoom in far enough and everything you have ever touched, eaten, or been is built
 
 <ParticleBuilder />
 
-Worth remembering:
+A few things the workbench does not say out loud:
 
-- **You are the dashed column.** Up and down quarks build protons (two ups, one down) and neutrons (two downs, one up). Electrons wrap around them and do all of chemistry. That is the whole recipe for the periodic table, and for you.
-- **Columns 2 and 3 are photocopies.** Same charges, same behavior, just heavier, and they decay almost instantly. When the muon (a heavy electron) was discovered, physicist I. I. Rabi's entire review was: "Who ordered that?" Seventy years later, still no answer.
-- **Neutrinos are the ghosts.** About a hundred trillion of them, mostly from the Sun, will pass through your body while you read this sentence. In your entire life, roughly one will actually hit you.
-- **Fermions are antisocial, and it matters.** No two matter particles can share the same quantum state (the Pauli exclusion principle). That refusal is why atoms have electron shells, why chemistry exists, and why your hand does not pass through the table. Solidity is not atoms touching. It is electrons declining to share.
+- **Nobody ordered the extras.** The muon is just a heavier electron, charm is just a heavier up. When the muon appeared in cosmic rays in 1936, physicist I. I. Rabi's entire reaction was "Who ordered that?" Nature stocks three copies of every matter particle, uses one, and ninety years later nobody knows what the other two are for.
+- **The ghosts are real.** Neutrinos barely acknowledge that matter exists: a hundred trillion have flown through you since you started this sentence, and in your whole life roughly one will bother to stop.
+- **You can stand on the floor because electrons refuse to share.** No two matter particles will occupy the same quantum state, a rule called Pauli exclusion. It forces electrons into stacked shells, the shells make chemistry, and that refusal to overlap is the entire meaning of "solid." Your hand and the table never actually touch.
 
-The four tiles on the right carry the forces:
+The force carriers deserve their own scorecard:
 
 | Force           | Carrier        | Relative strength | Range         | Where you feel it                              |
 | --------------- | -------------- | ----------------- | ------------- | ---------------------------------------------- |
