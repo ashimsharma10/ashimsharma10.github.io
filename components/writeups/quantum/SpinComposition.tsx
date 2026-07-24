@@ -42,7 +42,6 @@ function Caption({ text, color, fadeAt = 0 }: { text: string; color: string; fad
 function MythScene({ isDark }: { isDark: boolean }) {
   const p = palette(isDark)
   const frame = useCurrentFrame()
-  const fade = interpolate(frame, [0, 8], [0, 1], { extrapolateRight: 'clamp' })
   const angle = frame * 6
   const orbitX = 320 + 46 * Math.cos((angle * Math.PI) / 180)
   const orbitY = 158 + 46 * Math.sin((angle * Math.PI) / 180)
@@ -51,7 +50,8 @@ function MythScene({ isDark }: { isDark: boolean }) {
     extrapolateRight: 'clamp',
   })
   return (
-    <AbsoluteFill style={{ opacity: fade }}>
+    // No fade-in: frame 0 doubles as the poster image when the player is paused.
+    <AbsoluteFill>
       <svg width={SPIN_WIDTH} height={SPIN_HEIGHT}>
         <circle cx={320} cy={158} r={64} fill={p.accentSoft} stroke={p.accent} strokeWidth={2.5} />
         <circle cx={298} cy={136} r={18} fill={isDark ? '#334155' : '#ffffff'} opacity={0.55} />
@@ -91,7 +91,7 @@ function MythScene({ isDark }: { isDark: boolean }) {
         <Caption
           text="The picture in your head: a tiny ball, spinning."
           color={p.text}
-          fadeAt={10}
+          fadeAt={-10}
         />
       ) : (
         <Caption

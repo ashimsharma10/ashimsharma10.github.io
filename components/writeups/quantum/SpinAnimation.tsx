@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState, type ComponentType } from 'react'
+import { useEffect, useRef, useState, type ComponentType } from 'react'
+import type { PlayerRef } from '@remotion/player'
 import { DemoFrame, palette, useIsDark } from './shared'
 import { SPIN_DURATION, SPIN_FPS, SPIN_HEIGHT, SPIN_WIDTH } from './spinConstants'
 
@@ -16,6 +17,7 @@ export default function SpinAnimation() {
   const p = palette(isDark)
   const [loaded, setLoaded] = useState<Loaded | null>(null)
   const [reducedMotion, setReducedMotion] = useState(false)
+  const playerRef = useRef<PlayerRef>(null)
 
   useEffect(() => {
     setReducedMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches)
@@ -34,6 +36,27 @@ export default function SpinAnimation() {
     }
   }, [])
 
+  // autoPlay is a one-shot attempt; if the tab was hidden at mount it never
+  // engages. Retry when the page becomes visible, until playback first starts.
+  useEffect(() => {
+    if (!loaded || reducedMotion) return
+    const tryPlay = () => {
+      const player = playerRef.current
+      if (!player) return
+      if (player.isPlaying()) {
+        document.removeEventListener('visibilitychange', tryPlay)
+        return
+      }
+      if (document.visibilityState === 'visible') player.play()
+    }
+    const timer = setTimeout(tryPlay, 300)
+    document.addEventListener('visibilitychange', tryPlay)
+    return () => {
+      clearTimeout(timer)
+      document.removeEventListener('visibilitychange', tryPlay)
+    }
+  }, [loaded, reducedMotion])
+
   return (
     <DemoFrame
       title="Spin: what is actually rotating (nothing)"
@@ -42,6 +65,7 @@ export default function SpinAnimation() {
     >
       {loaded ? (
         <loaded.Player
+          ref={playerRef}
           component={loaded.Composition}
           inputProps={{ isDark }}
           durationInFrames={SPIN_DURATION}
