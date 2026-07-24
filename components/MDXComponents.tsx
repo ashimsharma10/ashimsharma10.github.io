@@ -8,6 +8,9 @@ import TableWrapper from './TableWrapper'
 import MermaidChart from './MermaidChart'
 import LinuxFSHierarchy from './LinuxFSHierarchy'
 import RiemannZeta from './writeups/RiemannZeta'
+import QubitCollapse from './writeups/quantum/QubitCollapse'
+import DoubleSlit from './writeups/quantum/DoubleSlit'
+import EntangledPair from './writeups/quantum/EntangledPair'
 
 export const components: MDXComponents = {
   Image,
@@ -15,6 +18,9 @@ export const components: MDXComponents = {
   MermaidChart,
   LinuxFSHierarchy,
   RiemannZeta,
+  QubitCollapse,
+  DoubleSlit,
+  EntangledPair,
   a: CustomLink,
   pre: Pre,
   table: TableWrapper,

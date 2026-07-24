@@ -4,6 +4,8 @@
 
 ## Write-ups
 
+- [Quantum and Particle Physics: The Universe in 17 Particles](https://ashimsharma10.github.io/write-up/quantum-and-particle-physics/index.md): Superposition, entanglement, and the Standard Model explained with plain-English analogies and three interactive demos, plus what physics still cannot explain, a century after quantum mechanics was born.
+- [From Prompting to Loops: Why Agents Stopped Waiting for You](https://ashimsharma10.github.io/write-up/from-prompting-to-loops/index.md): Why AI work moved from single prompts to loops, the main types of loops, and examples of goal-driven loops in practice.
 - [Extending Claude Code: Skills, Subagents, and Hooks](https://ashimsharma10.github.io/write-up/claude-code-skills-subagents-and-hooks/index.md): Build your own Claude Code extensions from scratch: skills with SKILL.md, custom subagents, and lifecycle hooks. Copy-paste examples, a combined worked workflow, and a tour of the most popular skill repos on GitHub.
 - [The Riemann Hypothesis](https://ashimsharma10.github.io/write-up/riemann-zeta-and-the-riemann-hypothesis/index.md): Why the zeros of the zeta function govern the primes, built from scratch with live graphs you can zoom, drag, and animate.
 - [MLOps Tooling](https://ashimsharma10.github.io/write-up/mlops-tooling-from-experiment-tracking-to-production/index.md): A conceptual guide to MLOps tooling — MLflow, artifact versioning, reproducible pipelines, framework integrations, alternatives, and deploying and improving models in production.
