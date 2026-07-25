@@ -71,6 +71,18 @@ CREATE TABLE IF NOT EXISTS trace_sources (
 );
 CREATE INDEX IF NOT EXISTS trace_sources_url ON trace_sources (url);
 
+-- One row per page view, written by the site's beacon via POST /track. Powers
+-- the "Site visits" chart on /ops. `visitor` is a daily-rotating, non-reversible
+-- hash (date + IP + user-agent + salt) — no cookies and no raw PII are stored,
+-- so distinct `visitor` values per day approximate unique visitors.
+CREATE TABLE IF NOT EXISTS pageviews (
+  id       TEXT PRIMARY KEY,
+  ts       INTEGER,
+  path     TEXT,
+  visitor  TEXT
+);
+CREATE INDEX IF NOT EXISTS pageviews_ts ON pageviews (ts DESC);
+
 -- One row per `npm run eval` run (retrieval-recall regression gate). The /ops
 -- RAG tab shows the latest row so the eval result is visible on the dashboard.
 CREATE TABLE IF NOT EXISTS eval_runs (

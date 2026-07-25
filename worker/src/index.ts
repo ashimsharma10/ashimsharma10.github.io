@@ -165,10 +165,12 @@ export default {
     if (request.method === 'OPTIONS') {
       return new Response(null, { status: 204, headers: corsHeaders(env) })
     }
+    if (url.pathname === '/track' && request.method === 'POST') return handleTrack(request, env)
     if (url.pathname === '/chat' && request.method === 'POST') return handleChat(request, env, ctx)
     if (url.pathname === '/ingest' && request.method === 'POST') return handleIngest(request, env)
     if (url.pathname === '/purge' && request.method === 'POST') return handlePurge(request, env)
-    if (url.pathname === '/retrieve' && request.method === 'POST') return handleRetrieve(request, env)
+    if (url.pathname === '/retrieve' && request.method === 'POST')
+      return handleRetrieve(request, env)
     if (url.pathname === '/eval/report' && request.method === 'POST')
       return handleEvalReport(request, env)
     if (url.pathname === '/ops/stats' && request.method === 'GET')
@@ -262,7 +264,13 @@ async function handleRetrieve(request: Request, env: Env): Promise<Response> {
   const [vec, kw] = await Promise.all([vectorSearch(env, query), keywordSearch(env, query)])
   const fused = fuse(vec, kw)
   const reranked = await rerank(env, query, fused, zero())
-  const slim = (c: Chunk) => ({ id: c.id, title: c.title, url: c.url, type: c.type, score: c.score })
+  const slim = (c: Chunk) => ({
+    id: c.id,
+    title: c.title,
+    url: c.url,
+    type: c.type,
+    score: c.score,
+  })
   return json(
     {
       query,
@@ -395,9 +403,7 @@ function fuse(vector: Chunk[], keyword: Chunk[]): Chunk[] {
     })
   add(vector)
   add(keyword)
-  const ranked = [...scores.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .map(([id]) => byId.get(id)!)
+  const ranked = [...scores.entries()].sort((a, b) => b[1] - a[1]).map(([id]) => byId.get(id)!)
   return guaranteeTypes(ranked, CANDIDATE_K)
 }
 
@@ -473,7 +479,11 @@ async function handleChat(request: Request, env: Env, ctx: ExecutionContext): Pr
       return json({ error: 'message role must be "user" or "assistant"' }, 400, env)
     }
     if (typeof m.content !== 'string' || m.content.length > MAX_MESSAGE_CHARS) {
-      return json({ error: `message content must be a string of at most ${MAX_MESSAGE_CHARS} characters` }, 400, env)
+      return json(
+        { error: `message content must be a string of at most ${MAX_MESSAGE_CHARS} characters` },
+        400,
+        env
+      )
     }
   }
   let messages = raw.filter((m) => m.content.trim()).slice(-8)
@@ -569,7 +579,10 @@ async function handleChat(request: Request, env: Env, ctx: ExecutionContext): Pr
   const context =
     `${CONTEXT_PREAMBLE}\n\n` +
     chunks
-      .map((c, i) => `<result index="${i + 1}" title="${c.title}" url="${c.url}">\n${c.text}\n</result>`)
+      .map(
+        (c, i) =>
+          `<result index="${i + 1}" title="${c.title}" url="${c.url}">\n${c.text}\n</result>`
+      )
       .join('\n\n')
   // Cap to the 2 most-relevant sources: the reranker put the best chunks first,
   // so a short, focused citation list beats a wall of pills (some of them stale
@@ -899,8 +912,100 @@ async function sendToLangfuse(env: Env, traceId: string, ts: number, t: TraceInp
     } catch {
       /* non-JSON body — leave errCount at 0 */
     }
-    console.log(`[langfuse] host=${host} status=${res.status} events=${batch.length} errors=${errCount}`)
+    console.log(
+      `[langfuse] host=${host} status=${res.status} events=${batch.length} errors=${errCount}`
+    )
     if (errCount) console.error(`[langfuse] per-event errors: ${text.slice(0, 500)}`)
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Site visits: first-party page-view counting (no third-party analytics).
+// The site fires POST /track on each navigation; we store one privacy-preserving
+// row per view and aggregate it for the /ops "Site visits" chart.
+// ---------------------------------------------------------------------------
+interface Visits {
+  daily: { day: string; pageviews: number; visitors: number }[]
+  summary: { pageviews: number; visitors: number }
+}
+// One UTC day in milliseconds.
+const DAY_MS = 86_400_000
+
+/**
+ * Daily-rotating, non-reversible visitor hash. Combining the UTC date with the
+ * IP + user-agent (and a fixed salt) yields a value that approximates a unique
+ * visitor within a day without cookies or storing any raw PII; because the date
+ * is part of the input, the hash changes every day so visitors can't be tracked
+ * across days. Mirrors the approach used by Plausible/Umami.
+ */
+async function visitorHash(request: Request): Promise<string> {
+  const ip = request.headers.get('CF-Connecting-IP') || 'unknown'
+  const ua = request.headers.get('User-Agent') || 'unknown'
+  const day = new Date().toISOString().slice(0, 10)
+  const data = new TextEncoder().encode(`${day}|${ip}|${ua}|ashim-site-visits`)
+  const digest = await crypto.subtle.digest('SHA-256', data)
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('')
+}
+
+async function handleTrack(request: Request, env: Env): Promise<Response> {
+  // Fire-and-forget: record the view, but never let a tracking failure surface
+  // to the visitor. Always answer 204 so the beacon stays cheap and silent.
+  try {
+    const raw = await request.text()
+    let path = '/'
+    try {
+      path = (JSON.parse(raw) as { path?: string }).path || '/'
+    } catch {
+      path = raw || '/'
+    }
+    path = path.slice(0, 512)
+    const visitor = await visitorHash(request)
+    await env.DB.prepare('INSERT INTO pageviews (id, ts, path, visitor) VALUES (?, ?, ?, ?)')
+      .bind(crypto.randomUUID(), Date.now(), path, visitor)
+      .run()
+  } catch {
+    /* swallow — analytics must never break a page load */
+  }
+  return new Response(null, { status: 204, headers: corsHeaders(env) })
+}
+
+async function fetchVisits(env: Env): Promise<Visits | null> {
+  // Last 14 whole UTC days through today, matching the chatbot charts' bucketing.
+  const now = Date.now()
+  const startMs = Math.floor(now / DAY_MS) * DAY_MS - 13 * DAY_MS
+  try {
+    const rows = await env.DB.prepare(
+      `SELECT date(ts/1000,'unixepoch') AS day, COUNT(*) AS pageviews,
+              COUNT(DISTINCT visitor) AS visitors
+       FROM pageviews WHERE ts >= ? GROUP BY day`
+    )
+      .bind(startMs)
+      .all()
+    const byDay = new Map<string, { pageviews: number; visitors: number }>()
+    for (const r of (rows.results ?? []) as {
+      day: string
+      pageviews: number
+      visitors: number
+    }[]) {
+      byDay.set(r.day, { pageviews: r.pageviews, visitors: r.visitors })
+    }
+    const daily = Array.from({ length: 14 }, (_, i) => {
+      const day = new Date(startMs + i * DAY_MS).toISOString().slice(0, 10)
+      return {
+        day,
+        pageviews: byDay.get(day)?.pageviews ?? 0,
+        visitors: byDay.get(day)?.visitors ?? 0,
+      }
+    })
+    return {
+      daily,
+      summary: {
+        pageviews: daily.reduce((s, d) => s + d.pageviews, 0),
+        visitors: daily.reduce((s, d) => s + d.visitors, 0),
+      },
+    }
+  } catch {
+    return null
   }
 }
 
@@ -911,48 +1016,59 @@ async function handleOpsStats(request: Request, env: Env): Promise<Response> {
   try {
     // All seven aggregations are independent reads over the same tables, so run
     // them in one round-trip instead of seven sequential awaits.
-    const [totals, byComponent, byModel, daily, ragAverages, topSources, recent, latestEval] =
-      await Promise.all([
-        env.DB.prepare(
-          `SELECT COUNT(*) AS messages, COALESCE(SUM(input_tokens),0) AS input_tokens,
+    const [
+      totals,
+      byComponent,
+      byModel,
+      daily,
+      ragAverages,
+      topSources,
+      recent,
+      latestEval,
+      visits,
+    ] = await Promise.all([
+      env.DB.prepare(
+        `SELECT COUNT(*) AS messages, COALESCE(SUM(input_tokens),0) AS input_tokens,
                   COALESCE(SUM(output_tokens),0) AS output_tokens, COALESCE(SUM(cost_usd),0) AS cost_usd,
                   COALESCE(AVG(total_ms),0) AS avg_latency_ms, COALESCE(AVG(used_search),0) AS search_rate
            FROM traces`
-        ).first(),
-        // Costs tab
-        env.DB.prepare(
-          `SELECT COALESCE(SUM(decision_cost),0) AS decision, COALESCE(SUM(rerank_cost),0) AS rerank,
+      ).first(),
+      // Costs tab
+      env.DB.prepare(
+        `SELECT COALESCE(SUM(decision_cost),0) AS decision, COALESCE(SUM(rerank_cost),0) AS rerank,
                   COALESCE(SUM(gen_cost),0) AS generation FROM traces`
-        ).first(),
-        env.DB.prepare(
-          `SELECT model, COALESCE(SUM(cost_usd),0) AS cost, COUNT(*) AS messages
+      ).first(),
+      env.DB.prepare(
+        `SELECT model, COALESCE(SUM(cost_usd),0) AS cost, COUNT(*) AS messages
            FROM traces GROUP BY model ORDER BY cost DESC`
-        ).all(),
-        env.DB.prepare(
-          `SELECT date(ts/1000,'unixepoch') AS day, COALESCE(SUM(cost_usd),0) AS cost, COUNT(*) AS messages,
+      ).all(),
+      env.DB.prepare(
+        `SELECT date(ts/1000,'unixepoch') AS day, COALESCE(SUM(cost_usd),0) AS cost, COUNT(*) AS messages,
                   COALESCE(AVG(total_ms),0) AS avg_ms, COALESCE(SUM(used_search),0) AS searches
            FROM traces GROUP BY day ORDER BY day DESC LIMIT 14`
-        ).all(),
-        // RAG tab
-        env.DB.prepare(
-          `SELECT COALESCE(AVG(vector_hits),0) AS vector_hits, COALESCE(AVG(keyword_hits),0) AS keyword_hits,
+      ).all(),
+      // RAG tab
+      env.DB.prepare(
+        `SELECT COALESCE(AVG(vector_hits),0) AS vector_hits, COALESCE(AVG(keyword_hits),0) AS keyword_hits,
                   COALESCE(AVG(fused_candidates),0) AS fused, COALESCE(AVG(used),0) AS used,
                   COALESCE(AVG(overlap),0) AS overlap, COALESCE(AVG(avg_score),0) AS avg_score
            FROM traces WHERE used_search = 1`
-        ).first(),
-        env.DB.prepare(
-          `SELECT title, url, COUNT(*) AS uses FROM trace_sources GROUP BY url ORDER BY uses DESC LIMIT 10`
-        ).all(),
-        env.DB.prepare(
-          `SELECT id, ts, question, answer, used_search, total_ms, input_tokens, output_tokens, cost_usd, model
+      ).first(),
+      env.DB.prepare(
+        `SELECT title, url, COUNT(*) AS uses FROM trace_sources GROUP BY url ORDER BY uses DESC LIMIT 10`
+      ).all(),
+      env.DB.prepare(
+        `SELECT id, ts, question, answer, used_search, total_ms, input_tokens, output_tokens, cost_usd, model
            FROM traces ORDER BY ts DESC LIMIT 50`
-        ).all(),
-        // RAG tab — latest eval run (retrieval-recall regression gate)
-        env.DB.prepare(
-          `SELECT ts, total, cand_ok, ctx_ok, ground_ok, ground_total, threshold, passed
+      ).all(),
+      // RAG tab — latest eval run (retrieval-recall regression gate)
+      env.DB.prepare(
+        `SELECT ts, total, cand_ok, ctx_ok, ground_ok, ground_total, threshold, passed
            FROM eval_runs ORDER BY ts DESC LIMIT 1`
-        ).first(),
-      ])
+      ).first(),
+      // First-party site traffic (null only if the pageviews table is missing).
+      fetchVisits(env),
+    ])
 
     return json(
       {
@@ -964,6 +1080,7 @@ async function handleOpsStats(request: Request, env: Env): Promise<Response> {
         },
         rag: { averages: ragAverages, topSources: topSources.results ?? [], latestEval },
         recent: recent.results ?? [],
+        visits,
       },
       200,
       env

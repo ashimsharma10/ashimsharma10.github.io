@@ -271,27 +271,26 @@ export default function ChatWidget() {
 
           {/* Messages */}
           <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
-            {messages.length === 0 && (
-              <>
-                <div className="inline-block max-w-[90%] rounded-2xl bg-gray-100 px-3 py-2 text-sm text-gray-800 dark:bg-gray-800 dark:text-gray-100">
-                  Hi! I'm{' '}
-                  <span className="font-semibold text-[#047857] dark:text-[#34D399]">Ashim</span>.
-                  Ask me anything: experience, projects, what drives me.
-                </div>
-                <div className="grid grid-cols-2 gap-2 pt-1">
-                  {CHIPS.map(({ label, Icon, prompt }) => (
-                    <button
-                      key={label}
-                      onClick={() => send(prompt)}
-                      className="flex items-center gap-2 rounded-xl border border-[#047857]/40 px-3 py-2 text-left text-xs font-medium text-[#047857] transition-colors hover:bg-[#047857]/10 dark:border-[#34D399]/40 dark:text-[#34D399] dark:hover:bg-[#34D399]/10"
-                    >
-                      <Icon className="h-4 w-4 shrink-0" />
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
+            {/* Greeting + suggestion chips stay pinned at the top of the thread so
+                scrolling back up always resurfaces the default options, even after
+                a conversation has started. */}
+            <div className="inline-block max-w-[90%] rounded-2xl bg-gray-100 px-3 py-2 text-sm text-gray-800 dark:bg-gray-800 dark:text-gray-100">
+              Hi! I'm{' '}
+              <span className="font-semibold text-[#047857] dark:text-[#34D399]">Ashim</span>. Ask
+              me anything: experience, projects, what drives me.
+            </div>
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              {CHIPS.map(({ label, Icon, prompt }) => (
+                <button
+                  key={label}
+                  onClick={() => send(prompt)}
+                  className="flex items-center gap-2 rounded-xl border border-[#047857]/40 px-3 py-2 text-left text-xs font-medium text-[#047857] transition-colors hover:bg-[#047857]/10 dark:border-[#34D399]/40 dark:text-[#34D399] dark:hover:bg-[#34D399]/10"
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                  {label}
+                </button>
+              ))}
+            </div>
 
             {messages.map((m, i) => (
               <div key={i} className={m.role === 'user' ? 'text-right' : 'text-left'}>

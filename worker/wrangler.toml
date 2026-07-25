@@ -51,3 +51,7 @@ LANGFUSE_BASE_URL = "https://us.cloud.langfuse.com"
 # Optional Langfuse tracing (set both to enable; leave unset to disable):
 #   npx wrangler secret put LANGFUSE_PUBLIC_KEY
 #   npx wrangler secret put LANGFUSE_SECRET_KEY
+#
+# Site-visit counting (the /ops "Site visits" chart) needs no secrets, but the
+# `pageviews` table must exist. After pulling these changes, re-apply the schema:
+#   npx wrangler d1 execute ashim-chatbot --file=./schema.sql --remote
