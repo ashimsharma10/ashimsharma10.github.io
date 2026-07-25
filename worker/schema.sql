@@ -30,10 +30,16 @@ END;
 -- NOTE: if upgrading an existing database that predates a column, run e.g.:
 --   ALTER TABLE traces ADD COLUMN answer TEXT;
 --   ALTER TABLE traces ADD COLUMN country TEXT;   -- for the invocations map
+--   ALTER TABLE traces ADD COLUMN city TEXT;      -- city-level map dots
+--   ALTER TABLE traces ADD COLUMN lat REAL;
+--   ALTER TABLE traces ADD COLUMN lon REAL;
 CREATE TABLE IF NOT EXISTS traces (
   id              TEXT PRIMARY KEY,
   ts              INTEGER,
   country         TEXT,   -- ISO alpha-2 from Cloudflare (request.cf.country)
+  city            TEXT,   -- approximate, city-level from the edge (IP-derived)
+  lat             REAL,
+  lon             REAL,
   question        TEXT,
   answer          TEXT,
   used_search     INTEGER,
@@ -77,14 +83,20 @@ CREATE INDEX IF NOT EXISTS trace_sources_url ON trace_sources (url);
 -- the "Site visits" chart on /ops. `visitor` is a daily-rotating, non-reversible
 -- hash (date + IP + user-agent + salt) — no cookies and no raw PII are stored,
 -- so distinct `visitor` values per day approximate unique visitors.
--- NOTE: if upgrading a pageviews table that predates `country`, run:
+-- NOTE: if upgrading a pageviews table that predates these columns, run:
 --   ALTER TABLE pageviews ADD COLUMN country TEXT;
+--   ALTER TABLE pageviews ADD COLUMN city TEXT;
+--   ALTER TABLE pageviews ADD COLUMN lat REAL;
+--   ALTER TABLE pageviews ADD COLUMN lon REAL;
 CREATE TABLE IF NOT EXISTS pageviews (
   id       TEXT PRIMARY KEY,
   ts       INTEGER,
   path     TEXT,
   visitor  TEXT,
-  country  TEXT   -- ISO alpha-2 from Cloudflare (request.cf.country)
+  country  TEXT,  -- ISO alpha-2 from Cloudflare (request.cf.country)
+  city     TEXT,  -- approximate, city-level from the edge (IP-derived)
+  lat      REAL,
+  lon      REAL
 );
 CREATE INDEX IF NOT EXISTS pageviews_ts ON pageviews (ts DESC);
 
