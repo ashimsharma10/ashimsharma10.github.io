@@ -27,11 +27,13 @@ CREATE TRIGGER IF NOT EXISTS chunks_au AFTER UPDATE ON chunks BEGIN
 END;
 
 -- One row per /chat request for the /ops dashboard.
--- NOTE: if upgrading an existing database that predates the `answer` column,
--- run:  ALTER TABLE traces ADD COLUMN answer TEXT;
+-- NOTE: if upgrading an existing database that predates a column, run e.g.:
+--   ALTER TABLE traces ADD COLUMN answer TEXT;
+--   ALTER TABLE traces ADD COLUMN country TEXT;   -- for the invocations map
 CREATE TABLE IF NOT EXISTS traces (
   id              TEXT PRIMARY KEY,
   ts              INTEGER,
+  country         TEXT,   -- ISO alpha-2 from Cloudflare (request.cf.country)
   question        TEXT,
   answer          TEXT,
   used_search     INTEGER,
@@ -75,11 +77,14 @@ CREATE INDEX IF NOT EXISTS trace_sources_url ON trace_sources (url);
 -- the "Site visits" chart on /ops. `visitor` is a daily-rotating, non-reversible
 -- hash (date + IP + user-agent + salt) — no cookies and no raw PII are stored,
 -- so distinct `visitor` values per day approximate unique visitors.
+-- NOTE: if upgrading a pageviews table that predates `country`, run:
+--   ALTER TABLE pageviews ADD COLUMN country TEXT;
 CREATE TABLE IF NOT EXISTS pageviews (
   id       TEXT PRIMARY KEY,
   ts       INTEGER,
   path     TEXT,
-  visitor  TEXT
+  visitor  TEXT,
+  country  TEXT   -- ISO alpha-2 from Cloudflare (request.cf.country)
 );
 CREATE INDEX IF NOT EXISTS pageviews_ts ON pageviews (ts DESC);
 
