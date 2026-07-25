@@ -457,7 +457,7 @@ async function rerank(
 // ---------------------------------------------------------------------------
 async function handleChat(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
   const ip = request.headers.get('CF-Connecting-IP') ?? 'anon'
-  const country = countryOf(request)
+  const geo = geoOf(request)
   if (rateLimited(ip)) return json({ error: 'Rate limit exceeded. Please slow down.' }, 429, env)
 
   let body: { messages?: ChatMessage[] }
@@ -539,7 +539,7 @@ async function handleChat(request: Request, env: Env, ctx: ExecutionContext): Pr
         .join('') || 'Happy to help! Ask me about Ashim, his projects, or his writing.'
     ctx.waitUntil(
       logTrace(env, {
-        country,
+        geo,
         question: lastUser.content,
         answer,
         usedSearch: false,
@@ -621,7 +621,7 @@ async function handleChat(request: Request, env: Env, ctx: ExecutionContext): Pr
     genUsage.input += streamUsage.input
     genUsage.output += streamUsage.output
     await logTrace(env, {
-      country,
+      geo,
       question: lastUser.content,
       answer,
       usedSearch: true,
@@ -772,7 +772,7 @@ interface RagMetrics {
   avgScore: number
 }
 interface TraceInput {
-  country: string
+  geo: { country: string; city: string | null; lat: number | null; lon: number | null }
   question: string
   answer: string
   usedSearch: boolean
@@ -799,16 +799,20 @@ async function logTrace(env: Env, t: TraceInput): Promise<void> {
 
   const insertTrace = env.DB.prepare(
     `INSERT INTO traces (
-       id, ts, country, question, answer, used_search, candidates, used, retrieve_ms, total_ms,
+       id, ts, country, city, lat, lon, question, answer, used_search, candidates, used,
+       retrieve_ms, total_ms,
        input_tokens, output_tokens, cost_usd, model,
        decision_in, decision_out, rerank_in, rerank_out, gen_in, gen_out,
        decision_cost, rerank_cost, gen_cost, embed_calls,
        vector_hits, keyword_hits, fused_candidates, overlap, avg_score
-     ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+     ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
   ).bind(
     id,
     ts,
-    t.country,
+    t.geo.country,
+    t.geo.city,
+    t.geo.lat,
+    t.geo.lon,
     t.question.slice(0, 500),
     t.answer.slice(0, 4000),
     t.usedSearch ? 1 : 0,
@@ -935,10 +939,19 @@ interface Visits {
   daily: { day: string; pageviews: number; visitors: number }[]
 }
 type CountryCount = { country: string; count: number }
-// Per-dataset country breakdowns for the "where from" map, at both ranges.
+// A city-level point for the map dots. lat/lon come from Cloudflare's edge
+// (approximate, city-level from IP — never exact/GPS). Counts are aggregated per
+// city so no per-visitor rows leave the Worker.
+type GeoPoint = { city: string; country: string; lat: number; lon: number; count: number }
+type Ranged<T> = { d14: T[]; d30: T[] }
+interface GeoDataset {
+  countries: Ranged<CountryCount>
+  points: Ranged<GeoPoint>
+}
+// Per-dataset "where from" data (country choropleth + city dots), at both ranges.
 interface Geo {
-  visits: { d14: CountryCount[]; d30: CountryCount[] }
-  invocations: { d14: CountryCount[]; d30: CountryCount[] }
+  visits: GeoDataset
+  invocations: GeoDataset
 }
 // One UTC day in milliseconds.
 const DAY_MS = 86_400_000
@@ -970,6 +983,30 @@ function countryOf(request: Request): string {
   return /^[A-Z]{2}$/.test(c) ? c : 'XX'
 }
 
+/**
+ * Approximate, city-level geolocation from Cloudflare's edge (derived from the
+ * IP — never exact/GPS). city/lat/lon are null when the edge can't resolve them
+ * (e.g. local dev), which keeps them out of the map dots.
+ */
+function geoOf(request: Request): {
+  country: string
+  city: string | null
+  lat: number | null
+  lon: number | null
+} {
+  const cf = request.cf as Record<string, unknown> | undefined
+  const num = (v: unknown) => {
+    const n = parseFloat(String(v))
+    return Number.isFinite(n) ? n : null
+  }
+  return {
+    country: countryOf(request),
+    city: (cf?.city as string) || null,
+    lat: num(cf?.latitude),
+    lon: num(cf?.longitude),
+  }
+}
+
 async function handleTrack(request: Request, env: Env): Promise<Response> {
   // Fire-and-forget: record the view, but never let a tracking failure surface
   // to the visitor. Always answer 204 so the beacon stays cheap and silent.
@@ -983,11 +1020,11 @@ async function handleTrack(request: Request, env: Env): Promise<Response> {
     }
     path = path.slice(0, 512)
     const visitor = await visitorHash(request)
-    const country = countryOf(request)
+    const g = geoOf(request)
     await env.DB.prepare(
-      'INSERT INTO pageviews (id, ts, path, visitor, country) VALUES (?, ?, ?, ?, ?)'
+      'INSERT INTO pageviews (id, ts, path, visitor, country, city, lat, lon) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
     )
-      .bind(crypto.randomUUID(), Date.now(), path, visitor, country)
+      .bind(crypto.randomUUID(), Date.now(), path, visitor, g.country, g.city, g.lat, g.lon)
       .run()
   } catch {
     /* swallow — analytics must never break a page load */
@@ -1027,40 +1064,64 @@ async function fetchVisits(env: Env): Promise<Visits | null> {
   }
 }
 
+const EMPTY_GEO_DATASET: GeoDataset = {
+  countries: { d14: [], d30: [] },
+  points: { d14: [], d30: [] },
+}
+
 /**
- * Country breakdown for a table over both dashboard ranges. Unknown/edge cases
- * are bucketed as 'XX'. Returns null if the table/column isn't there yet (older
- * DB not migrated), so the map degrades gracefully.
+ * "Where from" data for one table (country choropleth + city dots) over both
+ * ranges. Unknown countries bucket as 'XX'; dots need a resolved city + lat/lon,
+ * aggregated per city so no per-visitor rows leave the Worker. Returns the empty
+ * dataset if the table/columns aren't there yet (older DB), so the map degrades
+ * gracefully.
  */
-async function countryCounts(
-  env: Env,
-  table: 'pageviews' | 'traces'
-): Promise<{ d14: CountryCount[]; d30: CountryCount[] } | null> {
-  const q = (days: number) =>
+async function datasetGeo(env: Env, table: 'pageviews' | 'traces'): Promise<GeoDataset> {
+  const countryQ = (days: number) =>
     env.DB.prepare(
       `SELECT COALESCE(country,'XX') AS country, COUNT(*) AS count
        FROM ${table} WHERE ts >= ? GROUP BY country ORDER BY count DESC`
     )
       .bind(windowStartMs(days))
       .all()
+  const pointQ = (days: number) =>
+    env.DB.prepare(
+      `SELECT city, COALESCE(country,'XX') AS country, AVG(lat) AS lat, AVG(lon) AS lon,
+              COUNT(*) AS count
+       FROM ${table}
+       WHERE ts >= ? AND lat IS NOT NULL AND lon IS NOT NULL AND city IS NOT NULL
+       GROUP BY city, country ORDER BY count DESC LIMIT 300`
+    )
+      .bind(windowStartMs(days))
+      .all()
   try {
-    const [r14, r30] = await Promise.all([q(14), q(30)])
+    const [c14, c30, p14, p30] = await Promise.all([
+      countryQ(14),
+      countryQ(30),
+      pointQ(14),
+      pointQ(30),
+    ])
     return {
-      d14: (r14.results ?? []) as CountryCount[],
-      d30: (r30.results ?? []) as CountryCount[],
+      countries: {
+        d14: (c14.results ?? []) as CountryCount[],
+        d30: (c30.results ?? []) as CountryCount[],
+      },
+      points: {
+        d14: (p14.results ?? []) as GeoPoint[],
+        d30: (p30.results ?? []) as GeoPoint[],
+      },
     }
   } catch {
-    return null
+    return EMPTY_GEO_DATASET
   }
 }
 
 async function fetchGeo(env: Env): Promise<Geo> {
-  const empty = { d14: [], d30: [] }
   const [visits, invocations] = await Promise.all([
-    countryCounts(env, 'pageviews'),
-    countryCounts(env, 'traces'),
+    datasetGeo(env, 'pageviews'),
+    datasetGeo(env, 'traces'),
   ])
-  return { visits: visits ?? empty, invocations: invocations ?? empty }
+  return { visits, invocations }
 }
 
 async function handleOpsStats(request: Request, env: Env): Promise<Response> {

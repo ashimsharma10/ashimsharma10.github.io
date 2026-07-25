@@ -1,7 +1,10 @@
 'use client'
 
 import { Fragment, useEffect, useState } from 'react'
-import WorldMap, { type CountryCount } from './WorldMap'
+import WorldMap, { type CountryCount, type GeoPoint } from './WorldMap'
+
+type Ranged<T> = { d14: T[]; d30: T[] }
+type GeoDataset = { countries: Ranged<CountryCount>; points: Ranged<GeoPoint> }
 
 const API_URL = process.env.NEXT_PUBLIC_CHAT_API_URL
 // Deep links to the external observability tools the Worker reports into.
@@ -67,10 +70,10 @@ interface Stats {
   visits: {
     daily: { day: string; pageviews: number; visitors: number }[]
   } | null
-  // Country breakdowns for the "where from" maps, at both 14- and 30-day ranges.
+  // "Where from" data (country choropleth + city dots) for both maps, per range.
   geo: {
-    visits: { d14: CountryCount[]; d30: CountryCount[] }
-    invocations: { d14: CountryCount[]; d30: CountryCount[] }
+    visits: GeoDataset
+    invocations: GeoDataset
   }
 }
 
@@ -454,10 +457,13 @@ function ObservabilityTab({
   const pageviews = vd.reduce((s, d) => s + d.pageviews, 0)
   const visitors = vd.reduce((s, d) => s + d.visitors, 0)
   const invocations = cd.reduce((s, d) => s + d.messages, 0)
-  const emptyGeo = { d14: [] as CountryCount[], d30: [] as CountryCount[] }
-  const pick = (g: { d14: CountryCount[]; d30: CountryCount[] }) => (range === 14 ? g.d14 : g.d30)
-  const geoVisits = pick(geo?.visits ?? emptyGeo)
-  const geoInvocations = pick(geo?.invocations ?? emptyGeo)
+  const emptyDataset: GeoDataset = {
+    countries: { d14: [], d30: [] },
+    points: { d14: [], d30: [] },
+  }
+  const pickRange = <T,>(r: Ranged<T>) => (range === 14 ? r.d14 : r.d30)
+  const visitsGeo = geo?.visits ?? emptyDataset
+  const invocationsGeo = geo?.invocations ?? emptyDataset
 
   return (
     <div className="mt-6 space-y-8">
@@ -502,7 +508,11 @@ function ObservabilityTab({
             <h3 className="mt-6 mb-2 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
               Where visits come from
             </h3>
-            <WorldMap data={geoVisits} label="visits" />
+            <WorldMap
+              countries={pickRange(visitsGeo.countries)}
+              points={pickRange(visitsGeo.points)}
+              label="visits"
+            />
           </>
         ) : (
           <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -546,7 +556,11 @@ function ObservabilityTab({
         <h3 className="mt-6 mb-2 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
           Where invocations come from
         </h3>
-        <WorldMap data={geoInvocations} label="invocations" />
+        <WorldMap
+          countries={pickRange(invocationsGeo.countries)}
+          points={pickRange(invocationsGeo.points)}
+          label="invocations"
+        />
       </section>
 
       <section>
