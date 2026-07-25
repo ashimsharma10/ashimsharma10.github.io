@@ -506,7 +506,9 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
         const factor = FOCAL / (FOCAL + drag.pz)
         const sc = S * zoom * factor || 1
         const gx = ddx / sc
-        const gy = -ddy / sc
+        // camUp projects to +screen-y (downward), so a downward drag (ddy > 0)
+        // must map to +gy for the node to follow the cursor instead of mirroring it.
+        const gy = ddy / sc
         const rt = camRight()
         const up = camUp()
         const dgx = rt[0] * gx + up[0] * gy
