@@ -457,6 +457,7 @@ async function rerank(
 // ---------------------------------------------------------------------------
 async function handleChat(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
   const ip = request.headers.get('CF-Connecting-IP') ?? 'anon'
+  const country = countryOf(request)
   if (rateLimited(ip)) return json({ error: 'Rate limit exceeded. Please slow down.' }, 429, env)
 
   let body: { messages?: ChatMessage[] }
@@ -538,6 +539,7 @@ async function handleChat(request: Request, env: Env, ctx: ExecutionContext): Pr
         .join('') || 'Happy to help! Ask me about Ashim, his projects, or his writing.'
     ctx.waitUntil(
       logTrace(env, {
+        country,
         question: lastUser.content,
         answer,
         usedSearch: false,
@@ -619,6 +621,7 @@ async function handleChat(request: Request, env: Env, ctx: ExecutionContext): Pr
     genUsage.input += streamUsage.input
     genUsage.output += streamUsage.output
     await logTrace(env, {
+      country,
       question: lastUser.content,
       answer,
       usedSearch: true,
@@ -769,6 +772,7 @@ interface RagMetrics {
   avgScore: number
 }
 interface TraceInput {
+  country: string
   question: string
   answer: string
   usedSearch: boolean
@@ -795,15 +799,16 @@ async function logTrace(env: Env, t: TraceInput): Promise<void> {
 
   const insertTrace = env.DB.prepare(
     `INSERT INTO traces (
-       id, ts, question, answer, used_search, candidates, used, retrieve_ms, total_ms,
+       id, ts, country, question, answer, used_search, candidates, used, retrieve_ms, total_ms,
        input_tokens, output_tokens, cost_usd, model,
        decision_in, decision_out, rerank_in, rerank_out, gen_in, gen_out,
        decision_cost, rerank_cost, gen_cost, embed_calls,
        vector_hits, keyword_hits, fused_candidates, overlap, avg_score
-     ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+     ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
   ).bind(
     id,
     ts,
+    t.country,
     t.question.slice(0, 500),
     t.answer.slice(0, 4000),
     t.usedSearch ? 1 : 0,
@@ -925,11 +930,23 @@ async function sendToLangfuse(env: Env, traceId: string, ts: number, t: TraceInp
 // row per view and aggregate it for the /ops "Site visits" chart.
 // ---------------------------------------------------------------------------
 interface Visits {
+  // 30 daily buckets (oldest → newest); the UI slices to the selected 14/30 range
+  // and derives per-range totals client-side.
   daily: { day: string; pageviews: number; visitors: number }[]
-  summary: { pageviews: number; visitors: number }
+}
+type CountryCount = { country: string; count: number }
+// Per-dataset country breakdowns for the "where from" map, at both ranges.
+interface Geo {
+  visits: { d14: CountryCount[]; d30: CountryCount[] }
+  invocations: { d14: CountryCount[]; d30: CountryCount[] }
 }
 // One UTC day in milliseconds.
 const DAY_MS = 86_400_000
+// The dashboard offers a 14- or 30-day window; 30 is the widest we aggregate.
+const MAX_RANGE_DAYS = 30
+// Start-of-day (UTC) N-1 days ago, i.e. the inclusive start of an N-day window.
+const windowStartMs = (days: number) =>
+  Math.floor(Date.now() / DAY_MS) * DAY_MS - (days - 1) * DAY_MS
 
 /**
  * Daily-rotating, non-reversible visitor hash. Combining the UTC date with the
@@ -947,6 +964,12 @@ async function visitorHash(request: Request): Promise<string> {
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('')
 }
 
+/** ISO alpha-2 country from Cloudflare's edge; 'XX' when unknown (e.g. local dev). */
+function countryOf(request: Request): string {
+  const c = (request.cf?.country as string | undefined) || ''
+  return /^[A-Z]{2}$/.test(c) ? c : 'XX'
+}
+
 async function handleTrack(request: Request, env: Env): Promise<Response> {
   // Fire-and-forget: record the view, but never let a tracking failure surface
   // to the visitor. Always answer 204 so the beacon stays cheap and silent.
@@ -960,8 +983,11 @@ async function handleTrack(request: Request, env: Env): Promise<Response> {
     }
     path = path.slice(0, 512)
     const visitor = await visitorHash(request)
-    await env.DB.prepare('INSERT INTO pageviews (id, ts, path, visitor) VALUES (?, ?, ?, ?)')
-      .bind(crypto.randomUUID(), Date.now(), path, visitor)
+    const country = countryOf(request)
+    await env.DB.prepare(
+      'INSERT INTO pageviews (id, ts, path, visitor, country) VALUES (?, ?, ?, ?, ?)'
+    )
+      .bind(crypto.randomUUID(), Date.now(), path, visitor, country)
       .run()
   } catch {
     /* swallow — analytics must never break a page load */
@@ -970,9 +996,7 @@ async function handleTrack(request: Request, env: Env): Promise<Response> {
 }
 
 async function fetchVisits(env: Env): Promise<Visits | null> {
-  // Last 14 whole UTC days through today, matching the chatbot charts' bucketing.
-  const now = Date.now()
-  const startMs = Math.floor(now / DAY_MS) * DAY_MS - 13 * DAY_MS
+  const startMs = windowStartMs(MAX_RANGE_DAYS)
   try {
     const rows = await env.DB.prepare(
       `SELECT date(ts/1000,'unixepoch') AS day, COUNT(*) AS pageviews,
@@ -989,7 +1013,7 @@ async function fetchVisits(env: Env): Promise<Visits | null> {
     }[]) {
       byDay.set(r.day, { pageviews: r.pageviews, visitors: r.visitors })
     }
-    const daily = Array.from({ length: 14 }, (_, i) => {
+    const daily = Array.from({ length: MAX_RANGE_DAYS }, (_, i) => {
       const day = new Date(startMs + i * DAY_MS).toISOString().slice(0, 10)
       return {
         day,
@@ -997,16 +1021,46 @@ async function fetchVisits(env: Env): Promise<Visits | null> {
         visitors: byDay.get(day)?.visitors ?? 0,
       }
     })
+    return { daily }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Country breakdown for a table over both dashboard ranges. Unknown/edge cases
+ * are bucketed as 'XX'. Returns null if the table/column isn't there yet (older
+ * DB not migrated), so the map degrades gracefully.
+ */
+async function countryCounts(
+  env: Env,
+  table: 'pageviews' | 'traces'
+): Promise<{ d14: CountryCount[]; d30: CountryCount[] } | null> {
+  const q = (days: number) =>
+    env.DB.prepare(
+      `SELECT COALESCE(country,'XX') AS country, COUNT(*) AS count
+       FROM ${table} WHERE ts >= ? GROUP BY country ORDER BY count DESC`
+    )
+      .bind(windowStartMs(days))
+      .all()
+  try {
+    const [r14, r30] = await Promise.all([q(14), q(30)])
     return {
-      daily,
-      summary: {
-        pageviews: daily.reduce((s, d) => s + d.pageviews, 0),
-        visitors: daily.reduce((s, d) => s + d.visitors, 0),
-      },
+      d14: (r14.results ?? []) as CountryCount[],
+      d30: (r30.results ?? []) as CountryCount[],
     }
   } catch {
     return null
   }
+}
+
+async function fetchGeo(env: Env): Promise<Geo> {
+  const empty = { d14: [], d30: [] }
+  const [visits, invocations] = await Promise.all([
+    countryCounts(env, 'pageviews'),
+    countryCounts(env, 'traces'),
+  ])
+  return { visits: visits ?? empty, invocations: invocations ?? empty }
 }
 
 async function handleOpsStats(request: Request, env: Env): Promise<Response> {
@@ -1026,6 +1080,7 @@ async function handleOpsStats(request: Request, env: Env): Promise<Response> {
       recent,
       latestEval,
       visits,
+      geo,
     ] = await Promise.all([
       env.DB.prepare(
         `SELECT COUNT(*) AS messages, COALESCE(SUM(input_tokens),0) AS input_tokens,
@@ -1045,7 +1100,7 @@ async function handleOpsStats(request: Request, env: Env): Promise<Response> {
       env.DB.prepare(
         `SELECT date(ts/1000,'unixepoch') AS day, COALESCE(SUM(cost_usd),0) AS cost, COUNT(*) AS messages,
                   COALESCE(AVG(total_ms),0) AS avg_ms, COALESCE(SUM(used_search),0) AS searches
-           FROM traces GROUP BY day ORDER BY day DESC LIMIT 14`
+           FROM traces GROUP BY day ORDER BY day DESC LIMIT ${MAX_RANGE_DAYS}`
       ).all(),
       // RAG tab
       env.DB.prepare(
@@ -1068,6 +1123,8 @@ async function handleOpsStats(request: Request, env: Env): Promise<Response> {
       ).first(),
       // First-party site traffic (null only if the pageviews table is missing).
       fetchVisits(env),
+      // Country breakdowns for the "where from" maps (visits + invocations).
+      fetchGeo(env),
     ])
 
     return json(
@@ -1081,6 +1138,7 @@ async function handleOpsStats(request: Request, env: Env): Promise<Response> {
         rag: { averages: ragAverages, topSources: topSources.results ?? [], latestEval },
         recent: recent.results ?? [],
         visits,
+        geo,
       },
       200,
       env

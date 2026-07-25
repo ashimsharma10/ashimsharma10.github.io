@@ -1,6 +1,7 @@
 'use client'
 
 import { Fragment, useEffect, useState } from 'react'
+import WorldMap, { type CountryCount } from './WorldMap'
 
 const API_URL = process.env.NEXT_PUBLIC_CHAT_API_URL
 // Deep links to the external observability tools the Worker reports into.
@@ -62,10 +63,15 @@ interface Stats {
   }
   recent: Trace[]
   // First-party site traffic; null only if the pageviews table is missing.
+  // `daily` holds 30 buckets (oldest → newest); the UI slices to the range.
   visits: {
     daily: { day: string; pageviews: number; visitors: number }[]
-    summary: { pageviews: number; visitors: number }
   } | null
+  // Country breakdowns for the "where from" maps, at both 14- and 30-day ranges.
+  geo: {
+    visits: { d14: CountryCount[]; d30: CountryCount[] }
+    invocations: { d14: CountryCount[]; d30: CountryCount[] }
+  }
 }
 
 type Tab = 'overview' | 'costs' | 'rag' | 'traces' | 'observability'
@@ -173,7 +179,12 @@ export default function OpsPage() {
           {tab === 'costs' && <CostsTab costs={stats.costs} />}
           {tab === 'rag' && <RagTab rag={stats.rag} />}
           {tab === 'observability' && (
-            <ObservabilityTab totals={t} daily={stats.costs.daily} visits={stats.visits} />
+            <ObservabilityTab
+              totals={t}
+              daily={stats.costs.daily}
+              visits={stats.visits}
+              geo={stats.geo}
+            />
           )}
           {tab === 'traces' && <TracesTab recent={stats.recent} />}
         </>
@@ -278,18 +289,24 @@ function TracesTab({ recent }: { recent: Trace[] }) {
   )
 }
 
+type Series = {
+  values: number[]
+  className: string
+  name: string
+  dashed?: boolean
+  fill?: boolean
+  format?: (v: number) => string
+}
+
 /**
  * Minimal responsive SVG line chart. The viewBox is stretched to the container
  * width (preserveAspectRatio="none"); strokes stay crisp via non-scaling-stroke,
  * and each series colours itself through `currentColor` so dark mode just works.
+ * Hovering reveals a guide line, per-series markers, and a tooltip with the exact
+ * value at that day (positioned with an HTML overlay to avoid the viewBox stretch).
  */
-function LineChart({
-  labels,
-  series,
-}: {
-  labels: string[]
-  series: { values: number[]; className: string; dashed?: boolean; fill?: boolean }[]
-}) {
+function LineChart({ labels, series }: { labels: string[]; series: Series[] }) {
+  const [hover, setHover] = useState<number | null>(null)
   if (labels.length === 0) {
     return <p className="text-sm text-gray-500 dark:text-gray-400">No data yet.</p>
   }
@@ -305,25 +322,72 @@ function LineChart({
     vals.map((v, i) => `${i === 0 ? 'M' : 'L'} ${cx(i).toFixed(1)} ${cy(v).toFixed(1)}`).join(' ')
   const areaPath = (vals: number[]) =>
     `${linePath(vals)} L ${cx(n - 1).toFixed(1)} ${H - padBottom} L ${cx(0).toFixed(1)} ${H - padBottom} Z`
+  const leftPct = (i: number) => `${((i + 0.5) / n) * 100}%`
+  const topPct = (v: number) => `${(cy(v) / H) * 100}%`
+  const onMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    const rel = (e.clientX - rect.left) / rect.width
+    setHover(Math.max(0, Math.min(n - 1, Math.round(rel * n - 0.5))))
+  }
   return (
     <div>
-      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="h-32 w-full">
-        {series.map((s, si) => (
-          <g key={si} className={s.className}>
-            {s.fill && <path d={areaPath(s.values)} fill="currentColor" opacity={0.1} />}
-            <path
-              d={linePath(s.values)}
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              strokeDasharray={s.dashed ? '5 4' : undefined}
-              strokeLinejoin="round"
-              strokeLinecap="round"
-              vectorEffect="non-scaling-stroke"
+      <div className="relative h-32" onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
+        <svg
+          viewBox={`0 0 ${W} ${H}`}
+          preserveAspectRatio="none"
+          className="h-32 w-full overflow-visible"
+        >
+          {series.map((s, si) => (
+            <g key={si} className={s.className}>
+              {s.fill && <path d={areaPath(s.values)} fill="currentColor" opacity={0.1} />}
+              <path
+                d={linePath(s.values)}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeDasharray={s.dashed ? '5 4' : undefined}
+                strokeLinejoin="round"
+                strokeLinecap="round"
+                vectorEffect="non-scaling-stroke"
+              />
+            </g>
+          ))}
+        </svg>
+        {hover !== null && (
+          <>
+            <div
+              className="pointer-events-none absolute top-0 bottom-0 w-px -translate-x-1/2 bg-gray-300 dark:bg-gray-600"
+              style={{ left: leftPct(hover) }}
             />
-          </g>
-        ))}
-      </svg>
+            {series.map((s, si) => (
+              <div
+                key={si}
+                className={`pointer-events-none absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white dark:border-gray-900 ${s.className}`}
+                style={{
+                  left: leftPct(hover),
+                  top: topPct(s.values[hover]),
+                  background: 'currentColor',
+                }}
+              />
+            ))}
+            <div
+              className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-md bg-gray-900 px-2 py-1 text-[11px] whitespace-nowrap text-white shadow-lg dark:bg-gray-100 dark:text-gray-900"
+              style={{ left: leftPct(hover), top: -4 }}
+            >
+              <div className="font-semibold">{labels[hover]}</div>
+              {series.map((s, si) => (
+                <div key={si} className="flex items-center gap-1.5">
+                  <span
+                    className={`inline-block h-1.5 w-1.5 rounded-full ${s.className}`}
+                    style={{ background: 'currentColor' }}
+                  />
+                  {s.name}: {(s.format ?? ((v: number) => v.toLocaleString()))(s.values[hover])}
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
       <div className="mt-1 flex">
         {labels.map((l, i) => (
           <span key={i} className="flex-1 text-center text-[9px] text-gray-400">
@@ -335,16 +399,38 @@ function LineChart({
   )
 }
 
+function RangeToggle({ range, onChange }: { range: 14 | 30; onChange: (r: 14 | 30) => void }) {
+  return (
+    <div className="inline-flex overflow-hidden rounded-lg border border-gray-200 text-xs font-medium dark:border-gray-700">
+      {([14, 30] as const).map((r) => (
+        <button
+          key={r}
+          onClick={() => onChange(r)}
+          className={`px-3 py-1 ${
+            range === r
+              ? 'bg-[#047857] text-white dark:bg-[#34D399] dark:text-gray-900'
+              : 'text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
+          }`}
+        >
+          {r}d
+        </button>
+      ))}
+    </div>
+  )
+}
+
 function ObservabilityTab({
   totals,
   daily,
   visits,
+  geo,
 }: {
   totals: Totals
   daily: Stats['costs']['daily']
   visits: Stats['visits']
+  geo: Stats['geo'] | undefined
 }) {
-  const labels = daily.map((d) => d.day.slice(5))
+  const [range, setRange] = useState<14 | 30>(14)
   const line = 'text-[#047857] dark:text-[#34D399]'
   const tools = [
     {
@@ -360,24 +446,51 @@ function ObservabilityTab({
       cta: 'Open Cloudflare',
     },
   ]
-  const visitLabels = visits?.daily.map((d) => d.day.slice(5)) ?? []
+  // Server returns 30 daily buckets + geo for both windows; slice to the toggle.
+  const cd = daily.slice(-range)
+  const labels = cd.map((d) => d.day.slice(5))
+  const vd = visits?.daily.slice(-range) ?? []
+  const visitLabels = vd.map((d) => d.day.slice(5))
+  const pageviews = vd.reduce((s, d) => s + d.pageviews, 0)
+  const visitors = vd.reduce((s, d) => s + d.visitors, 0)
+  const invocations = cd.reduce((s, d) => s + d.messages, 0)
+  const emptyGeo = { d14: [] as CountryCount[], d30: [] as CountryCount[] }
+  const pick = (g: { d14: CountryCount[]; d30: CountryCount[] }) => (range === 14 ? g.d14 : g.d30)
+  const geoVisits = pick(geo?.visits ?? emptyGeo)
+  const geoInvocations = pick(geo?.invocations ?? emptyGeo)
+
   return (
     <div className="mt-6 space-y-8">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-gray-500 dark:text-gray-400">Showing the last {range} days.</p>
+        <RangeToggle range={range} onChange={setRange} />
+      </div>
+
       <section>
         <h2 className="mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100">
-          Site visits (last 14 days)
+          Site visits (last {range} days)
         </h2>
         {visits ? (
           <>
             <div className="mb-4 grid grid-cols-2 gap-4">
-              <Stat label="Pageviews" value={visits.summary.pageviews.toLocaleString()} />
-              <Stat label="Visitors" value={visits.summary.visitors.toLocaleString()} />
+              <Stat label="Pageviews" value={pageviews.toLocaleString()} />
+              <Stat label="Visitors" value={visitors.toLocaleString()} />
             </div>
             <LineChart
               labels={visitLabels}
               series={[
-                { values: visits.daily.map((d) => d.pageviews), className: line, fill: true },
-                { values: visits.daily.map((d) => d.visitors), className: line, dashed: true },
+                {
+                  values: vd.map((d) => d.pageviews),
+                  className: line,
+                  name: 'Pageviews',
+                  fill: true,
+                },
+                {
+                  values: vd.map((d) => d.visitors),
+                  className: line,
+                  name: 'Visitors',
+                  dashed: true,
+                },
               ]}
             />
             <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
@@ -386,6 +499,10 @@ function ObservabilityTab({
               <span className="mr-1 ml-4 inline-block w-4 border-t-2 border-dashed border-[#047857] align-middle dark:border-[#34D399]" />
               daily visitors
             </p>
+            <h3 className="mt-6 mb-2 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
+              Where visits come from
+            </h3>
+            <WorldMap data={geoVisits} label="visits" />
           </>
         ) : (
           <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -405,13 +522,19 @@ function ObservabilityTab({
 
       <section>
         <h2 className="mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100">
-          Invocations (last 14 days)
+          Invocations (last {range} days) ·{' '}
+          <span className="text-gray-500 dark:text-gray-400">{invocations.toLocaleString()}</span>
         </h2>
         <LineChart
           labels={labels}
           series={[
-            { values: daily.map((d) => d.messages), className: line, fill: true },
-            { values: daily.map((d) => d.searches ?? 0), className: line, dashed: true },
+            { values: cd.map((d) => d.messages), className: line, name: 'Invocations', fill: true },
+            {
+              values: cd.map((d) => d.searches ?? 0),
+              className: line,
+              name: 'With search',
+              dashed: true,
+            },
           ]}
         />
         <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
@@ -420,15 +543,27 @@ function ObservabilityTab({
           <span className="mr-1 ml-4 inline-block w-4 border-t-2 border-dashed border-[#047857] align-middle dark:border-[#34D399]" />
           with search
         </p>
+        <h3 className="mt-6 mb-2 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
+          Where invocations come from
+        </h3>
+        <WorldMap data={geoInvocations} label="invocations" />
       </section>
 
       <section>
         <h2 className="mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100">
-          Avg latency (last 14 days)
+          Avg latency (last {range} days)
         </h2>
         <LineChart
           labels={labels}
-          series={[{ values: daily.map((d) => d.avg_ms ?? 0), className: line, fill: true }]}
+          series={[
+            {
+              values: cd.map((d) => d.avg_ms ?? 0),
+              className: line,
+              name: 'Avg latency',
+              fill: true,
+              format: (v) => `${Math.round(v)} ms`,
+            },
+          ]}
         />
       </section>
 
@@ -468,7 +603,9 @@ function CostsTab({ costs }: { costs: Stats['costs'] }) {
     { label: 'Generation', value: costs.byComponent.generation },
   ]
   const compMax = Math.max(...comp.map((c) => c.value), 1e-9)
-  const dayMax = Math.max(...costs.daily.map((d) => d.cost), 1e-9)
+  // The Worker returns 30 daily buckets; this tab shows the most recent 14.
+  const recentDaily = costs.daily.slice(-14)
+  const dayMax = Math.max(...recentDaily.map((d) => d.cost), 1e-9)
 
   return (
     <div className="mt-6 space-y-8">
@@ -525,7 +662,7 @@ function CostsTab({ costs }: { costs: Stats['costs'] }) {
           Daily cost (last 14 days)
         </h2>
         <div className="flex h-32 items-end gap-1">
-          {costs.daily.map((d) => (
+          {recentDaily.map((d) => (
             <div
               key={d.day}
               className="flex h-full flex-1 flex-col items-center justify-end gap-1"
@@ -538,7 +675,7 @@ function CostsTab({ costs }: { costs: Stats['costs'] }) {
               <span className="text-[9px] text-gray-400">{d.day.slice(5)}</span>
             </div>
           ))}
-          {costs.daily.length === 0 && (
+          {recentDaily.length === 0 && (
             <p className="text-sm text-gray-500 dark:text-gray-400">No data yet.</p>
           )}
         </div>
