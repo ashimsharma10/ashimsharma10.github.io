@@ -61,6 +61,11 @@ interface Stats {
     } | null
   }
   recent: Trace[]
+  // First-party site traffic; null only if the pageviews table is missing.
+  visits: {
+    daily: { day: string; pageviews: number; visitors: number }[]
+    summary: { pageviews: number; visitors: number }
+  } | null
 }
 
 type Tab = 'overview' | 'costs' | 'rag' | 'traces' | 'observability'
@@ -167,7 +172,9 @@ export default function OpsPage() {
 
           {tab === 'costs' && <CostsTab costs={stats.costs} />}
           {tab === 'rag' && <RagTab rag={stats.rag} />}
-          {tab === 'observability' && <ObservabilityTab totals={t} daily={stats.costs.daily} />}
+          {tab === 'observability' && (
+            <ObservabilityTab totals={t} daily={stats.costs.daily} visits={stats.visits} />
+          )}
           {tab === 'traces' && <TracesTab recent={stats.recent} />}
         </>
       )}
@@ -328,7 +335,15 @@ function LineChart({
   )
 }
 
-function ObservabilityTab({ totals, daily }: { totals: Totals; daily: Stats['costs']['daily'] }) {
+function ObservabilityTab({
+  totals,
+  daily,
+  visits,
+}: {
+  totals: Totals
+  daily: Stats['costs']['daily']
+  visits: Stats['visits']
+}) {
   const labels = daily.map((d) => d.day.slice(5))
   const line = 'text-[#047857] dark:text-[#34D399]'
   const tools = [
@@ -345,8 +360,42 @@ function ObservabilityTab({ totals, daily }: { totals: Totals; daily: Stats['cos
       cta: 'Open Cloudflare',
     },
   ]
+  const visitLabels = visits?.daily.map((d) => d.day.slice(5)) ?? []
   return (
     <div className="mt-6 space-y-8">
+      <section>
+        <h2 className="mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100">
+          Site visits (last 14 days)
+        </h2>
+        {visits ? (
+          <>
+            <div className="mb-4 grid grid-cols-2 gap-4">
+              <Stat label="Pageviews" value={visits.summary.pageviews.toLocaleString()} />
+              <Stat label="Visitors" value={visits.summary.visitors.toLocaleString()} />
+            </div>
+            <LineChart
+              labels={visitLabels}
+              series={[
+                { values: visits.daily.map((d) => d.pageviews), className: line, fill: true },
+                { values: visits.daily.map((d) => d.visitors), className: line, dashed: true },
+              ]}
+            />
+            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+              <span className="mr-1 inline-block h-0.5 w-4 bg-[#047857] align-middle dark:bg-[#34D399]" />
+              pageviews
+              <span className="mr-1 ml-4 inline-block w-4 border-t-2 border-dashed border-[#047857] align-middle dark:border-[#34D399]" />
+              daily visitors
+            </p>
+          </>
+        ) : (
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            No visits recorded yet. Once the Worker is deployed with the <code>pageviews</code>{' '}
+            table, traffic will appear here.
+          </p>
+        )}
+      </section>
+
+      <h2 className="-mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Chatbot</h2>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <Stat label="Total invocations" value={totals.messages.toLocaleString()} />
         <Stat label="Avg latency" value={`${Math.round(totals.avg_latency_ms)} ms`} />
