@@ -70,10 +70,10 @@ export default function PortfolioAiChatbotPage() {
             A production RAG chatbot that answers questions about me, grounded in this site&apos;s
             content: bio, experience, projects, publications, and the full text of every write-up.
             It is <em>agentic</em>: Claude holds a <code>search_knowledge_base</code> tool and
-            decides per question whether to search or answer directly, then streams the answer
-            token by token. The whole backend is one Cloudflare Worker at the edge, and the project
-            covers the full lifecycle of an LLM system: retrieval design, evaluation, cost and
-            latency tracking, and deployment.
+            decides per question whether to search or answer directly, then streams the answer token
+            by token. The whole backend is one Cloudflare Worker at the edge, and the project covers
+            the full lifecycle of an LLM system: retrieval design, evaluation, cost and latency
+            tracking, and deployment.
           </p>
 
           <h2>Architecture</h2>
@@ -96,11 +96,11 @@ export default function PortfolioAiChatbotPage() {
           <h2>How a request flows</h2>
           <p>
             Each <code>/chat</code> request goes to Claude with a persona prompt and the search
-            tool. Greetings and core facts are answered directly; anything deeper triggers a
-            search, and the Worker feeds the results back and streams the grounded answer as
-            Server-Sent Events. Retrieved text is wrapped as untrusted data so nothing inside a
-            document can inject instructions, inputs are capped, CORS is locked to this origin,
-            and the API key never leaves the Worker.
+            tool. Greetings and core facts are answered directly; anything deeper triggers a search,
+            and the Worker feeds the results back and streams the grounded answer as Server-Sent
+            Events. Retrieved text is wrapped as untrusted data so nothing inside a document can
+            inject instructions, inputs are capped, CORS is locked to this origin, and the API key
+            never leaves the Worker.
           </p>
 
           <h2>Hybrid retrieval</h2>
@@ -118,10 +118,10 @@ export default function PortfolioAiChatbotPage() {
           <p>
             The small, critical facts (projects, publication, roles, contact) are pinned straight
             into the system prompt; retrieval is reserved for the ~350 chunks of write-up and
-            project content that do not fit. That split came from a real failure: when full
-            write-up bodies were first ingested, they crowded the projects and publication chunks
-            out of the results entirely. A golden-question eval now guards that seam, failing below
-            90% retrieval recall and reporting every run to the /ops RAG tab.
+            project content that do not fit. That split came from a real failure: when full write-up
+            bodies were first ingested, they crowded the projects and publication chunks out of the
+            results entirely. A golden-question eval now guards that seam, failing below 90%
+            retrieval recall and reporting every run to the /ops RAG tab.
           </p>
           <p>
             The corpus itself is curated from the site: bio, project pages (parsed from the built
@@ -152,7 +152,11 @@ export default function PortfolioAiChatbotPage() {
                   ['Keyword search', 'SQLite FTS5 (BM25)', 'Cloudflare D1'],
                   ['Fusion', 'Reciprocal Rank Fusion (k = 60)', 'Worker'],
                   ['Rerank', 'Claude Haiku 4.5 → top 6 chunks', 'Anthropic API'],
-                  ['Search decision + generation', 'Claude Haiku 4.5 with tool use', 'Anthropic API'],
+                  [
+                    'Search decision + generation',
+                    'Claude Haiku 4.5 with tool use',
+                    'Anthropic API',
+                  ],
                   ['Streaming', 'Server-Sent Events', 'Worker → browser'],
                   ['Tracing', 'Per-request traces; Langfuse spans', 'D1 + Langfuse'],
                   ['Eval gate', 'Golden-set recall ≥ 0.9', 'npm run eval → /ops'],
