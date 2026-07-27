@@ -1,5 +1,6 @@
 import { Metadata } from 'next'
 import Image from '@/components/Image'
+import ImageLightbox from '@/components/ImageLightbox'
 import Link from '@/components/Link'
 import SectionContainer from '@/components/SectionContainer'
 
@@ -12,6 +13,7 @@ export const metadata: Metadata = {
 export default function GanSrPipelinePage() {
   return (
     <SectionContainer>
+      <ImageLightbox />
       <article>
         <div className="pt-4 pb-2">
           <Link
