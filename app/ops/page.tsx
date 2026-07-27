@@ -1,14 +1,10 @@
 'use client'
 
 import { Fragment, useEffect, useState } from 'react'
-import WorldMap, { type CountryCount, type GeoPoint, type RawGeoVisit } from './WorldMap'
+import WorldMap, { type CountryCount, type GeoPoint } from './WorldMap'
 
 type Ranged<T> = { d14: T[]; d30: T[] }
-type GeoDataset = {
-  countries: Ranged<CountryCount>
-  points: Ranged<GeoPoint>
-  recent?: RawGeoVisit[]
-}
+type GeoDataset = { countries: Ranged<CountryCount>; points: Ranged<GeoPoint> }
 
 const API_URL = process.env.NEXT_PUBLIC_CHAT_API_URL
 // Deep links to the external observability tools the Worker reports into.
@@ -464,7 +460,6 @@ function ObservabilityTab({
   const emptyDataset: GeoDataset = {
     countries: { d14: [], d30: [] },
     points: { d14: [], d30: [] },
-    recent: [],
   }
   const pickRange = <T,>(r: Ranged<T>) => (range === 14 ? r.d14 : r.d30)
   const visitsGeo = geo?.visits ?? emptyDataset
@@ -516,7 +511,6 @@ function ObservabilityTab({
             <WorldMap
               countries={pickRange(visitsGeo.countries)}
               points={pickRange(visitsGeo.points)}
-              recent={visitsGeo.recent ?? []}
               label="visits"
             />
           </>
@@ -565,7 +559,6 @@ function ObservabilityTab({
         <WorldMap
           countries={pickRange(invocationsGeo.countries)}
           points={pickRange(invocationsGeo.points)}
-          recent={invocationsGeo.recent ?? []}
           label="invocations"
         />
       </section>
