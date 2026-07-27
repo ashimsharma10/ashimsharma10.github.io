@@ -15,6 +15,7 @@ import SpinExplainer from './writeups/quantum/SpinExplainer'
 import WaveParticleAnimation from './writeups/quantum/WaveParticleAnimation'
 import ParticleBuilder from './writeups/quantum/ParticleBuilder'
 import EntanglementAnimation from './writeups/quantum/EntanglementAnimation'
+import UniverseComposition from './writeups/quantum/UniverseComposition'
 
 export const components: MDXComponents = {
   Image,
@@ -29,6 +30,7 @@ export const components: MDXComponents = {
   WaveParticleAnimation,
   ParticleBuilder,
   EntanglementAnimation,
+  UniverseComposition,
   a: CustomLink,
   pre: Pre,
   table: TableWrapper,
