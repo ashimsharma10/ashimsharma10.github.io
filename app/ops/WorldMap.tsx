@@ -154,7 +154,14 @@ export default function WorldMap({
     }
     const acc = new Map<
       string,
-      { city: string; country: string; latSum: number; lonSum: number; count: number; latest: number }
+      {
+        city: string
+        country: string
+        latSum: number
+        lonSum: number
+        count: number
+        latest: number
+      }
     >()
     for (const r of filteredRecent) {
       if (r.lat == null || r.lon == null || !r.city) continue
