@@ -1,0 +1,55 @@
+<svg width="544" height="306" viewBox="0 0 544 306" xmlns="http://www.w3.org/2000/svg" role="img" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif">
+  <title>Agentic RAG chatbot pipeline</title>
+  <desc>Question flows to Claude which decides to search or answer; Vectorize and D1 FTS5 results are RRF-fused and Haiku-reranked into a grounded streamed answer.</desc>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8a8a86"/>
+    </marker>
+  </defs>
+
+  <rect width="544" height="306" fill="#F5F4EF"/>
+
+  <!-- chat bubble motif -->
+  <g transform="translate(30,26)">
+    <rect width="52" height="40" rx="12" fill="#047857"/>
+    <path d="M14,40 L14,52 L28,40 Z" fill="#047857"/>
+    <circle cx="16" cy="20" r="3.5" fill="#F5F4EF"/>
+    <circle cx="26" cy="20" r="3.5" fill="#F5F4EF"/>
+    <circle cx="36" cy="20" r="3.5" fill="#F5F4EF"/>
+  </g>
+
+  <text x="104" y="46" font-size="24" font-weight="700" fill="#2C2C2A">Agentic RAG Chatbot</text>
+  <text x="104" y="68" font-size="13" fill="#5F5E5A">Cloudflare edge &#183; hybrid retrieval &#183; live on this site</text>
+
+  <!-- mini pipeline -->
+  <g stroke="#8a8a86" stroke-width="1.5" fill="none">
+    <line x1="100" y1="126" x2="130" y2="126" marker-end="url(#ar)"/>
+    <line x1="278" y1="126" x2="278" y2="146"/>
+    <line x1="278" y1="146" x2="200" y2="162" marker-end="url(#ar)"/>
+    <line x1="278" y1="146" x2="356" y2="162" marker-end="url(#ar)"/>
+    <line x1="200" y1="196" x2="248" y2="222" marker-end="url(#ar)"/>
+    <line x1="356" y1="196" x2="308" y2="222" marker-end="url(#ar)"/>
+    <line x1="278" y1="252" x2="278" y2="268" marker-end="url(#ar)"/>
+    <path d="M 420,126 L 466,126 L 466,286 L 402,286" stroke-dasharray="4 3" marker-end="url(#ar)"/>
+  </g>
+  <text x="470" y="118" text-anchor="end" font-size="10" fill="#8a8a86">no search</text>
+
+  <rect x="26" y="108" width="74" height="36" rx="8" fill="#F1EFE8" stroke="#5F5E5A"/>
+  <text x="63" y="130" text-anchor="middle" font-size="12" fill="#2C2C2A">question</text>
+
+  <rect x="136" y="104" width="284" height="44" rx="8" fill="#EEEDFE" stroke="#534AB7"/>
+  <text x="278" y="123" text-anchor="middle" font-size="12" fill="#26215C">Claude decides (tool use):</text>
+  <text x="278" y="139" text-anchor="middle" font-size="12" fill="#26215C">search or answer directly</text>
+
+  <rect x="138" y="164" width="124" height="32" rx="8" fill="#E1F5EE" stroke="#0F6E56"/>
+  <text x="200" y="184" text-anchor="middle" font-size="12" fill="#04342C">Vectorize &#183; semantic</text>
+
+  <rect x="294" y="164" width="124" height="32" rx="8" fill="#E1F5EE" stroke="#0F6E56"/>
+  <text x="356" y="184" text-anchor="middle" font-size="12" fill="#04342C">D1 FTS5 &#183; keyword</text>
+
+  <rect x="158" y="220" width="240" height="32" rx="8" fill="#FAEEDA" stroke="#854F0B"/>
+  <text x="278" y="240" text-anchor="middle" font-size="12" fill="#412402">RRF fuse &#8594; Haiku rerank</text>
+
+  <rect x="178" y="268" width="200" height="32" rx="8" fill="#FAECE7" stroke="#993C1D"/>
+  <text x="278" y="288" text-anchor="middle" font-size="12" fill="#4A1B0C">grounded answer, streamed</text>
+</svg>
