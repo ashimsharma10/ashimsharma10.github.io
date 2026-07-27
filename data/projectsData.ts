@@ -15,12 +15,11 @@ const projectsData: Project[] = [
     href: '/projects/gan-sr-pipeline',
   },
   {
-    title: 'PR Warden',
+    title: 'Agentic RAG Chatbot (Live on This Site)',
     description:
-      'A GitHub App that automatically triages pull requests using a multi-agent architecture: deterministic checks run alongside a tool-using LLM agent for deeper review. Posts a single verdict comment per PR with facet labels so maintainers route their queue without reading every diff.',
-    imgSrc: '/static/images/pr-warden/logo.png',
-    href: 'https://github.com/ashimsharma10/PR_warden',
-    imageContain: true,
+      'The AI assistant running on this portfolio: a Cloudflare Worker where Claude decides via tool use when to search, hybrid retrieval (Vectorize semantic + D1 FTS5 keyword) is fused with Reciprocal Rank Fusion and Haiku-reranked, and grounded answers stream back over SSE. Every request is traced to D1 and Langfuse, powering a live /ops observability dashboard.',
+    imgSrc: '/static/images/portfolio-ai-chatbot/card-thumbnail.svg',
+    href: '/projects/portfolio-ai-chatbot',
   },
   {
     title: 'Social Sentiment Dashboard',
@@ -28,6 +27,14 @@ const projectsData: Project[] = [
       'An event-driven sentiment monitor for Rivian: Reddit, App Store reviews, X/Twitter, and NHTSA complaints flow through a Kafka pipeline with HuggingFace sentiment analysis into a FastAPI + Next.js dashboard, backed by a Slack-integrated safety-triage queue.',
     imgSrc: '/static/images/social-sentiment-dashboard/card-thumbnail.png',
     href: '/projects/social-sentiment-dashboard',
+  },
+  {
+    title: 'PR Warden',
+    description:
+      'A GitHub App that automatically triages pull requests using a multi-agent architecture: deterministic checks run alongside a tool-using LLM agent for deeper review. Posts a single verdict comment per PR with facet labels so maintainers route their queue without reading every diff.',
+    imgSrc: '/static/images/pr-warden/logo.png',
+    href: 'https://github.com/ashimsharma10/PR_warden',
+    imageContain: true,
   },
 ]
 
