@@ -70,18 +70,17 @@ const DAY_MS = 86_400_000
 const RANGE_OPTIONS = [
   { days: 3, label: '3d' },
   { days: 7, label: '7d' },
-  { days: 30, label: '30d' },
 ] as const
 type FilterDays = (typeof RANGE_OPTIONS)[number]['days']
 
 /**
- * "Where from" map with a World/US toggle plus a 3/7/30-day date filter. World
+ * "Where from" map with a World/US toggle plus a 3/7-day date filter. World
  * mode shades countries by `countries` (choropleth) and overlays city dots; US
  * mode zooms to Albers USA with the same dots. When `recent` (raw per-visit
  * rows for the last 30 days) is provided, the filter re-aggregates dots and the
- * choropleth client-side, and hover tooltips show the latest visit time. Points
- * are approximate (city-level, IP-derived) — never exact. `label` names the
- * metric in tooltips ("visits"/"invocations").
+ * choropleth client-side, and a table underneath lists individual rows in the
+ * window (time, city, country). Points are approximate (city-level, IP-derived)
+ * — never exact. `label` names the metric ("visits"/"invocations").
  */
 export default function WorldMap({
   countries,
@@ -258,9 +257,9 @@ export default function WorldMap({
 
   const cityCount = new Set(dots.map((d) => `${d.country}|${d.city}`)).size
   const totalCountries = byA2.size
-  const rangeLabel =
-    filterDays === 30 ? 'last month' : filterDays === 7 ? 'last 7 days' : 'last 3 days'
+  const rangeLabel = filterDays === 7 ? 'last 7 days' : 'last 3 days'
   const isDotHover = hover?.latestTs !== undefined
+  const listLabel = label[0].toUpperCase() + label.slice(1)
 
   return (
     <div>
@@ -377,6 +376,58 @@ export default function WorldMap({
             </button>
           ))}
         </div>
+      </div>
+      <div className="mt-4">
+        <h3 className="mb-2 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
+          Recent {label} · {rangeLabel}{' '}
+          <span className="ml-1 font-normal text-gray-400 normal-case">
+            ({filteredRecent.length})
+          </span>
+        </h3>
+        {hasRecent ? (
+          filteredRecent.length > 0 ? (
+            <div className="max-h-64 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-700">
+              <table className="w-full text-left text-xs">
+                <thead className="sticky top-0 bg-gray-50 text-[10px] tracking-wide text-gray-500 uppercase dark:bg-gray-900 dark:text-gray-400">
+                  <tr>
+                    <th className="px-3 py-2 font-medium">When</th>
+                    <th className="px-3 py-2 font-medium">City</th>
+                    <th className="px-3 py-2 font-medium">Country</th>
+                  </tr>
+                </thead>
+                <tbody className="text-gray-700 dark:text-gray-300">
+                  {filteredRecent.slice(0, 200).map((r, i) => (
+                    <tr
+                      key={`${r.ts}-${i}`}
+                      className="border-t border-gray-100 dark:border-gray-800"
+                    >
+                      <td className="px-3 py-1.5 whitespace-nowrap text-gray-500 dark:text-gray-400">
+                        {new Date(r.ts).toLocaleString()}
+                      </td>
+                      <td className="px-3 py-1.5">{r.city ?? '—'}</td>
+                      <td className="px-3 py-1.5">
+                        {r.country && r.country !== 'XX' ? r.country : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {filteredRecent.length > 200 && (
+                <p className="border-t border-gray-100 px-3 py-2 text-[11px] text-gray-500 dark:border-gray-800 dark:text-gray-400">
+                  Showing latest 200 of {filteredRecent.length}.
+                </p>
+              )}
+            </div>
+          ) : (
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              No {label} in the {rangeLabel.replace('last ', '')}.
+            </p>
+          )
+        ) : (
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Per-{listLabel.toLowerCase()} details appear once the Worker returns raw recent rows.
+          </p>
+        )}
       </div>
     </div>
   )
