@@ -943,10 +943,22 @@ type CountryCount = { country: string; count: number }
 // (approximate, city-level from IP — never exact/GPS). Counts are aggregated per
 // city so no per-visitor rows leave the Worker.
 type GeoPoint = { city: string; country: string; lat: number; lon: number; count: number }
+// Raw (un-aggregated) recent visit row for last 30 days. Sent to the ops UI
+// so the map can filter to 3/7/30 days client-side and show per-datapoint
+// details (latest visit ts, aggregate count) on hover. Capped by the query
+// so the payload stays small; ts is a unix epoch (ms).
+type RawGeoVisit = {
+  ts: number
+  city: string | null
+  country: string
+  lat: number
+  lon: number
+}
 type Ranged<T> = { d14: T[]; d30: T[] }
 interface GeoDataset {
   countries: Ranged<CountryCount>
   points: Ranged<GeoPoint>
+  recent: RawGeoVisit[]
 }
 // Per-dataset "where from" data (country choropleth + city dots), at both ranges.
 interface Geo {
@@ -1067,6 +1079,7 @@ async function fetchVisits(env: Env): Promise<Visits | null> {
 const EMPTY_GEO_DATASET: GeoDataset = {
   countries: { d14: [], d30: [] },
   points: { d14: [], d30: [] },
+  recent: [],
 }
 
 /**
@@ -1094,12 +1107,23 @@ async function datasetGeo(env: Env, table: 'pageviews' | 'traces'): Promise<GeoD
     )
       .bind(windowStartMs(days))
       .all()
+  // Raw recent rows (last 30 days) so the map can filter to 3/7/30d client-side
+  // and show per-datapoint detail on hover. Cap keeps the payload small.
+  const recentQ = env.DB.prepare(
+    `SELECT ts, city, COALESCE(country,'XX') AS country, lat, lon
+     FROM ${table}
+     WHERE ts >= ? AND lat IS NOT NULL AND lon IS NOT NULL
+     ORDER BY ts DESC LIMIT 1000`
+  )
+    .bind(windowStartMs(30))
+    .all()
   try {
-    const [c14, c30, p14, p30] = await Promise.all([
+    const [c14, c30, p14, p30, recent] = await Promise.all([
       countryQ(14),
       countryQ(30),
       pointQ(14),
       pointQ(30),
+      recentQ,
     ])
     return {
       countries: {
@@ -1110,6 +1134,7 @@ async function datasetGeo(env: Env, table: 'pageviews' | 'traces'): Promise<GeoD
         d14: (p14.results ?? []) as GeoPoint[],
         d30: (p30.results ?? []) as GeoPoint[],
       },
+      recent: (recent.results ?? []) as RawGeoVisit[],
     }
   } catch {
     return EMPTY_GEO_DATASET

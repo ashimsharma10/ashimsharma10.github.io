@@ -15,6 +15,16 @@ const { numericToA2, a2ToName } = iso as {
 
 export type CountryCount = { country: string; count: number }
 export type GeoPoint = { city: string; country: string; lat: number; lon: number; count: number }
+// Raw per-visit row for the last 30 days (from the Worker). Kept on the client
+// so the map's date filter (3/7/30d) can re-aggregate without another round-trip
+// and dot hovers can show the latest visit time.
+export type RawGeoVisit = {
+  ts: number
+  city: string | null
+  country: string
+  lat: number | null
+  lon: number | null
+}
 
 // Build both base maps once at module load. World = Natural Earth for the global
 // choropleth; US = Albers USA (with Alaska/Hawaii insets) for the zoomed view.
@@ -54,65 +64,196 @@ function useIsDark() {
   return dark
 }
 
-type Hover = { x: number; y: number; title: string; count: number } | null
+type Hover = { x: number; y: number; title: string; count: number; latestTs?: number } | null
+
+const DAY_MS = 86_400_000
+const RANGE_OPTIONS = [
+  { days: 3, label: '3d' },
+  { days: 7, label: '7d' },
+  { days: 30, label: '30d' },
+] as const
+type FilterDays = (typeof RANGE_OPTIONS)[number]['days']
 
 /**
- * "Where from" map with a World/US toggle. World mode shades countries by
- * `countries` (choropleth) and overlays city dots; US mode zooms to Albers USA
- * with the same dots. Dots come from `points` (approximate, city-level, IP-derived
- * — never exact). `label` names the metric in tooltips ("visits"/"invocations").
+ * "Where from" map with a World/US toggle plus a 3/7/30-day date filter. World
+ * mode shades countries by `countries` (choropleth) and overlays city dots; US
+ * mode zooms to Albers USA with the same dots. When `recent` (raw per-visit
+ * rows for the last 30 days) is provided, the filter re-aggregates dots and the
+ * choropleth client-side, and hover tooltips show the latest visit time. Points
+ * are approximate (city-level, IP-derived) — never exact. `label` names the
+ * metric in tooltips ("visits"/"invocations").
  */
 export default function WorldMap({
   countries,
   points,
+  recent = [],
   label,
 }: {
   countries: CountryCount[]
   points: GeoPoint[]
+  recent?: RawGeoVisit[]
   label: string
 }) {
   const dark = useIsDark()
   const wrapRef = useRef<HTMLDivElement>(null)
   const [mode, setMode] = useState<'world' | 'us'>('us')
+  const [filterDays, setFilterDays] = useState<FilterDays>(7)
   const [hover, setHover] = useState<Hover>(null)
+  const [hoverKey, setHoverKey] = useState<string | null>(null)
 
+  // Rows inside the selected window. Only used when `recent` is populated —
+  // otherwise we fall back to the pre-aggregated `points`/`countries` from
+  // the API (older Worker builds without the raw feed).
+  const hasRecent = recent.length > 0
+  const filteredRecent = useMemo(() => {
+    if (!hasRecent) return []
+    const cutoff = Date.now() - filterDays * DAY_MS
+    return recent.filter((r) => r.ts >= cutoff)
+  }, [recent, filterDays, hasRecent])
+
+  // Country counts: aggregate from raw rows when available (so the filter
+  // actually shifts the choropleth), otherwise use the server-provided range.
   const byA2 = useMemo(() => {
     const m = new Map<string, number>()
-    for (const r of countries) if (r.country && r.country !== 'XX') m.set(r.country, r.count)
+    if (hasRecent) {
+      for (const r of filteredRecent) {
+        if (!r.country || r.country === 'XX') continue
+        m.set(r.country, (m.get(r.country) ?? 0) + 1)
+      }
+    } else {
+      for (const r of countries) if (r.country && r.country !== 'XX') m.set(r.country, r.count)
+    }
     return m
-  }, [countries])
-  const maxCountry = useMemo(
-    () => Math.max(1, ...countries.filter((d) => d.country !== 'XX').map((d) => d.count)),
-    [countries]
-  )
+  }, [filteredRecent, countries, hasRecent])
+  const maxCountry = useMemo(() => Math.max(1, ...byA2.values()), [byA2])
 
-  // Project the city points with the active projection. In US mode we restrict to
-  // US points (Albers USA can still place border-adjacent foreign cities, so filter
-  // by country rather than rely on the projection returning null).
+  // City-level dots. When raw rows are present, aggregate per city (with
+  // count + latest ts + averaged lat/lon). Otherwise use the server points.
+  type Aggregated = {
+    key: string
+    city: string
+    country: string
+    lat: number
+    lon: number
+    count: number
+    latestTs: number
+  }
+  const aggregated = useMemo<Aggregated[]>(() => {
+    if (!hasRecent) {
+      return points
+        .filter((p) => p.lat != null && p.lon != null && p.city)
+        .map((p) => ({
+          key: `${p.country}|${p.city}`,
+          city: p.city,
+          country: p.country,
+          lat: p.lat,
+          lon: p.lon,
+          count: p.count,
+          latestTs: 0,
+        }))
+    }
+    const acc = new Map<
+      string,
+      { city: string; country: string; latSum: number; lonSum: number; count: number; latest: number }
+    >()
+    for (const r of filteredRecent) {
+      if (r.lat == null || r.lon == null || !r.city) continue
+      const key = `${r.country}|${r.city}`
+      const cur = acc.get(key)
+      if (cur) {
+        cur.latSum += r.lat
+        cur.lonSum += r.lon
+        cur.count += 1
+        if (r.ts > cur.latest) cur.latest = r.ts
+      } else {
+        acc.set(key, {
+          city: r.city,
+          country: r.country,
+          latSum: r.lat,
+          lonSum: r.lon,
+          count: 1,
+          latest: r.ts,
+        })
+      }
+    }
+    return Array.from(acc.entries()).map(([key, v]) => ({
+      key,
+      city: v.city,
+      country: v.country,
+      lat: v.latSum / v.count,
+      lon: v.lonSum / v.count,
+      count: v.count,
+      latestTs: v.latest,
+    }))
+  }, [points, filteredRecent, hasRecent])
+
+  // Project city points with the active projection. In US mode we restrict to
+  // US points (Albers USA can still place border-adjacent foreign cities, so
+  // filter by country rather than rely on the projection returning null).
   const dots = useMemo(() => {
     const project = mode === 'world' ? worldProjection : usProjection
-    const src = mode === 'us' ? points.filter((p) => p.country === 'US') : points
+    const src = mode === 'us' ? aggregated.filter((p) => p.country === 'US') : aggregated
     return src
       .map((p) => {
         const xy = project([p.lon, p.lat])
-        return xy ? { x: xy[0], y: xy[1], city: p.city, count: p.count } : null
+        return xy
+          ? {
+              x: xy[0],
+              y: xy[1],
+              key: p.key,
+              city: p.city,
+              country: p.country,
+              count: p.count,
+              latestTs: p.latestTs,
+            }
+          : null
       })
-      .filter((d): d is { x: number; y: number; city: string; count: number } => d !== null)
-  }, [points, mode])
+      .filter(
+        (
+          d
+        ): d is {
+          x: number
+          y: number
+          key: string
+          city: string
+          country: string
+          count: number
+          latestTs: number
+        } => d !== null
+      )
+  }, [aggregated, mode])
   const maxDot = useMemo(() => Math.max(1, ...dots.map((d) => d.count)), [dots])
   const dotR = (count: number) => 2.5 + Math.sqrt(count / maxDot) * 7
 
   const base = dark ? '#1f2937' : '#e5e7eb'
   const stroke = dark ? '#0b1220' : '#ffffff'
+  const hoverStroke = dark ? '#f9fafb' : '#0b1220'
   const accent = dark ? '#34D399' : '#047857'
 
-  const at = (e: React.MouseEvent, title: string, count: number) => {
+  const at = (
+    e: React.MouseEvent,
+    title: string,
+    count: number,
+    latestTs?: number,
+    key?: string
+  ) => {
     const rect = wrapRef.current?.getBoundingClientRect()
-    setHover({ x: e.clientX - (rect?.left ?? 0), y: e.clientY - (rect?.top ?? 0), title, count })
+    setHover({
+      x: e.clientX - (rect?.left ?? 0),
+      y: e.clientY - (rect?.top ?? 0),
+      title,
+      count,
+      latestTs,
+    })
+    if (key !== undefined) setHoverKey(key)
   }
+  const clearDot = () => setHoverKey(null)
 
-  const cityCount = new Set(dots.map((d) => d.city)).size
+  const cityCount = new Set(dots.map((d) => `${d.country}|${d.city}`)).size
   const totalCountries = byA2.size
+  const rangeLabel =
+    filterDays === 30 ? 'last month' : filterDays === 7 ? 'last 7 days' : 'last 3 days'
+  const isDotHover = hover?.latestTs !== undefined
 
   return (
     <div>
@@ -137,7 +278,10 @@ export default function WorldMap({
         <svg
           viewBox={`0 0 ${W} ${H}`}
           className="h-auto w-full"
-          onMouseLeave={() => setHover(null)}
+          onMouseLeave={() => {
+            setHover(null)
+            clearDot()
+          }}
         >
           {mode === 'world'
             ? WORLD_SHAPES.map((s, i) => {
@@ -151,9 +295,10 @@ export default function WorldMap({
                     fillOpacity={count ? intensity : 1}
                     stroke={stroke}
                     strokeWidth={0.4}
-                    onMouseMove={(e) =>
+                    onMouseMove={(e) => {
+                      clearDot()
                       at(e, (s.a2 && a2ToName[s.a2]) || 'Unknown', (s.a2 && byA2.get(s.a2)) || 0)
-                    }
+                    }}
                   />
                 )
               })
@@ -161,38 +306,71 @@ export default function WorldMap({
                 <path key={s.key} d={s.d} fill={base} stroke={stroke} strokeWidth={0.5} />
               ))}
 
-          {dots.map((d, i) => (
-            <circle
-              key={i}
-              cx={d.x}
-              cy={d.y}
-              r={dotR(d.count)}
-              fill={accent}
-              fillOpacity={0.75}
-              stroke={stroke}
-              strokeWidth={0.6}
-              onMouseMove={(e) => {
-                e.stopPropagation()
-                at(e, d.city, d.count)
-              }}
-            />
-          ))}
+          {dots.map((d) => {
+            const isHover = hoverKey === d.key
+            const r = dotR(d.count)
+            return (
+              <circle
+                key={d.key}
+                cx={d.x}
+                cy={d.y}
+                r={isHover ? r * 1.5 : r}
+                fill={accent}
+                fillOpacity={isHover ? 0.95 : 0.75}
+                stroke={isHover ? hoverStroke : stroke}
+                strokeWidth={isHover ? 1.2 : 0.6}
+                className="cursor-pointer transition-all"
+                onMouseMove={(e) => {
+                  e.stopPropagation()
+                  const title = d.city + (d.country ? `, ${d.country}` : '')
+                  at(e, title, d.count, d.latestTs || undefined, d.key)
+                }}
+                onMouseLeave={clearDot}
+              />
+            )
+          })}
         </svg>
         {hover && (
           <div
-            className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-md bg-gray-900 px-2 py-1 text-xs whitespace-nowrap text-white shadow-lg dark:bg-gray-100 dark:text-gray-900"
-            style={{ left: hover.x, top: hover.y - 6 }}
+            className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-md bg-gray-900 px-2.5 py-1.5 text-xs whitespace-nowrap text-white shadow-lg dark:bg-gray-100 dark:text-gray-900"
+            style={{ left: hover.x, top: hover.y - 8 }}
           >
-            <span className="font-semibold">{hover.title}</span> · {hover.count.toLocaleString()}{' '}
-            {label}
+            <div className="font-semibold">{hover.title}</div>
+            <div className="mt-0.5 text-[11px] opacity-90">
+              {hover.count.toLocaleString()} {label} · {rangeLabel}
+            </div>
+            {isDotHover && hover.latestTs ? (
+              <div className="mt-0.5 text-[11px] opacity-75">
+                Latest: {new Date(hover.latestTs).toLocaleString()}
+              </div>
+            ) : null}
           </div>
         )}
       </div>
-      <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-        {mode === 'world' &&
-          `${totalCountries} ${totalCountries === 1 ? 'country' : 'countries'} · `}
-        {cityCount} {cityCount === 1 ? 'city' : 'cities'} · dots are approximate (city-level)
-      </p>
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          {mode === 'world' &&
+            `${totalCountries} ${totalCountries === 1 ? 'country' : 'countries'} · `}
+          {cityCount} {cityCount === 1 ? 'city' : 'cities'} · {rangeLabel} · dots are approximate
+          (city-level)
+        </p>
+        <div className="inline-flex overflow-hidden rounded-lg border border-gray-200 text-xs font-medium dark:border-gray-700">
+          {RANGE_OPTIONS.map((opt) => (
+            <button
+              key={opt.days}
+              onClick={() => setFilterDays(opt.days)}
+              className={`px-3 py-1 ${
+                filterDays === opt.days
+                  ? 'bg-[#047857] text-white dark:bg-[#34D399] dark:text-gray-900'
+                  : 'text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
+              }`}
+              title={`Filter to the last ${opt.days} days`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }
