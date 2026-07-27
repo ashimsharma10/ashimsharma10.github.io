@@ -54,6 +54,7 @@ export default function DoubleSlit() {
   const binsRef = useRef<number[]>(new Array(BINS).fill(0))
   const cdfRef = useRef<number[] | null>(null)
   const rafRef = useRef(0)
+  const autoStarted = useRef(false)
   const [running, setRunning] = useState(false)
   const [detectorOn, setDetectorOn] = useState(false)
   const [hits, setHits] = useState(0)
@@ -138,6 +139,24 @@ export default function DoubleSlit() {
     ctx.scale(dpr, dpr)
     repaintAll(ctx)
   }, [repaintAll])
+
+  // Autostart once when the demo scrolls into view (so it plays on its own,
+  // but only while visible and only the first time).
+  useEffect(() => {
+    const el = canvasRef.current
+    if (!el || typeof IntersectionObserver === 'undefined') return
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && !autoStarted.current && hitsRef.current.length === 0) {
+          autoStarted.current = true
+          setRunning(true)
+        }
+      },
+      { threshold: 0.4 }
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
 
   // Animation loop.
   useEffect(() => {
