@@ -26,6 +26,17 @@ export default function GanSrPipelinePage() {
             GAN-Based Two-Step Pipeline For Real-World Image Super-Resolution
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">Published Research Paper</p>
+          <div className="pt-3">
+            <Link
+              href="https://link.springer.com/chapter/10.1007%2F978-981-16-4177-0_75"
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:border-[#047857] hover:text-[#047857] dark:border-gray-600 dark:text-gray-300 dark:hover:border-[#34D399] dark:hover:text-[#34D399]"
+            >
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden="true">
+                <path d="M6 2a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6H6Zm7 1.5L18.5 9H14a1 1 0 0 1-1-1V3.5ZM8 13h8v1.5H8V13Zm0 3.5h8V18H8v-1.5Z" />
+              </svg>
+              Read the Paper on Springer
+            </Link>
+          </div>
         </div>
 
         <div className="prose prose-lg dark:prose-invert max-w-none pt-4 pb-8">
