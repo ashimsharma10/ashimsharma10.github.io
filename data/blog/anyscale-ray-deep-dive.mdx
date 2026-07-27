@@ -3,6 +3,7 @@ title: 'Anyscale and Ray: A Deep Dive into Distributed AI Compute'
 date: '2026-06-10'
 tags: ['ray', 'anyscale', 'distributed-computing', 'deep-learning', 'infrastructure']
 draft: false
+pinned: 2
 summary: 'A comprehensive technical writeup covering why distributed computing for AI is hard, what Ray is, what Anyscale adds on top of it, how it compares to the alternatives, and how to actually use it.'
 ---
 

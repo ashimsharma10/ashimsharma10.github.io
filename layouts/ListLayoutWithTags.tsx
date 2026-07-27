@@ -124,7 +124,8 @@ export default function ListLayoutWithTags({
           <div className="min-w-0 flex-1">
             <ul>
               {displayPosts.map((post) => {
-                const { path, date, title, summary, tags } = post
+                const { path, date, title, summary, tags, pinned } = post
+                const isPinned = typeof pinned === 'number'
                 return (
                   <li key={path} className="py-4">
                     <article className="flex flex-col space-y-1 xl:space-y-0">
@@ -142,6 +143,19 @@ export default function ListLayoutWithTags({
                             <Link href={`/${path}`} className="text-gray-900 dark:text-gray-100">
                               {title}
                             </Link>
+                            {isPinned && (
+                              <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-[#047857]/10 px-2 py-0.5 align-middle text-[10px] font-semibold tracking-wide text-[#047857] uppercase dark:bg-[#34D399]/15 dark:text-[#34D399]">
+                                <svg
+                                  viewBox="0 0 20 20"
+                                  fill="currentColor"
+                                  className="h-3 w-3"
+                                  aria-hidden="true"
+                                >
+                                  <path d="M9.828.722a.5.5 0 0 1 .354.146l4.95 4.95a.5.5 0 0 1-.51.836l-1.813-.51-2.828 2.828 1.485 4.849a.5.5 0 0 1-.836.51l-3.182-3.182-3.182 3.182a.5.5 0 0 1-.707-.707l3.182-3.182-3.182-3.182a.5.5 0 0 1 .51-.836l4.849 1.485L11.746 4.13l-.51-1.813a.5.5 0 0 1 .146-.51z" />
+                                </svg>
+                                Pinned
+                              </span>
+                            )}
                           </h2>
                           <div className="flex flex-wrap">
                             {tags?.map((tag) => (
