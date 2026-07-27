@@ -73,7 +73,7 @@ export default function WorldMap({
 }) {
   const dark = useIsDark()
   const wrapRef = useRef<HTMLDivElement>(null)
-  const [mode, setMode] = useState<'world' | 'us'>('world')
+  const [mode, setMode] = useState<'world' | 'us'>('us')
   const [hover, setHover] = useState<Hover>(null)
 
   const byA2 = useMemo(() => {

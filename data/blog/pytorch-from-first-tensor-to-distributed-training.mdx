@@ -3,6 +3,7 @@ title: 'PyTorch: From First Tensor to Distributed Training'
 date: '2026-06-07'
 tags: ['pytorch', 'deep-learning', 'distributed-training', 'guide']
 draft: false
+pinned: 1
 summary: 'Deep guide for ML engineers: tensors, autograd, nn.Module, training loops, DDP, FSDP, checkpointing, and debugging at scale.'
 ---
 
