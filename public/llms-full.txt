@@ -115,6 +115,61 @@ The pattern behind all of these: several distinct stages, at least one quality g
 
 Notice what these have in common: a step where something is checked, and a defined thing that happens when the check fails.
 
+## One example end to end: a refund that must not go wrong
+
+Take the clearest case of all, where a graph is not just tidier but the only sane option: **a customer asks for a refund, and money is about to move.**
+
+```mermaid
+flowchart TD
+    IN([request arrives]) --> CL[classify]
+    CL -->|"not a refund"| OTHER[other queues]
+    CL -->|"refund"| LK[look up order and history]
+    LK --> PC[check policy]
+    PC -->|"fails policy"| DENY[explain and close]
+    PC -->|"passes, under 50 USD"| PAY[issue refund]
+    PC -->|"passes, 50 to 500 USD"| HUM[wait for lead approval]
+    PC -->|"over 500 USD or fraud signals"| FRAUD[fraud team review]
+    HUM -->|"approved"| PAY
+    HUM -->|"rejected"| DENY
+    FRAUD -->|"cleared"| PAY
+    FRAUD -->|"blocked"| DENY
+    PAY --> NOTE[notify customer and write audit record]
+    NOTE --> OUT([done])
+```
+
+Every box has one job, one set of permissions, and one thing it contributes to the shared state:
+
+| Node               | Its one job                     | What it is allowed to touch                      | What it writes to state             |
+| ------------------ | ------------------------------- | ------------------------------------------------ | ----------------------------------- |
+| classify           | is this even a refund request?  | nothing                                          | intent                              |
+| look up            | fetch the order and past claims | order API, read only                             | order id, amount, date, past claims |
+| check policy       | is this eligible?               | the policy documents, read only                  | verdict, reason, policy version     |
+| lead approval      | a human decides                 | the approvals queue                              | approver, decision, timestamp       |
+| fraud review       | a specialist decides            | fraud tooling                                    | cleared or blocked                  |
+| issue refund       | move the money                  | the payment API, and it is the only box that can | confirmation id                     |
+| notify and archive | tell the customer, record it    | email and the audit log                          | message id, audit row               |
+
+Here is one real run, a 240 USD refund on a nine-day-old order:
+
+| When         | What happens                                                                 | State afterwards                      |
+| ------------ | ---------------------------------------------------------------------------- | ------------------------------------- |
+| 0s           | classify: this is a refund request                                           | intent = refund                       |
+| 2s           | look up: order 8812, 240 USD, bought 9 days ago, no prior claims             | order details filled in               |
+| 6s           | check policy: inside the 30 day window, item is eligible                     | verdict = eligible, policy = v14      |
+| 6s           | the amount lands in the middle band, so the graph **stops and saves itself** | waiting on = lead approval            |
+| 2 days later | a support lead approves it from their queue                                  | decision = approved, approver = named |
+| +3s          | refund issued, customer emailed, audit row written                           | confirmation id, done                 |
+
+That two day gap in the middle is the whole point. Run this as a single agent in a loop and you hit five problems at once:
+
+- **The pause kills it.** A loop waiting two days is a chat session someone has to keep alive. The graph simply stopped between two boxes and resumed with its state intact.
+- **The blast radius is wrong.** A single agent needs payment permissions for the entire run, including while it is doing harmless lookups. In the graph, exactly one box can move money.
+- **You cannot safely retry.** If the email fails after the refund goes out, rerunning a loop risks refunding twice. In the graph you replay the notify box alone, because the refund already recorded its confirmation id in state.
+- **The audit answer is unconvincing.** A compliance reviewer asking "which policy version was applied, and who approved it?" gets a named field and a route through named boxes, not a 4,000 word transcript to read.
+- **You overpay.** Classification is trivial and can run on a cheap model; only the policy call needs your best one. In a loop, one model does everything at one price.
+
+The flip side, so this does not read as an advertisement: if every refund under 20 USD were auto-approved with no human, no fraud path, and no compliance requirement, this whole diagram collapses to one agent with two tools, and that is the correct design. The graph earns its complexity because of the pause, the permissions, and the audit, not because it looks impressive.
+
 ## The patterns that keep showing up
 
 Almost every production graph is a mix of six shapes.
