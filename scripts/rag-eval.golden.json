@@ -73,5 +73,10 @@
     "question": "Has Ashim written anything about quantum physics?",
     "expectAny": ["quantum", "/write-up/"],
     "expectText": ["quantum"]
+  },
+  {
+    "question": "Has Ashim written anything about graph engineering?",
+    "expectAny": ["graph", "/write-up/"],
+    "expectText": ["graph"]
   }
 ]

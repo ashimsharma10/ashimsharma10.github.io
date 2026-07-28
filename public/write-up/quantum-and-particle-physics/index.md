@@ -4,7 +4,7 @@ date: '2026-07-23'
 lastmod: '2026-07-24'
 tags: ['physics', 'quantum-mechanics', 'particle-physics', 'standard-model']
 draft: false
-summary: 'A plain-language tour of quantum physics a century after it was born: light and photons, superposition, the double slit, spin, tunneling, entanglement, the 17 particles everything is made of, the quantum devices in your pocket, and the mysteries still open. With interactive demos and animations.'
+summary: 'A plain-language tour of quantum physics a century after it was born: from photons and superposition to the 17 particles behind everything and the quantum tech in your pocket. With interactive demos.'
 ---
 
 **Quantum mechanics is the rulebook for very small things**: atoms, and the particles inside them. At that scale the comfortable rules of everyday objects stop working. Things can be in several states at once, walls can be crossed without climbing, and looking at something changes what it does. None of this is speculation: it is the most rigorously confirmed science humans have ever produced, with some predictions checked to eleven decimal places.
@@ -184,13 +184,7 @@ An old estimate says a third of the world economy now depends on devices that wo
 
 Time for humility. The Standard Model is the most precisely tested theory in the history of science, and it describes about 5% of the universe.
 
-```mermaid
-pie
-    title What the universe is made of
-    "Ordinary matter" : 5
-    "Dark matter" : 27
-    "Dark energy" : 68
-```
+<UniverseComposition />
 
 | Problem             | What we know                                                                 | Leading ideas                                                | Status                                                            |
 | ------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------- |

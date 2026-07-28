@@ -4,7 +4,8 @@
 
 ## Write-ups
 
-- [The Quantum Century](https://ashimsharma10.github.io/write-up/quantum-and-particle-physics/index.md): A plain-language tour of quantum physics a century after it was born: light and photons, superposition, the double slit, spin, tunneling, entanglement, the 17 particles everything is made of, the quantum devices in your pocket, and the mysteries still open. With interactive demos and animations.
+- [Graph Engineering for Agentic AI](https://ashimsharma10.github.io/write-up/graph-engineering-for-agentic-ai/index.md): What graph engineering is, how it differs from loop engineering, and what the recent papers actually add: LangGraph workflow recipes, graph-augmented agents, multi-graph memory, and code DAGs.
+- [The Quantum Century](https://ashimsharma10.github.io/write-up/quantum-and-particle-physics/index.md): A plain-language tour of quantum physics a century after it was born: from photons and superposition to the 17 particles behind everything and the quantum tech in your pocket. With interactive demos.
 - [From Prompting to Loops: Why Agents Stopped Waiting for You](https://ashimsharma10.github.io/write-up/from-prompting-to-loops/index.md): Why AI work moved from single prompts to loops, the main types of loops, and examples of goal-driven loops in practice.
 - [Extending Claude Code: Skills, Subagents, and Hooks](https://ashimsharma10.github.io/write-up/claude-code-skills-subagents-and-hooks/index.md): Build your own Claude Code extensions from scratch: skills with SKILL.md, custom subagents, and lifecycle hooks. Copy-paste examples, a combined worked workflow, and a tour of the most popular skill repos on GitHub.
 - [The Riemann Hypothesis](https://ashimsharma10.github.io/write-up/riemann-zeta-and-the-riemann-hypothesis/index.md): Why the zeros of the zeta function govern the primes, built from scratch with live graphs you can zoom, drag, and animate.
