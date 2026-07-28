@@ -43,7 +43,7 @@ None of this is a new idea. What changed recently is what fits inside a box:
 | A node held        | one model call | a whole agent with its own tools |
 | So the graph wired | prompts        | coworkers                        |
 
-Once every box is a full agent, drawing the boxes and arrows stops being plumbing and becomes org design. That is the entire argument behind the new name.
+Once every box is a full agent, drawing the boxes and arrows stops being plumbing and becomes org design. That is the argument behind the new name.
 
 ## How it differs from the things it resembles
 
@@ -61,7 +61,7 @@ Two comparisons deserve more than a table row.
 
 **Versus a workflow engine.** A graph looks like a DAG in Airflow, but a workflow engine assumes every step is deterministic: same input, same output, retry on crash. In an agent graph the steps are judgment calls, so you need a different kind of safety net. You are not retrying a failed API call, you are grading an answer and deciding whether to try a different approach.
 
-**Versus free-form multi-agent chat.** In a chat-style system, agents message each other and the conversation decides what happens. It demos beautifully and operates terribly: nobody can say why a run cost $40, took 11 minutes, and produced the wrong answer. A graph gives up some flexibility to get back the thing you need in production, which is a route you can point at afterwards.
+**Versus free-form multi-agent chat.** In a chat-style system, agents message each other and the conversation decides what happens. It demos well and operates badly: nobody can say why a run cost 40 USD, took 11 minutes, and produced the wrong answer. A graph gives up some flexibility to get back the thing you need in production, which is a route you can point at afterwards.
 
 ## When to build one
 
@@ -86,7 +86,7 @@ Here is the same task run both ways, so you can watch where the history ends up 
 Signals you have outgrown a single loop:
 
 - The agent keeps rereading its own earlier mistakes and getting confused by them.
-- Different stages want genuinely different tools, models, or permissions.
+- Different stages need different tools, models, or permissions.
 - Someone has to approve something in the middle, and approval takes days.
 - You cannot answer "where did this run spend its money?" after the fact.
 - The same three or four stages appear in every run, in the same order.
@@ -97,9 +97,9 @@ Signals you do not need one yet:
 - The stages change with every request, so any graph you draw is wrong tomorrow.
 - Nobody has yet written down what "done" means. Fix that first; a graph will not save an undefined goal.
 
-The honest failure mode of this whole discipline is **over-graphing**: freezing a workflow into boxes and arrows before you understand it, then spending months maintaining a rigid structure that a plain loop handled better.
+The most common failure in this whole discipline is **over-graphing**: freezing a workflow into boxes and arrows before you understand it, then spending months maintaining a rigid structure that a plain loop handled better.
 
-## Use cases that actually fit
+## Where graphs fit
 
 The pattern behind all of these: several distinct stages, at least one quality gate, and a real cost to getting it wrong.
 
@@ -113,11 +113,11 @@ The pattern behind all of these: several distinct stages, at least one quality g
 | Research and reporting       | plan, parallel searches, merge, fact-check, write                 | Parallel work with a merge point, plus a check before publishing       |
 | Data analysis and reporting  | write query, run it, repair on error, interpret, chart            | Broken queries loop back automatically instead of failing the run      |
 
-Notice what these have in common: a step where something is checked, and a defined thing that happens when the check fails.
+All of them share two things: a step where something is checked, and a defined thing that happens when the check fails.
 
-## One example end to end: a refund that must not go wrong
+## One example end to end: approving a refund
 
-Take the clearest case of all, where a graph is not just tidier but the only sane option: **a customer asks for a refund, and money is about to move.**
+Here is a case where the graph is clearly the right shape: **a customer asks for a refund, and money is about to move.**
 
 ```mermaid
 flowchart TD
@@ -160,15 +160,15 @@ Here is one real run, a 240 USD refund on a nine-day-old order:
 | 2 days later | a support lead approves it from their queue                                  | decision = approved, approver = named |
 | +3s          | refund issued, customer emailed, audit row written                           | confirmation id, done                 |
 
-That two day gap in the middle is the whole point. Run this as a single agent in a loop and you hit five problems at once:
+The two day gap in the middle is what makes this a graph problem. Run it as a single agent in a loop and five things go wrong:
 
-- **The pause kills it.** A loop waiting two days is a chat session someone has to keep alive. The graph simply stopped between two boxes and resumed with its state intact.
+- **The pause kills it.** A loop waiting two days is a chat session someone has to keep alive. The graph stopped between two boxes and resumed later with its state intact.
 - **The blast radius is wrong.** A single agent needs payment permissions for the entire run, including while it is doing harmless lookups. In the graph, exactly one box can move money.
 - **You cannot safely retry.** If the email fails after the refund goes out, rerunning a loop risks refunding twice. In the graph you replay the notify box alone, because the refund already recorded its confirmation id in state.
 - **The audit answer is unconvincing.** A compliance reviewer asking "which policy version was applied, and who approved it?" gets a named field and a route through named boxes, not a 4,000 word transcript to read.
 - **You overpay.** Classification is trivial and can run on a cheap model; only the policy call needs your best one. In a loop, one model does everything at one price.
 
-The flip side, so this does not read as an advertisement: if every refund under 20 USD were auto-approved with no human, no fraud path, and no compliance requirement, this whole diagram collapses to one agent with two tools, and that is the correct design. The graph earns its complexity because of the pause, the permissions, and the audit, not because it looks impressive.
+The flip side: if every refund under 20 USD were auto-approved with no human, no fraud path, and no compliance requirement, this whole diagram collapses to one agent with two tools, and that is the correct design. The graph is worth its complexity here because of the pause, the permissions, and the audit.
 
 ## The patterns that keep showing up
 
@@ -200,7 +200,7 @@ A loop would run those three searches one after another, each one filling up the
 
 ## Designing the state is most of the work
 
-The nodes and arrows are the fun part. The thing that decides whether your graph survives contact with production is what you let travel between the boxes.
+The nodes and arrows are the easy part. What decides whether the graph works in production is what you let travel between the boxes.
 
 | Belongs in shared state                      | Should stay inside a node                     |
 | -------------------------------------------- | --------------------------------------------- |
@@ -218,7 +218,7 @@ Three rules worth following from day one:
 
 ## Pauses, replays, and other operational wins
 
-This is where graphs earn their keep. Because progress lives in named state rather than a chat window, a run can be saved between any two boxes.
+Because progress lives in named state rather than a chat window, a run can be saved between any two boxes.
 
 ```mermaid
 stateDiagram-v2
@@ -241,10 +241,10 @@ What that gets you in practice:
 
 ## The failure modes
 
-The problems are as predictable as the patterns.
+These come up again and again.
 
 - **Over-graphing.** Structure added before understanding. If you are editing the graph every week to fit new cases, the work wanted a loop.
-- **State bloat.** Everything gets stuffed into shared state until each hop carries a novel. Pass pointers, not payloads.
+- **State bloat.** Everything gets stuffed into shared state until every hop carries far more than the next box needs. Pass pointers, not payloads.
 - **Runaway cycles.** A retry arrow with no attempt limit, quietly spending money.
 - **The mega-node.** One box that "handles the hard part" and slowly absorbs the whole system. Split it.
 - **Silent quality drift.** The grader passes everything because nobody ever checked the grader. Test the checkers, not just the workers.
@@ -304,7 +304,7 @@ flowchart LR
     Q --> A[context for the agent]
 ```
 
-"What broke after the config change?" walks the cause and time links. "What do we know about service X?" walks the meaning and entity links. Same stored memories, different paths through them, better answers than one flat pile of embeddings.
+"What broke after the config change?" walks the cause and time links. "What do we know about service X?" walks the meaning and entity links. Same stored memories, different paths through them, and better answers than a single flat vector store.
 
 ## Is this actually new?
 
