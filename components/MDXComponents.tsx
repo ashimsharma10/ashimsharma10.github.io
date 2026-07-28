@@ -8,6 +8,7 @@ import TableWrapper from './TableWrapper'
 import MermaidChart from './MermaidChart'
 import LinuxFSHierarchy from './LinuxFSHierarchy'
 import RiemannZeta from './writeups/RiemannZeta'
+import LoopVsGraphSim from './writeups/LoopVsGraphSim'
 import QuantumTimeline from './writeups/quantum/QuantumTimeline'
 import QubitCollapse from './writeups/quantum/QubitCollapse'
 import DoubleSlit from './writeups/quantum/DoubleSlit'
@@ -23,6 +24,7 @@ export const components: MDXComponents = {
   MermaidChart,
   LinuxFSHierarchy,
   RiemannZeta,
+  LoopVsGraphSim,
   QuantumTimeline,
   QubitCollapse,
   DoubleSlit,
