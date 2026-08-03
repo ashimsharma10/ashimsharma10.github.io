@@ -4,6 +4,7 @@
 
 ## Write-ups
 
+- [The AI Engineer's Swiss Knife: Agentic Systems in Production](https://ashimsharma10.github.io/write-up/ai-engineers-swiss-knife/index.md): Forty production questions on agentic systems, answered plainly: evals, guardrails, quality measurement, observability, security, and token economics. It also works as senior interview prep.
 - [Graph Engineering for Agentic AI](https://ashimsharma10.github.io/write-up/graph-engineering-for-agentic-ai/index.md): What graph engineering is, how it differs from loops and workflow engines, when to build one, a refund approval worked through end to end, and the failure modes to watch for.
 - [The Quantum Century](https://ashimsharma10.github.io/write-up/quantum-and-particle-physics/index.md): A plain-language tour of quantum physics a century after it was born: from photons and superposition to the 17 particles behind everything and the quantum tech in your pocket. With interactive demos.
 - [From Prompting to Loops: Why Agents Stopped Waiting for You](https://ashimsharma10.github.io/write-up/from-prompting-to-loops/index.md): Why AI work moved from single prompts to loops, the main types of loops, and examples of goal-driven loops in practice.
