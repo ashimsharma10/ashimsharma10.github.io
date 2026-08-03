@@ -24,17 +24,17 @@ Cross-cutting rule: answers commit to concrete numbers/thresholds (latency, cost
 
 ## Sections (production lifecycle order)
 
-| # | Section | ~Qs | Coverage |
-|---|---------|-----|----------|
-| 1 | Agent system design | 5 | Design-an-agent, single vs multi-agent, partial failure mid-trajectory, memory/persistence, human-in-the-loop |
-| 2 | Prompt & context engineering | 4 | Context-window budgeting, few-shot vs fine-tune framework, prompt versioning/testing |
-| 3 | RAG & retrieval quality | 4 | Retrieval vs generation metrics, chunking trade-offs, RAG vs long context |
-| 4 | Evals: offline | 6 | Eval suite from zero, LLM-as-judge biases + corrections, trajectory vs final-answer eval, golden vs synthetic sets, CI regression gates |
-| 5 | Measuring quality online | 4 | Offline-passes-but-users-complain debugging, online proxy metrics, A/B testing LLM changes |
-| 6 | Guardrails | 4 | Layered architecture (input/output/tool), fail-open vs fail-closed, latency budgets |
-| 7 | Security & prompt injection | 4 | Indirect injection concrete attack, why guardrails alone are insufficient, tool-call sandboxing/permissioning |
-| 8 | Observability & tracing | 4 | Per-step logging schema, tracing nondeterministic failures, drift detection |
-| 9 | Token & cost engineering | 5 | 10x cost-cut walkthrough, model routing/cascades, prompt caching mechanics, KV-cache vs prompt cache, streaming/batching |
+| #   | Section                      | ~Qs | Coverage                                                                                                                                |
+| --- | ---------------------------- | --- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Agent system design          | 5   | Design-an-agent, single vs multi-agent, partial failure mid-trajectory, memory/persistence, human-in-the-loop                           |
+| 2   | Prompt & context engineering | 4   | Context-window budgeting, few-shot vs fine-tune framework, prompt versioning/testing                                                    |
+| 3   | RAG & retrieval quality      | 4   | Retrieval vs generation metrics, chunking trade-offs, RAG vs long context                                                               |
+| 4   | Evals: offline               | 6   | Eval suite from zero, LLM-as-judge biases + corrections, trajectory vs final-answer eval, golden vs synthetic sets, CI regression gates |
+| 5   | Measuring quality online     | 4   | Offline-passes-but-users-complain debugging, online proxy metrics, A/B testing LLM changes                                              |
+| 6   | Guardrails                   | 4   | Layered architecture (input/output/tool), fail-open vs fail-closed, latency budgets                                                     |
+| 7   | Security & prompt injection  | 4   | Indirect injection concrete attack, why guardrails alone are insufficient, tool-call sandboxing/permissioning                           |
+| 8   | Observability & tracing      | 4   | Per-step logging schema, tracing nondeterministic failures, drift detection                                                             |
+| 9   | Token & cost engineering     | 5   | 10x cost-cut walkthrough, model routing/cascades, prompt caching mechanics, KV-cache vs prompt cache, streaming/batching                |
 
 ## Site integration
 
