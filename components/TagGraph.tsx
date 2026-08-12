@@ -239,7 +239,7 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
     // Camera + interaction state.
     let ry = 0.6 // yaw
     let rx = -0.35 // pitch
-    let zoom = 1.35 // default: framed a little tighter so the graph fills the canvas
+    let zoom = 1.0 // default: normal framing, the whole graph visible with breathing room
     let autoRotate = true
     let hover: Node | null = null
     let drag: Node | null = null
@@ -616,7 +616,7 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
     const onReset = () => {
       ry = 0.6
       rx = -0.35
-      zoom = 1.35
+      zoom = 1.0
       autoRotate = !reducedMotion
       pinnedAny = false
       nodes.forEach((n, i) => {
