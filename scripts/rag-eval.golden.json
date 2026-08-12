@@ -78,5 +78,10 @@
     "question": "Has Ashim written anything about graph engineering?",
     "expectAny": ["graph", "/write-up/"],
     "expectText": ["graph"]
+  },
+  {
+    "question": "Has Ashim written anything about A/B testing or causal inference?",
+    "expectAny": ["data-science-fundamentals", "/write-up/"],
+    "expectText": ["causal", "experiment"]
   }
 ]
