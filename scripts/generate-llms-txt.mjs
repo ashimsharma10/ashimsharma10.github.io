@@ -28,15 +28,8 @@ async function generateLlmsTxt() {
   lines.push('')
   lines.push(`- [Profile](${siteUrl}/profile.md): Bio, skills, experience, contact`)
   lines.push('')
-  lines.push('## Optional')
-  lines.push('')
-  lines.push(`- [Full site content](${siteUrl}/llms-full.txt): All posts concatenated`)
-  lines.push('')
 
   writeFileSync(`${outputFolder}/llms.txt`, lines.join('\n'))
-
-  const full = published.map((post) => `# ${post.title}\n\n${post.body.raw}`).join('\n\n---\n\n')
-  writeFileSync(`${outputFolder}/llms-full.txt`, full)
 
   console.log('llms.txt generated...')
 }

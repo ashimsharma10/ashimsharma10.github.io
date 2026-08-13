@@ -25,7 +25,3 @@
 ## About
 
 - [Profile](https://ashimsharma10.github.io/profile.md): Bio, skills, experience, contact
-
-## Optional
-
-- [Full site content](https://ashimsharma10.github.io/llms-full.txt): All posts concatenated
