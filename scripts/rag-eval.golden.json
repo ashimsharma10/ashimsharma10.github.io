@@ -83,5 +83,10 @@
     "question": "Has Ashim written anything about A/B testing or causal inference?",
     "expectAny": ["data-science-fundamentals", "/write-up/"],
     "expectText": ["causal", "experiment"]
+  },
+  {
+    "question": "Has Ashim written anything about LLM evals or hallucination detection?",
+    "expectAny": ["evaluation-engineering", "/write-up/"],
+    "expectText": ["judge", "golden"]
   }
 ]
