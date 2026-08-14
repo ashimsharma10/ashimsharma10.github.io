@@ -1,6 +1,6 @@
 {
-  "llm": 5,
-  "agents": 6,
+  "llm": 6,
+  "agents": 7,
   "evals": 2,
   "guardrails": 2,
   "guide": 5,
@@ -13,7 +13,7 @@
   "skills": 1,
   "subagents": 1,
   "hooks": 1,
-  "ai": 4,
+  "ai": 5,
   "gpu": 1,
   "tpu": 1,
   "hardware": 1,
@@ -29,7 +29,7 @@
   "devops": 1,
   "networking": 2,
   "observability": 1,
-  "loop-engineering": 2,
+  "loop-engineering": 3,
   "pandas": 1,
   "feature-engineering": 1,
   "python": 3,
@@ -51,5 +51,7 @@
   "mathematics": 1,
   "number-theory": 1,
   "riemann-hypothesis": 1,
-  "primes": 1
+  "primes": 1,
+  "self-improving-agents": 1,
+  "continual-learning": 1
 }
