@@ -166,7 +166,7 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
         `/${p.path}`,
         'post',
         p.tags.length,
-        11,
+        13,
         spherePoint(i, posts.length, 210)
       )
     )
@@ -179,7 +179,7 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
         `/tags/${slug(t)}`,
         'tag',
         tagCount[t],
-        6 + tagCount[t] * 2.6,
+        7 + tagCount[t] * 3,
         spherePoint(i, tagKeys.length, 70)
       )
     )
