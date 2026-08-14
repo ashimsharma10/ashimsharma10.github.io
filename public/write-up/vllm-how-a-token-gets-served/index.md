@@ -45,7 +45,7 @@ When a program asks your laptop for memory, it believes it received one long unb
 
 vLLM does exactly that to the model's memory. That is the paper in one sentence. Everything below is a consequence.
 
-One more thing before we start. Five claims get repeated about vLLM that are slightly off, and the corrected versions are more useful than the originals:
+Five claims get repeated about vLLM that are slightly off, and the corrected versions are more useful than the originals:
 
 | What gets repeated | What the source says |
 | --- | --- |
@@ -70,21 +70,21 @@ Six terms carry the rest of the post.
 
 The KV cache is the one to sit with, because the rest of the post is about it.
 
-To write the next token, the model looks back at every token so far and decides which ones matter. To do that, it computes two vectors for each token: a key and a value. Think of the key as the label on a filing folder and the value as what is inside it. Once computed for a token, they never change, so the model files them away and reuses them at every later step.
+To write the next token, the model looks back at every token so far and decides which ones matter. It does that with three vectors per token. The **query** is what the current token is looking for. The **key** is what each earlier token advertises about itself. The **value** is what that token actually contributes if you decide to use it. Compare the query against every key, turn those scores into weights, and the output is a weighted blend of the values. In folder terms: keys are the labels you scan, values are the contents you pull out.
 
-That pile of folders is the KV cache. Without it, producing each new token would mean re-reading the entire conversation from scratch. With it, the pile grows by one entry per token and is only freed when the request finishes. It is the model's short-term memory, and it is what you actually run out of.
+Keys and values never change once computed, so the model stores them and reuses them at every later step. Queries are computed fresh each step and discarded, which is why it is a KV cache and not a QKV cache. Without that store, generating each new token would mean recomputing keys and values for the whole conversation, which is quadratic work. With it, the store grows by one entry per token and is freed only when the request finishes. It is the model's short-term memory, and it is what you actually run out of.
 
 ## 3. Why Your GPU Fills Up
 
-Now put numbers on that pile, because the numbers are the reason the rest of the post exists.
+Now put numbers on that store, because the numbers are the argument.
 
-Weights are the easy part. Each parameter takes 2 bytes at BF16, so a 70 billion parameter model is 140 GB. Fixed, computable on a napkin, done.
+Weights are the easy part. At BF16 (bfloat16, 16 bits per number) each parameter takes 2 bytes, so a 70 billion parameter model is 140 GB. Fixed, computable on a napkin, done.
 
 The KV cache is the part that moves, and it decides how many people you can serve. Its size is:
 
 **bytes per token = 2 (key and value) x layers x kv_heads x head_dim x bytes_per_element**
 
-Read that as: for every token, at every layer, every attention head files away one key and one value.
+Read that as: for every token, at every layer, every KV head stores one key vector and one value vector, each `head_dim` numbers long.
 
 For Llama 3 70B at BF16: 2 x 80 layers x 8 KV heads x 128 dimensions x 2 bytes = 327,680 bytes. Roughly 0.31 MB for a single token, which looks harmless. Now run it forward.
 
@@ -110,7 +110,7 @@ So the cache is what fills the card. The next question is how it gets stored, an
 
 Before vLLM, each request got one contiguous block of memory sized for the longest it might ever grow, because attention kernels wanted contiguous memory to run fast. You reserve room for 8,192 tokens, the user asks a 200-token question and stops, and 97 percent of that reservation sits there doing nothing while other users are turned away. Multiply by every request on the server. That is where 60 to 80 percent of cache memory went.
 
-PagedAttention gives up on contiguous. The cache is cut into fixed blocks of 16 tokens, and each sequence keeps a block table: my tokens 0 to 15 live in physical block 47, my tokens 16 to 31 live in physical block 12, and so on. Blocks sit anywhere in a shared pool. The attention kernel is rewritten to follow the table instead of walking in a straight line.
+PagedAttention gives up on contiguous. The cache is cut into fixed blocks of 16 tokens, and each sequence keeps a block table: my tokens 0 to 15 live in physical block 47, my tokens 16 to 31 live in physical block 12, and so on. Blocks sit anywhere in a shared pool. The attention kernel is rewritten to gather each block through that table rather than walking a straight line through memory, so a sequence's keys and values can be physically scattered while staying logically contiguous. That is the same indirection your OS does with a page table, applied to attention.
 
 Press play and watch two requests that share a system prompt land in the pool:
 
@@ -130,7 +130,7 @@ Memory is now packed tightly. The next thing being wasted is time.
 
 Static batching is the obvious way to serve many requests: collect a group, run them together, return them together. It behaves like an airport shuttle, which leaves when the last passenger boards and finishes when the last passenger gets off. Requests do not finish together. One request generating 800 tokens holds the whole batch open while the requests that stopped at 30 tokens sit in their seats, holding their memory, producing nothing.
 
-Continuous batching schedules per iteration instead of per batch. After every single forward pass, the engine drops finished sequences, frees their blocks, and pulls waiting requests into the empty slots. Nobody waits on anybody else's ending.
+Continuous batching, or iteration-level scheduling, makes the scheduling decision per forward pass instead of per batch. After every single pass, the engine drops finished sequences, frees their blocks, and pulls waiting requests into the empty slots. The batch is re-formed every step, so nobody waits on anybody else's ending.
 
 Press play and watch the red, which is memory you are paying for and not using:
 
@@ -165,9 +165,11 @@ Prefill and decode are not two phases of the same workload. They are two differe
 | Bigger batch | little help, already saturated | large help, amortizes the weight read |
 | Latency it owns | TTFT | inter-token latency |
 
-The decode row is the one to understand. To produce a single token, the GPU streams the model's entire weight set out of memory and does very little arithmetic with it on the way past. At batch 1 on a 70B model you read 140 GB to emit one token. At batch 64 you read the same 140 GB and emit 64. The truck is driving to the store either way, so you may as well fill it. That is why throughput scales so violently with batch size, and why a GPU that looks nearly idle can still feel slow.
+The decode row is the one to understand. To produce a single token, the GPU streams the model's entire weight set out of memory and does very little arithmetic with it on the way past. The ratio of math done to bytes moved is called **arithmetic intensity**, and decode's is dismal: roughly two floating point operations per weight byte read, on hardware built for hundreds. So the memory bus is saturated while the arithmetic units sit mostly idle.
 
-Prefill is the opposite. Your whole prompt arrives at once, thousands of tokens go through the same matmul, the arithmetic units are already busy, and a bigger batch buys almost nothing.
+The fix is to reuse each byte for more work. At batch 1 on a 70B model you read 140 GB to emit one token. At batch 64 you read the same 140 GB and emit 64, because every sequence in the batch multiplies against the same weights while they are on the chip. The truck is driving to the store either way, so you may as well fill it. That is why throughput scales so violently with batch size, and why a GPU that looks nearly idle can still feel slow.
+
+Prefill is the opposite. Your whole prompt arrives at once, so thousands of tokens go through one matmul, arithmetic intensity is high, the compute units are already saturated, and a bigger batch buys almost nothing.
 
 Which sets up the fight. Prefill wants to own an entire step. Decode wants steps to come often. A 32k prompt arrives, a naive scheduler spends a whole step on it, and every user currently streaming watches their text freeze mid-sentence. **Chunked prefill** is the referee: long prompts get sliced, and every step carries all the decode work plus one slice.
 
@@ -215,7 +217,9 @@ Sections 3 through 6 assumed everything fits on the card. A 70B model needs 140 
 | Data (DP) | nothing, full replicas | throughput, and it is the simplest thing | every replica needs the full weights |
 | Expert (EP) | the experts of an MoE layer | sparse models, most experts idle per token | load imbalance when a few experts run hot |
 
-The default layout: TP equal to the number of GPUs in a node, PP equal to the number of nodes. That puts the chatty split on fast NVLink inside a box and the quiet split on the slower network between boxes.
+Tensor parallel is the one worth picturing. It splits the weight matrices themselves, so every GPU holds a slice of every layer, computes a partial result, and then an all-reduce sums the slices back into the real answer. That all-reduce happens at every layer, twice per transformer block, which is why TP is fast inside a node with NVLink and falls apart across a network.
+
+So the default layout is: TP equal to the number of GPUs in a node, PP equal to the number of nodes. The chatty split stays on NVLink inside a box, and the quiet split crosses the slower network between boxes.
 
 Two things people miss. TP splits the KV cache too, not only the weights, so TP=4 buys more headroom than the weight math alone suggests. And for mixture-of-experts models vLLM's shipped recipe is a hybrid: data parallel for the attention layers, expert parallel for the expert layers, because those two parts of the model want opposite things.
 
@@ -227,7 +231,7 @@ Start by asking what you are optimizing, because there is no single right answer
 
 Everything so far makes work cheaper. This makes some of it disappear.
 
-As blocks fill, they get hashed, keyed on their contents plus everything before them. When a new request arrives, the engine hashes its prompt the same way and reuses the longest run of blocks that already exists. Your system prompt gets prefilled once ever, rather than once per request.
+As blocks fill, they get hashed. The hash of a block chains in the hash of the block before it, so two blocks match only when the entire prefix leading up to them matches, which is what makes reuse safe. When a new request arrives, the engine hashes its prompt the same way and points at the longest run of blocks that already exists instead of recomputing them. Your system prompt gets prefilled once ever, rather than once per request.
 
 Two constraints get missed constantly.
 
@@ -255,7 +259,9 @@ Because caching is lookup, and decode has nothing to look up. Prefill computes k
 
 Prefix caching skips work that was already done. Speculative decoding buys speed with work you might throw away.
 
-Go back to the truck. At low batch the GPU spends its time streaming weights past arithmetic units that sit mostly idle. Speculative decoding spends them. A cheap draft, either a small model or a small extra head attached to the big one, guesses the next few tokens. The real model then checks all of those guesses in a single forward pass, which costs about what emitting one token normally costs. A rejection sampler keeps the longest correct run and discards the rest.
+Go back to arithmetic intensity. At low batch the GPU streams weights past compute units that sit mostly idle. Speculative decoding spends those idle units. A cheap draft, either a small model or a small extra head attached to the big one, guesses the next few tokens. The real model then checks all of those guesses in a single forward pass, and a rejection sampler keeps the longest correct run.
+
+Verification is nearly free for the same reason batching is. Checking 4 tokens means pushing 4 positions through the network together, which is a prefill-shaped operation, and the weight read that dominates a decode step happens once regardless. You pay one step's bandwidth and get up to 4 tokens out of it.
 
 The clever part is that the sampler is built so the output distribution is provably identical to what the big model would have produced alone. You are not trading quality for speed. You are getting the same tokens sooner.
 
@@ -293,7 +299,9 @@ It means storing numbers with fewer bits: a weight kept in 16 bits becomes 8, or
 | Activations | actually hitting the low-precision tensor cores, so real speed | more sensitive, needs calibration |
 | KV cache | roughly double the concurrent tokens | quality loss at long context if pushed too far |
 
-The sharp edge is in the second row. Weight-only formats store weights small but expand them back to full precision before the matmul, and that unpacking is real work. If you were not short on memory in the first place, AWQ or GPTQ can leave you **slower** than the unquantized model. Weight-only is a memory technique that people keep reaching for as a speed technique.
+The naming tells you which you are getting. **W8A8** means 8-bit weights and 8-bit activations, so the multiply itself runs on the low-precision tensor cores and you get real speed. **W4A16** is weight-only: four-bit weights fed into 16-bit math.
+
+That second form is the sharp edge. Weight-only formats have to dequantize each weight back to 16 bits before the matmul, and that unpacking is work the unquantized model never does. If you were not short on memory in the first place, AWQ or GPTQ can leave you **slower** than where you started. Weight-only is a memory technique that people keep reaching for as a speed technique.
 
 | Format | Type | Memory | Reach for it when |
 | --- | --- | --- | --- |
@@ -312,7 +320,9 @@ Answer with a question back, because which one is bigger flips with context leng
 
 Quantization makes one model cheaper. This one makes many models unnecessary.
 
-The base model loads once. A LoRA adapter is a small set of learned deltas for a single task, usually tens of megabytes against a model of tens of gigabytes. vLLM pages adapters in and out of GPU memory the way it pages KV blocks, which is the S-LoRA idea, and runs batches where different rows use different adapters, which is the Punica idea. One GPU, one copy of the weights, many customers.
+The base model loads once. A LoRA adapter is a low-rank correction to that model's weight matrices: rather than store a whole new matrix, you store two thin matrices whose product gets added to the original at inference time. At rank 16 against a 4096-wide layer that is under 1 percent of the original numbers, which is how an adapter comes out at tens of megabytes against a model of tens of gigabytes.
+
+vLLM pages adapters in and out of GPU memory the way it pages KV blocks, which is the S-LoRA idea, and runs batches where different rows use different adapters, which is the Punica idea. One GPU, one copy of the weights, many customers.
 
 | Approach | Cost of 20 tasks | Time to add task 21 | Quality ceiling |
 | --- | --- | --- | --- |
@@ -332,7 +342,7 @@ One base model plus 50 LoRA adapters, paged in and out like cache blocks, with a
 
 Adapters change what the model knows. This changes what it is allowed to say.
 
-At every step the model produces a score for every token in its vocabulary, and the sampler picks one of them. Constrained decoding puts a grammar engine between those two. The grammar knows which tokens could legally come next, sets the score of every other token to negative infinity, and the sampler chooses from what remains. Invalid output is not caught after the fact. It is never generated.
+At every step the model produces a score, a logit, for every token in its vocabulary, and the sampler picks one of them. Constrained decoding puts a grammar engine between those two steps. Your schema is compiled into a state machine, the engine tracks which state the partial output is in, and at each step it sets the logit of every token that would leave the grammar to negative infinity. The sampler then chooses from what survives. Invalid output is not caught after the fact. It cannot be generated.
 
 | | Prompt and retry | Constrained decoding |
 | --- | --- | --- |
@@ -371,7 +381,7 @@ The ratio inverts. Chat is mostly decode, so you are bandwidth bound and you tun
 
 ## 14. The Four Numbers You Get Judged On
 
-That is a lot of knobs across thirteen sections. These are the numbers that tell you whether turning any of them helped. Four of them, and really only four:
+That is a lot of knobs. These are the numbers that tell you whether turning any of them helped, and there are only four:
 
 | Metric | What it is | Rule of thumb (p99) | What moves it |
 | --- | --- | --- | --- |
@@ -461,7 +471,7 @@ The top of the market wants kernel-level people and there are not many of them. 
 
 ## 18. Where to Start
 
-Find the row that describes you and do the one thing in it. The third column matters as much as the second, because most wasted effort in this area is a good technique applied to the wrong bottleneck.
+Find the row that describes you. The third column matters as much as the second, because most wasted effort here is a good technique aimed at the wrong bottleneck.
 
 | Your situation | First move | Skip |
 | --- | --- | --- |
