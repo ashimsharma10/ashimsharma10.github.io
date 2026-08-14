@@ -88,5 +88,10 @@
     "question": "Has Ashim written anything about LLM evals or hallucination detection?",
     "expectAny": ["evaluation-engineering", "/write-up/"],
     "expectText": ["judge", "golden"]
+  },
+  {
+    "question": "What does Ashim say about vLLM and PagedAttention?",
+    "expectAny": ["vllm-how-a-token-gets-served", "/write-up/"],
+    "expectText": ["KV cache", "prefill"]
   }
 ]
