@@ -1,5 +1,5 @@
 {
-  "llm": 6,
+  "llm": 7,
   "agents": 7,
   "evals": 2,
   "guardrails": 2,
@@ -14,7 +14,7 @@
   "subagents": 1,
   "hooks": 1,
   "ai": 5,
-  "gpu": 1,
+  "gpu": 2,
   "tpu": 1,
   "hardware": 1,
   "ml-systems": 1,
@@ -53,5 +53,8 @@
   "riemann-hypothesis": 1,
   "primes": 1,
   "self-improving-agents": 1,
-  "continual-learning": 1
+  "continual-learning": 1,
+  "vllm": 1,
+  "inference": 1,
+  "kv-cache": 1
 }
