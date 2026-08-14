@@ -12,6 +12,16 @@ Explain LLM inference serving through vLLM, from the memory arithmetic up to the
 - **Style: narrative essay, first person, anchored by figures.** Ashim explicitly asked for "a different style than the rest of the writeups, humanly, natural flow." That sits against the standing house rule that write-ups must not be text-heavy. Resolution: prose carries the argument, figures and tables carry the facts. Every section ships at least one table or diagram, so a scanner still gets the content. No fenced code blocks, inline code spans for flag names only.
 - **Length and scope: ~4,000 prose words**, vLLM internals plus the surrounding 2026 landscape (disaggregation, cache-aware routing, SGLang and TensorRT-LLM).
 - **Interview prep woven, not quarantined.** Sections 2 through 12 close with a `**What they actually ask:**` line. One aggregate skills table near the end. Ashim chose "woven throughout" over a single closing block.
+
+### Revision, 2026-08-14: plain-language rewrite
+
+Ashim asked for the same treatment the evaluation-engineering post got in c224a57: natural flow, concepts explained from scratch, simple language, "instead of just laying out information, make it understandable to reader." Three decisions changed:
+
+- **Essay mode replaced with a numbered table of contents and plain-language headings.** "The batch is a lie" became "Taking Requests as They Arrive," and so on for all 18 sections. The TOC now reads as a path through the post.
+- **Interview lead-ins reformatted.** `**What they actually ask:**` one-liners became `**Question:**` followed by a full answer paragraph, at Ashim's request. This is the bulk of the length increase.
+- **A concrete analogy per hard concept, then the mechanism.** OS paging for the `v` in vLLM, filing folders for the KV cache, an airport shuttle for static batching, a truck driving to the store for bandwidth-bound decode.
+
+Prose grew from ~4,000 to ~5,400 words, roughly 1,100 of which are the detailed answers. Every figure, table, number, source and both interactive components are byte-identical to the original.
 - **Correct the draft and cite.** Ashim chose "yes, correct and cite" over keeping his framing. Five claims from the supplied draft are corrected in a table in section 1 rather than silently fixed, because the corrections are themselves the interesting content.
 
 ## The spine
@@ -20,9 +30,11 @@ One idea holds the essay together: **serving is a memory problem, not a compute 
 
 ## Structure
 
-Essay mode after `self-improving-agents.mdx`: no table of contents, sentence-case H2s that read as claims, `&nbsp;` after frontmatter. 15 H2 sections, 5 mermaid figures, 12 tables, 11 interview lead-ins, 4,004 prose words.
+As of the 2026-08-14 rewrite, structure follows `evaluation-engineering.mdx`: `&nbsp;` after frontmatter, a cold open, then a numbered table of contents and 18 numbered H2 sections. 3 mermaid figures, 2 interactive components, 18 tables, 13 `**Question:**` blocks, ~5,400 prose words.
 
-Cold open (no heading), then: the name is the whole idea; where the memory actually goes; PagedAttention in one picture; the batch is a lie; the asymmetry everything else falls out of; the cheapest win you are probably not taking; buying latency with compute; where quantization actually pays; one model, many tenants; making it return valid JSON; what you actually get measured on; the stuff that grew around the engine; what the job actually asks for; where to start; sources.
+Cold open (no heading), then: what vLLM actually is; the words you need first; why your GPU fills up; paging the cache; taking requests as they arrive; reading and writing are different jobs; splitting a model across GPUs; reusing work you already did; guessing ahead; using smaller numbers; one model, many customers; forcing valid JSON; agents are a different workload; the four numbers you get judged on; splitting prefill and decode across machines; what actually breaks; what the job asks for; where to start; sources.
+
+Each section opens by picking up where the previous one left off, so the post reads as one argument rather than a list of features.
 
 ## Corrections made to the supplied draft
 
