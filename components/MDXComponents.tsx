@@ -9,6 +9,8 @@ import MermaidChart from './MermaidChart'
 import LinuxFSHierarchy from './LinuxFSHierarchy'
 import RiemannZeta from './writeups/RiemannZeta'
 import LoopVsGraphSim from './writeups/LoopVsGraphSim'
+import BatchingSim from './writeups/BatchingSim'
+import PagedKVSim from './writeups/PagedKVSim'
 import QuantumTimeline from './writeups/quantum/QuantumTimeline'
 import QubitCollapse from './writeups/quantum/QubitCollapse'
 import DoubleSlit from './writeups/quantum/DoubleSlit'
@@ -25,6 +27,8 @@ export const components: MDXComponents = {
   LinuxFSHierarchy,
   RiemannZeta,
   LoopVsGraphSim,
+  BatchingSim,
+  PagedKVSim,
   QuantumTimeline,
   QubitCollapse,
   DoubleSlit,
