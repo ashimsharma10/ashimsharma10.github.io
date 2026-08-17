@@ -29,13 +29,24 @@ const siteMetadata = {
     // If you want to use an analytics provider you have to add it to the
     // content security policy in the `next.config.js` file.
     // supports Plausible, Simple Analytics, Umami, Posthog or Google Analytics.
-    umamiAnalytics: {
-      // We use an env variable for this site to avoid other users cloning our analytics ID
-      umamiWebsiteId: process.env.NEXT_UMAMI_ID, // e.g. 123e4567-e89b-12d3-a456-426614174000
-      // You may also need to overwrite the script if you're storing data in the US - ex:
-      // src: 'https://us.umami.is/script.js'
-      // Remember to add 'us.umami.is' in `next.config.js` as a permitted domain for the CSP
-    },
+    // Umami is configured only when a website ID is present. pliny renders the
+    // script tag for whatever provider keys exist here, so an always-on
+    // umamiAnalytics block made every page load analytics.umami.is even with no
+    // ID to report against — a third-party request that collected nothing.
+    // Unset means no script at all, which is what we want locally: localhost
+    // traffic stays out of the dashboard.
+    ...(process.env.NEXT_UMAMI_ID && {
+      umamiAnalytics: {
+        // Both values come from the tracking snippet in Umami Cloud (Websites →
+        // Edit → Tracking code) and are set as GitHub Actions *variables*, not
+        // secrets — they ship in the built HTML for anyone to read.
+        umamiWebsiteId: process.env.NEXT_UMAMI_ID, // e.g. 123e4567-e89b-12d3-a456-426614174000
+        // Umami Cloud serves the script from a few hosts depending on the
+        // account region; unset falls back to pliny's analytics.umami.is.
+        // Whatever host is used must also be allowed in `next.config.js` CSP.
+        src: process.env.NEXT_UMAMI_SRC,
+      },
+    }),
     // plausibleAnalytics: {
     //   plausibleDataDomain: '', // e.g. tailwind-nextjs-starter-blog.vercel.app
     // If you are hosting your own Plausible.

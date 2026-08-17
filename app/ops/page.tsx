@@ -15,6 +15,11 @@ const LANGFUSE_URL = process.env.NEXT_PUBLIC_LANGFUSE_URL || 'https://us.cloud.l
 const CLOUDFLARE_URL =
   process.env.NEXT_PUBLIC_CLOUDFLARE_DASH_URL ||
   'https://dash.cloudflare.com/?to=/:account/workers/services/view/ashim-chatbot/production/observability'
+// Umami has no useful top-level fallback — an unconfigured build would link to a
+// login screen — so the card is only rendered once this points at the site's
+// dashboard. Umami covers the visitor detail the first-party counting below
+// doesn't: referrers, devices, entry and exit pages, session duration.
+const UMAMI_URL = process.env.NEXT_PUBLIC_UMAMI_URL
 
 interface Totals {
   messages: number
@@ -448,6 +453,16 @@ function ObservabilityTab({
       href: CLOUDFLARE_URL,
       cta: 'Open Cloudflare',
     },
+    ...(UMAMI_URL
+      ? [
+          {
+            name: 'Umami',
+            desc: 'Visitor detail behind the counts below: referrers, devices and browsers, entry and exit pages, and session duration.',
+            href: UMAMI_URL,
+            cta: 'Open Umami',
+          },
+        ]
+      : []),
   ]
   // Server returns 30 daily buckets + geo for both windows; slice to the toggle.
   const cd = daily.slice(-range)
@@ -505,6 +520,12 @@ function ObservabilityTab({
               <span className="mr-1 ml-4 inline-block w-4 border-t-2 border-dashed border-[#047857] align-middle dark:border-[#34D399]" />
               daily visitors
             </p>
+            {UMAMI_URL && (
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Counted first-party in the Worker — no cookies, no third party. The Umami link above
+                has the per-visitor breakdown.
+              </p>
+            )}
             <h3 className="mt-6 mb-2 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
               Where visits come from
             </h3>
