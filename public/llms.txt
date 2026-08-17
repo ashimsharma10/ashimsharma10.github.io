@@ -4,6 +4,7 @@
 
 ## Write-ups
 
+- [Mixture of Experts, MoE](https://ashimsharma10.github.io/write-up/mixture-of-experts/index.md): Sixteen questions about sparse models, each one the thing you would ask after hearing the last answer: what the router really is, why experts do not learn topics, why sparsity stops paying once you batch, and what it costs to serve one.
 - [Evaluation Engineering: Evals, Traces, and Guardrails](https://ashimsharma10.github.io/write-up/evaluation-engineering/index.md): How to tell whether an LLM system works, and how to keep it working: test cases, graders, judges, groundedness, CI gates, live signals, traces, latency, schemas, injection defense, and PII masking.
 - [Self-Improving Agents](https://ashimsharma10.github.io/write-up/self-improving-agents/index.md): An agent that gets better on its own has to change something about itself, and something has to check the change. This post walks the six things it can change, the checker that decides whether any of it worked, the ceiling it runs into, the ways it breaks, and the loop teams actually run in production.
 - [vLLM: How a Token Actually Gets Served](https://ashimsharma10.github.io/write-up/vllm-how-a-token-gets-served/index.md): What happens inside a serving engine: why the GPU fills up with something other than the model, what paging the cache buys you, why reading a prompt and writing an answer fight each other, and which knobs settle the fight.
