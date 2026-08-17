@@ -7,7 +7,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 
 // A 3D, wiki-style force-directed knowledge graph for the /tags page.
 // - Write-up nodes (light orange) sit on the outer shell — the "leaves".
-// - Tag nodes (green) form the central concept core, sized by post count.
+// - Tag nodes (green) spread over an inner shell — the concept core, sized by
+//   post count.
 // - Edges connect each write-up to its tags.
 // Interactions: drag the background to orbit, scroll to zoom, drag a node to
 // move it in 3D (it pins where you drop it), hover to highlight, click to open.
@@ -87,9 +88,11 @@ const palette = {
   },
 }
 
-// Reference radius the graph is framed to (graph units). The layout keeps the
-// tag core near the centre and pushes write-ups out toward this shell.
-const R0 = 240
+// Reference radius the graph is framed to (graph units). Write-ups sit on the
+// outer shell (R0); tags spread over an inner shell rather than collapsing into
+// a single clump at the origin, so the whole frame is used.
+const R0 = 320
+const TAG_SHELL = 200
 
 // Evenly distribute point i of n on a sphere of the given radius (Fibonacci).
 function spherePoint(i: number, n: number, radius: number): [number, number, number] {
@@ -167,7 +170,7 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
         'post',
         p.tags.length,
         13,
-        spherePoint(i, posts.length, 210)
+        spherePoint(i, posts.length, R0)
       )
     )
 
@@ -180,7 +183,7 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
         'tag',
         tagCount[t],
         7 + tagCount[t] * 3,
-        spherePoint(i, tagKeys.length, 70)
+        spherePoint(i, tagKeys.length, TAG_SHELL)
       )
     )
 
@@ -230,9 +233,10 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
       canvas.width = W * dpr
       canvas.height = H * dpr
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-      // Divide by the near-hemisphere magnification (~1.7×) so the whole
-      // rotating sphere stays inside the frame at any orientation.
-      S = (Math.min(W, H) / 2 - 46) / (R0 * 1.62)
+      // Divide by the widest projected extent of the shell (a point on the
+      // near-side limb, magnified by perspective) so the whole rotating sphere
+      // stays inside the frame at any orientation, with room for labels.
+      S = (Math.min(W, H) / 2 - 46) / (R0 * 1.22)
     }
     resize()
 
@@ -284,7 +288,10 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
             const dy = a.y - b.y
             const dz = a.z - b.z
             const d2 = dx * dx + dy * dy + dz * dz || 0.01
-            const charge = a.type === 'post' && b.type === 'post' ? 9000 : 4200
+            // Size-aware repulsion: a big multi-post tag claims proportionally
+            // more room, which is what keeps the core from matting together.
+            // Halved across types so write-ups aren't shoved off their shell.
+            const charge = 110 * a.r * b.r * (a.type === b.type ? 1 : 0.5)
             const d = Math.sqrt(d2)
             const f = charge / d2 / d
             a.vx += dx * f
@@ -303,7 +310,7 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
           const dy = b.y - a.y
           const dz = b.z - a.z
           const d = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1
-          const f = ((d - 120) * 0.02) / d
+          const f = ((d - 145) * 0.015) / d
           a.vx += dx * f
           a.vy += dy * f
           a.vz += dz * f
@@ -311,23 +318,19 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
           b.vy -= dy * f
           b.vz -= dz * f
         })
-        // Radial: tags to the core, write-ups out to the shell.
+        // Radial: each type seeks its own shell — tags the inner one, write-ups
+        // the outer one. Giving tags a shell (rather than pulling them at the
+        // origin) is what keeps the core spread out instead of clumped.
         nodes.forEach((n) => {
           const dist = Math.sqrt(n.x * n.x + n.y * n.y + n.z * n.z) || 1
-          if (n.type === 'tag') {
-            const f = -0.012
-            n.vx += n.x * f
-            n.vy += n.y * f
-            n.vz += n.z * f
-          } else {
-            const f = ((210 - dist) * 0.01) / dist
-            n.vx += n.x * f
-            n.vy += n.y * f
-            n.vz += n.z * f
-          }
-          n.vx += -n.x * 0.002
-          n.vy += -n.y * 0.002
-          n.vz += -n.z * 0.002
+          const shell = n.type === 'tag' ? TAG_SHELL : R0
+          const f = ((shell - dist) * 0.012) / dist
+          n.vx += n.x * f
+          n.vy += n.y * f
+          n.vz += n.z * f
+          n.vx += -n.x * 0.001
+          n.vy += -n.y * 0.001
+          n.vz += -n.z * 0.001
           if (n.fixed || n === drag) return
           n.vx *= 0.82
           n.vy *= 0.82
@@ -619,9 +622,15 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
       zoom = 1.0
       autoRotate = !reducedMotion
       pinnedAny = false
-      nodes.forEach((n, i) => {
-        const total = nodes.length
-        const pos = spherePoint(i, total, n.type === 'post' ? 210 : 70)
+      // Re-seed each type across its own shell — indexing per type (rather than
+      // across the whole node list) keeps both spread over the full sphere.
+      const totals = {
+        post: nodes.filter((n) => n.type === 'post').length,
+        tag: nodes.filter((n) => n.type === 'tag').length,
+      }
+      const seen = { post: 0, tag: 0 }
+      nodes.forEach((n) => {
+        const pos = spherePoint(seen[n.type]++, totals[n.type], n.type === 'post' ? R0 : TAG_SHELL)
         n.x = pos[0]
         n.y = pos[1]
         n.z = pos[2]
