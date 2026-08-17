@@ -138,9 +138,7 @@ export default function MoELayerDiagram() {
           >
             one feed forward network
           </Box>
-          <div style={cost(p.secondary)}>
-            feed forward weights used: 100%
-          </div>
+          <div style={cost(p.secondary)}>feed forward weights used: 100%</div>
         </div>
 
         <div style={column}>
