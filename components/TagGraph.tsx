@@ -224,6 +224,7 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
     let W = 0
     let H = 0
     let S = 1 // graph-units → screen-px scale
+    let XS = 1 // horizontal stretch, so a wide canvas is not mostly margin
     const col = () => (themeRef.current === 'dark' ? palette.dark : palette.light)
 
     const resize = () => {
@@ -239,6 +240,10 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
       // 1.22 assumed the graph settles on R0, but repulsion inflates it well
       // past that, so the outer nodes were being clipped off the canvas.
       S = (Math.min(W, H) / 2 - 46) / (R0 * 1.5)
+      // Height is the binding dimension, so an unstretched sphere used barely
+      // two thirds of a 16:9 canvas and read as a clump in the middle. Spread x
+      // to suit the box; nodes stay circular because only positions scale.
+      XS = Math.min(1.45, Math.max(1, (W / H) * 0.82))
     }
     resize()
 
@@ -272,7 +277,7 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
       const y1 = n.y * cx - z1 * sx
       const z2 = n.y * sx + z1 * cx
       const factor = FOCAL / (FOCAL + z2)
-      n.px = W / 2 + x1 * factor * S * zoom
+      n.px = W / 2 + x1 * factor * S * zoom * XS
       n.py = H / 2 + y1 * factor * S * zoom
       n.pz = z2
       n.pr = n.r * factor * S * zoom
@@ -510,7 +515,7 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
         last = { x: e.clientX, y: e.clientY }
         const factor = FOCAL / (FOCAL + drag.pz)
         const sc = S * zoom * factor || 1
-        const gx = ddx / sc
+        const gx = ddx / (sc * XS)
         // camUp projects to +screen-y (downward), so a downward drag (ddy > 0)
         // must map to +gy for the node to follow the cursor instead of mirroring it.
         const gy = ddy / sc
