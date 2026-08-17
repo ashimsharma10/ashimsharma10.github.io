@@ -42,6 +42,12 @@ jobs:
           # URL of the deployed Cloudflare Worker chatbot backend.
           # Set this as a GitHub repo variable (Settings → Secrets and variables → Actions → Variables).
           NEXT_PUBLIC_CHAT_API_URL: ${{ vars.NEXT_PUBLIC_CHAT_API_URL }}
+          # Umami Cloud analytics. Repo variables, not secrets — the website ID
+          # is embedded in the built HTML. Unset the ID to turn tracking off.
+          NEXT_UMAMI_ID: ${{ vars.NEXT_UMAMI_ID }}
+          NEXT_UMAMI_SRC: ${{ vars.NEXT_UMAMI_SRC }}
+          # Dashboard link on the /ops Observability tab.
+          NEXT_PUBLIC_UMAMI_URL: ${{ vars.NEXT_PUBLIC_UMAMI_URL }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: ./out
