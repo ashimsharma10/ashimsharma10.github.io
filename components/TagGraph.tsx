@@ -57,11 +57,13 @@ function shortLabel(title: string): string {
 }
 
 // Two-colour categorical scheme: write-ups → light orange, tags → green.
+// Edges are lime and always drawn, but barely there until a node is focused.
+// Light mode uses a darker lime: #CCFF00 on a near-white surface is unreadable.
 const palette = {
   light: {
     surface: '#f7f8fa',
-    edge: 'rgba(100,116,139,0.30)',
-    edgeHi: 'rgba(15,157,88,0.75)',
+    edge: 'rgba(122,153,0,0.30)',
+    edgeHi: '#7a9900',
     post: '#ef9a4f',
     postRing: '#d97b2e',
     tag: '#0f9d58',
@@ -74,8 +76,8 @@ const palette = {
   },
   dark: {
     surface: '#0e1117',
-    edge: 'rgba(148,163,184,0.26)',
-    edgeHi: 'rgba(52,211,153,0.7)',
+    edge: 'rgba(204,255,0,0.16)',
+    edgeHi: '#CCFF00',
     post: '#e6924a',
     postRing: '#c9762f',
     tag: '#1aa06e',
@@ -92,7 +94,7 @@ const palette = {
 // outer shell (R0); tags spread over an inner shell rather than collapsing into
 // a single clump at the origin, so the whole frame is used.
 const R0 = 320
-const TAG_SHELL = 200
+const TAG_SHELL = 192
 
 // Evenly distribute point i of n on a sphere of the given radius (Fibonacci).
 function spherePoint(i: number, n: number, radius: number): [number, number, number] {
@@ -224,6 +226,7 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
     let W = 0
     let H = 0
     let S = 1 // graph-units → screen-px scale
+    let XS = 1 // horizontal stretch, so a wide canvas is not mostly margin
     const col = () => (themeRef.current === 'dark' ? palette.dark : palette.light)
 
     const resize = () => {
@@ -236,7 +239,13 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
       // Divide by the widest projected extent of the shell (a point on the
       // near-side limb, magnified by perspective) so the whole rotating sphere
       // stays inside the frame at any orientation, with room for labels.
-      S = (Math.min(W, H) / 2 - 46) / (R0 * 1.22)
+      // 1.22 assumed the graph settles on R0, but repulsion inflates it well
+      // past that, so the outer nodes were being clipped off the canvas.
+      S = (Math.min(W, H) / 2 - 46) / (R0 * 1.5)
+      // Height is the binding dimension, so an unstretched sphere used barely
+      // two thirds of a 16:9 canvas and read as a clump in the middle. Spread x
+      // to suit the box; nodes stay circular because only positions scale.
+      XS = Math.min(1.45, Math.max(1, (W / H) * 0.82))
     }
     resize()
 
@@ -270,7 +279,7 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
       const y1 = n.y * cx - z1 * sx
       const z2 = n.y * sx + z1 * cx
       const factor = FOCAL / (FOCAL + z2)
-      n.px = W / 2 + x1 * factor * S * zoom
+      n.px = W / 2 + x1 * factor * S * zoom * XS
       n.py = H / 2 + y1 * factor * S * zoom
       n.pz = z2
       n.pr = n.r * factor * S * zoom
@@ -291,7 +300,7 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
             // Size-aware repulsion: a big multi-post tag claims proportionally
             // more room, which is what keeps the core from matting together.
             // Halved across types so write-ups aren't shoved off their shell.
-            const charge = 110 * a.r * b.r * (a.type === b.type ? 1 : 0.5)
+            const charge = 70 * a.r * b.r * (a.type === b.type ? 1 : 0.5)
             const d = Math.sqrt(d2)
             const f = charge / d2 / d
             a.vx += dx * f
@@ -376,18 +385,21 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
       const c = col()
       ctx.clearRect(0, 0, W, H)
       nodes.forEach(project)
-      const active = hover ? adj[hover.id] : null
+      // The node under the pointer, or the one being dragged.
+      const focus = drag || hover
+      const active = focus ? adj[focus.id] : null
 
-      // Edges first, faded by average depth.
+      // Edges sit at a whisper until a node is focused; its own links then go
+      // to full strength and everything else drops further back.
       edges.forEach((e) => {
-        const on = hover && (e.s === hover || e.t === hover)
+        const on = focus !== null && (e.s === focus || e.t === focus)
         const depthA = (e.s.pa + e.t.pa) / 2
         ctx.beginPath()
         ctx.moveTo(e.s.px, e.s.py)
         ctx.lineTo(e.t.px, e.t.py)
         ctx.strokeStyle = on ? c.edgeHi : c.edge
-        ctx.globalAlpha = hover && !on ? c.dim : depthA
-        ctx.lineWidth = on ? 1.8 : 1
+        ctx.globalAlpha = on ? 1 : focus ? c.dim * 0.6 : depthA
+        ctx.lineWidth = on ? 2 : 1
         ctx.stroke()
       })
       ctx.globalAlpha = 1
@@ -398,9 +410,9 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
       ctx.lineJoin = 'round'
       order.forEach((n) => {
         const isPost = n.type === 'post'
-        const isHover = n === hover
+        const isHover = n === focus
         const hi = isHover || (active !== null && active.has(n.id))
-        const lit = !hover || hi
+        const lit = !focus || hi
         const base = (lit ? 1 : c.dim) * n.pa
         const fill = isPost ? c.post : c.tag
         const ring = isPost ? c.postRing : c.tagRing
@@ -508,7 +520,7 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
         last = { x: e.clientX, y: e.clientY }
         const factor = FOCAL / (FOCAL + drag.pz)
         const sc = S * zoom * factor || 1
-        const gx = ddx / sc
+        const gx = ddx / (sc * XS)
         // camUp projects to +screen-y (downward), so a downward drag (ddy > 0)
         // must map to +gy for the node to follow the cursor instead of mirroring it.
         const gy = ddy / sc
@@ -666,6 +678,10 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
         <span className="inline-flex items-center gap-2">
           <span className="inline-block h-3 w-3 rounded-full bg-[#0f9d58] dark:bg-[#1aa06e]" />
           tag — opens the tag page
+        </span>
+        <span className="inline-flex items-center gap-2">
+          <span className="inline-block h-0.5 w-4 rounded-full bg-[#7a9900] dark:bg-[#CCFF00]" />
+          hover or drag a node to light up its links
         </span>
       </div>
 
