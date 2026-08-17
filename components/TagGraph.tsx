@@ -92,7 +92,7 @@ const palette = {
 // outer shell (R0); tags spread over an inner shell rather than collapsing into
 // a single clump at the origin, so the whole frame is used.
 const R0 = 320
-const TAG_SHELL = 200
+const TAG_SHELL = 192
 
 // Evenly distribute point i of n on a sphere of the given radius (Fibonacci).
 function spherePoint(i: number, n: number, radius: number): [number, number, number] {
@@ -236,7 +236,9 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
       // Divide by the widest projected extent of the shell (a point on the
       // near-side limb, magnified by perspective) so the whole rotating sphere
       // stays inside the frame at any orientation, with room for labels.
-      S = (Math.min(W, H) / 2 - 46) / (R0 * 1.22)
+      // 1.22 assumed the graph settles on R0, but repulsion inflates it well
+      // past that, so the outer nodes were being clipped off the canvas.
+      S = (Math.min(W, H) / 2 - 46) / (R0 * 1.5)
     }
     resize()
 
@@ -291,7 +293,7 @@ export default function TagGraph({ posts }: { posts: GraphPost[] }) {
             // Size-aware repulsion: a big multi-post tag claims proportionally
             // more room, which is what keeps the core from matting together.
             // Halved across types so write-ups aren't shoved off their shell.
-            const charge = 110 * a.r * b.r * (a.type === b.type ? 1 : 0.5)
+            const charge = 70 * a.r * b.r * (a.type === b.type ? 1 : 0.5)
             const d = Math.sqrt(d2)
             const f = charge / d2 / d
             a.vx += dx * f
