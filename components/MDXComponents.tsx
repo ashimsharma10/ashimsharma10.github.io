@@ -11,6 +11,8 @@ import RiemannZeta from './writeups/RiemannZeta'
 import LoopVsGraphSim from './writeups/LoopVsGraphSim'
 import BatchingSim from './writeups/BatchingSim'
 import PagedKVSim from './writeups/PagedKVSim'
+import MoERouterSim from './writeups/MoERouterSim'
+import MoELayerDiagram from './writeups/MoELayerDiagram'
 import QuantumTimeline from './writeups/quantum/QuantumTimeline'
 import QubitCollapse from './writeups/quantum/QubitCollapse'
 import DoubleSlit from './writeups/quantum/DoubleSlit'
@@ -29,6 +31,8 @@ export const components: MDXComponents = {
   LoopVsGraphSim,
   BatchingSim,
   PagedKVSim,
+  MoERouterSim,
+  MoELayerDiagram,
   QuantumTimeline,
   QubitCollapse,
   DoubleSlit,
