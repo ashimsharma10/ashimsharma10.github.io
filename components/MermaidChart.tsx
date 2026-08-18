@@ -2,10 +2,13 @@
 
 import { useEffect, useRef } from 'react'
 import { useTheme } from 'next-themes'
+import { SD_ICON_PACK } from './mermaid-icons'
 
 interface MermaidChartProps {
   chart: string
 }
+
+let iconsRegistered = false
 
 export default function MermaidChart({ chart }: MermaidChartProps) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -20,6 +23,13 @@ export default function MermaidChart({ chart }: MermaidChartProps) {
     const render = async () => {
       const mermaid = (await import('mermaid')).default
       if (cancelled) return
+
+      // Icon shapes (NODE@{ icon: "sd:database" }) need their pack registered
+      // before any render. Registering twice throws, so guard it.
+      if (!iconsRegistered) {
+        iconsRegistered = true
+        mermaid.registerIconPacks([{ name: SD_ICON_PACK.prefix, icons: SD_ICON_PACK }])
+      }
 
       const isDark = resolvedTheme === 'dark'
       mermaid.initialize({
