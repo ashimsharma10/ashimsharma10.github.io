@@ -150,6 +150,14 @@ const aboutData = {
 
   conferences: [
     {
+      name: 'vLLM Conference & Ray Summit',
+      detail: 'August 24–26, 2026 · San Francisco, CA',
+      logoUrl: '/static/images/logos/anyscale.svg',
+      logoBg: 'bg-blue-700',
+      logoInitial: 'vLLM',
+      cover: false,
+    },
+    {
       name: 'NVIDIA GTC 2026',
       detail: 'March 16–19, 2026 · San Jose, CA',
       logoUrl: '/static/images/logos/nvidia-gtc.jpg',
