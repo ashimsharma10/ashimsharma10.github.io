@@ -60,6 +60,22 @@ function OrgLogo({
 export default function AuthorLayout({ children, content }: Props) {
   const { name, avatar, occupation, email, twitter, bluesky, linkedin, github } = content
   const [activeSection, setActiveSection] = useState('about')
+  const [avatarZoomed, setAvatarZoomed] = useState(false)
+
+  // Close the enlarged avatar on Escape, and hold the page still behind it.
+  useEffect(() => {
+    if (!avatarZoomed) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setAvatarZoomed(false)
+    }
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', onKeyDown)
+    }
+  }, [avatarZoomed])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -88,13 +104,21 @@ export default function AuthorLayout({ children, content }: Props) {
       <aside className="pt-8 pb-8 lg:sticky lg:top-16 lg:-ml-6 lg:w-56 lg:flex-shrink-0 lg:self-start lg:pt-16 xl:w-64">
         <div className="flex flex-col items-center text-center">
           {avatar && (
-            <Image
-              src={avatar}
-              alt="avatar"
-              width={112}
-              height={112}
-              className="mb-6 h-24 w-24 rounded-full"
-            />
+            <button
+              type="button"
+              aria-label={`Enlarge photo of ${name}`}
+              onClick={() => setAvatarZoomed(true)}
+              className="mb-6 cursor-zoom-in rounded-full transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:outline-none dark:focus-visible:ring-offset-gray-950"
+            >
+              <Image
+                src={avatar}
+                alt="avatar"
+                width={256}
+                height={256}
+                quality={100}
+                className="h-28 w-28 rounded-full object-cover"
+              />
+            </button>
           )}
           <h1 className="text-2xl font-bold tracking-tight text-gray-900 xl:text-3xl dark:text-gray-100">
             {name}
@@ -344,6 +368,33 @@ export default function AuthorLayout({ children, content }: Props) {
           </ul>
         </section>
       </main>
+
+      {/* Enlarged avatar — a step up from the sidebar circle, not a full-bleed view */}
+      {avatarZoomed && avatar && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Photo of ${name}`}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6 backdrop-blur-sm"
+        >
+          {/* Click anywhere to dismiss. The photo above sits behind pointer
+              events, so a click on it lands here too. */}
+          <button
+            type="button"
+            aria-label="Close photo"
+            onClick={() => setAvatarZoomed(false)}
+            className="absolute inset-0 h-full w-full cursor-zoom-out"
+          />
+          <Image
+            src={avatar}
+            alt={name}
+            width={768}
+            height={768}
+            quality={100}
+            className="pointer-events-none relative h-64 w-64 rounded-full object-cover shadow-2xl ring-4 ring-white/80 sm:h-80 sm:w-80 dark:ring-white/20"
+          />
+        </div>
+      )}
     </div>
   )
 }

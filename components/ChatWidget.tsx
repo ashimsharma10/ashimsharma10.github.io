@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 // Static user-site (served at root), so the public path resolves directly.
-const AVATAR_SRC = '/static/images/avatar.png'
+const AVATAR_SRC = '/static/images/avatar.webp'
 const API_URL = process.env.NEXT_PUBLIC_CHAT_API_URL
 
 interface Source {
