@@ -1,5 +1,5 @@
 {
-  "llm": 8,
+  "llm": 9,
   "agents": 7,
   "evals": 2,
   "guardrails": 2,
@@ -9,12 +9,15 @@
   "distributed-computing": 1,
   "deep-learning": 3,
   "infrastructure": 4,
+  "kv-cache": 2,
+  "inference": 3,
+  "attention": 1,
+  "gpu": 3,
   "claude-code": 1,
   "skills": 1,
   "subagents": 1,
   "hooks": 1,
   "ai": 5,
-  "gpu": 2,
   "tpu": 1,
   "hardware": 1,
   "ml-systems": 1,
@@ -42,7 +45,6 @@
   "kernel": 1,
   "moe": 1,
   "architecture": 1,
-  "inference": 2,
   "training": 1,
   "pytorch": 3,
   "numpy": 1,
@@ -61,6 +63,5 @@
   "data-engineering": 1,
   "azure": 1,
   "system-design": 1,
-  "vllm": 1,
-  "kv-cache": 1
+  "vllm": 1
 }
