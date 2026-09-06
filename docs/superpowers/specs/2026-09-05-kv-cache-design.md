@@ -1,8 +1,10 @@
 # KV Cache Write-up — Design
 
 Date: 2026-09-05
-Slug: `kv-cache-what-fills-a-gpu`
-Status: approved, ready to implement
+Slug: `architecture-of-memory-kv-cache`
+Status: implemented. Revised mid-way at Ashim's request: his title verbatim, not the
+numbered-sections-with-Question house format, about half the length, plain language,
+few named systems or parameters, and hand-drawn Excalidraw figures rather than mermaid.
 
 ## Goal
 
@@ -30,36 +32,27 @@ recomputed and contested figures attributed rather than asserted.
 
 ## Structure
 
-Numbered sections with a table of contents, each closing with a bolded **Question:** in
-the vLLM post's house style.
-
-1. What the Cache Actually Holds
-2. Two Machines Sharing One GPU
-3. The Size Formula, and the Bill
-4. Cutting Heads: MQA and GQA
-5. Multi-head Latent Attention
-6. Weight Absorption, and Why RoPE Breaks It
-7. Where the Blocks Physically Live
-8. Sharing a Prefix: Radix Trees
-9. Quantizing a Moving Cache
-10. Throwing Tokens Away
-11. Why Eviction Fails on JSON
-12. Amortizing the Read
-13. The Decode Kernel
-14. Off the GPU
-15. Between Machines
-16. Which Lever, Given Your Symptom
-17. Sources and further reading
+Plain `##` headings, no table of contents, no closing Question blocks. Short paragraphs,
+simple sentences. Order follows the research brief: why the cache exists, prefill vs
+decode, size, shrinking it in the model (GQA, MLA, absorption, split positional key),
+storing it (paging, prefix tree), fewer bits (KIVI, alignment warning), eviction (H2O,
+sinks, the JSON failure), fewer reads (speculation), faster reads (Flash-Decoding),
+off-GPU tiers and split machines, a short "what to remember", further reading.
 
 ## Diagrams
 
-Mermaid with `look: handDrawn` set per-diagram via the diagram's own frontmatter config
-block. This is mermaid 11's built-in Excalidraw-style rough rendering — no new dependency,
-no change to `MermaidChart.tsx`, and existing posts' diagrams are untouched.
+Three hand-drawn figures, designed with the Excalidraw MCP (`create_view`) so Ashim sees
+them in chat, with the same element JSON kept in `scripts/sketches/*.json` as the source
+of truth. `scripts/render-sketches.mjs` renders that JSON with rough.js (the engine
+Excalidraw uses; already a mermaid dependency) into `components/writeups/sketches.generated.ts`,
+and `<Sketch name="..." />` inlines the SVG. Strokes are `currentColor` and fills are
+semi-transparent tints, so one SVG works in both themes.
 
-Keep each diagram simple: a handful of nodes, one idea per figure. Prefer TD/BT layouts
-(LR chains get scaled tiny by `useMaxWidth`). `classDef` colours are safe — the component
-strips them in dark mode.
+- `prefill-decode`: prompt -> prefill writes the cache -> decode reads all of it each step
+- `radix-tree`: shared system prompt stored once, conversations and branches hang off it
+- `memory-tiers`: GPU -> CPU -> SSD -> network, idle moves down, returning moves up
+
+To change a figure: edit the JSON, re-run the script, commit both.
 
 ## Interactive components
 
@@ -80,10 +73,12 @@ deterministic first render, Strict-Mode-safe cleanup.
 ## Corrections to the source brief
 
 - DeepSeek-V3's 1,152 bytes and the 57x ratio are **per layer**. Across 61 layers that is
-  70,272 B per token, so 128K context is **~9.0 GB**, not 11.8 GB. Verified against
-  Raschka's KV cache gallery and the DeepSeek-V3 config (`kv_lora_rank` 512,
-  `qk_rope_head_dim` 64).
-- Llama-3-70B at 128K is **40.0 GB**, not 42.
+  70,272 B per token, so 128K context (131,072 tokens) is **9.2 GB**, not 11.8 GB.
+  Verified against Raschka's KV cache gallery and the DeepSeek-V3 config
+  (`kv_lora_rank` 512, `qk_rope_head_dim` 64).
+- Units are decimal GB throughout (1 GB = 1e9 B), matching how HBM capacity and parameter
+  counts are quoted. On that basis the brief's Llama-3-70B figure of ~42 GB was correct
+  (42.9 GB at 131,072 tokens); the post uses 42.9.
 - MQA's saving is an `n_heads`-fold cut (32x on a 32-head model), not "75-90%".
 - Drop the claim that vLLM "bypasses the Python GIL via C++ extensions" — unsupported.
 - XQuant's 12.5x is **XQuant-CL**, which quantizes cross-layer *differences* in X, not
@@ -97,7 +92,7 @@ deterministic first render, Strict-Mode-safe cleanup.
 ## Frontmatter
 
 ```
-title: 'The KV Cache: What Actually Fills a GPU'
+title: 'The Architecture of Memory: KV Cache Dynamics, Optimization, and the Future of LLM Inference'
 tags: ['kv-cache', 'llm', 'inference', 'attention', 'gpu']
 ```
 
