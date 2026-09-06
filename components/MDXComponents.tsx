@@ -15,7 +15,6 @@ import MoERouterSim from './writeups/MoERouterSim'
 import MoELayerDiagram from './writeups/MoELayerDiagram'
 import KVCacheBudget from './writeups/KVCacheBudget'
 import MLACompression from './writeups/MLACompression'
-import KVEvictionSim from './writeups/KVEvictionSim'
 import Sketch from './writeups/Sketch'
 import QuantumTimeline from './writeups/quantum/QuantumTimeline'
 import QubitCollapse from './writeups/quantum/QubitCollapse'
@@ -39,7 +38,6 @@ export const components: MDXComponents = {
   MoELayerDiagram,
   KVCacheBudget,
   MLACompression,
-  KVEvictionSim,
   Sketch,
   QuantumTimeline,
   QubitCollapse,

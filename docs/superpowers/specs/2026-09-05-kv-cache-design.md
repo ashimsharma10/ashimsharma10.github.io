@@ -32,12 +32,20 @@ recomputed and contested figures attributed rather than asserted.
 
 ## Structure
 
-Plain `##` headings, no table of contents, no closing Question blocks. Short paragraphs,
-simple sentences. Order follows the research brief: why the cache exists, prefill vs
-decode, size, shrinking it in the model (GQA, MLA, absorption, split positional key),
-storing it (paging, prefix tree), fewer bits (KIVI, alignment warning), eviction (H2O,
-sinks, the JSON failure), fewer reads (speculation), faster reads (Flash-Decoding),
-off-GPU tiers and split machines, a short "what to remember", further reading.
+Follows Ashim's research brief section for section, using its headings verbatim as `##`
+and `###`: The Dual-Phase Anatomy of LLM Inference (prefill, decode, the cache formula),
+Architectural Interventions in Attention Mechanisms (MQA/GQA, MLA, weight absorption,
+decoupled RoPE), The Operating Systems of Inference (PagedAttention, RadixAttention, engine
+table), Algorithmic Compression (KIVI, XQuant, eviction and structural bias), Speculative
+Decoding (EAGLE, P-EAGLE, tree verification), Kernel Optimizations (Flash-Decoding,
+FlashInfer, prefetching, BitDecoding), Distributed Inference (PD disaggregation, Mooncake,
+DualPath, multi-tier storage), Synthesis and Strategic Outlook. Sentences are the brief's,
+lightly simplified. Formulas render with KaTeX. No table of contents, no Question blocks.
+
+Two earlier drafts were rejected: a house-style numbered deep dive (too long) and a
+plain-language rewrite with its own structure ("not good at all"). The instruction that
+stuck: use the brief's topics, sections, and sentences; make it simple; do not make it
+like the other write-ups.
 
 ## Diagrams
 
@@ -66,9 +74,7 @@ deterministic first render, Strict-Mode-safe cleanup.
 - `MLACompression.tsx` — a static diagram, `MoELayerDiagram`-shaped: full per-token K and V
   beside the latent `c_KV` plus the shared RoPE tail, with live byte counts. Carries
   section 5.
-- `KVEvictionSim.tsx` — a token strip with attention mass. Toggle recent-window vs H2O vs
-  a schema-dense JSON prompt, and watch H2O keep the delimiters and drop the values.
-  Carries sections 10-11.
+- `KVEvictionSim.tsx` was built and then removed at Ashim's request.
 
 ## Corrections to the source brief
 
