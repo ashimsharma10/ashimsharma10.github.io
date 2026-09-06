@@ -1,0 +1,13 @@
+[{"type":"settings","style":"clean"},
+{"type":"text","id":"t","x":260,"y":10,"text":"The production data flywheel","fontSize":22},
+{"type":"rectangle","id":"dep","x":250,"y":50,"width":300,"height":60,"roundness":{"type":3},"backgroundColor":"#a5d8ff","fillStyle":"solid","label":{"text":"Deployed model\nserving real traffic","fontSize":16}},
+{"type":"arrow","id":"a1","x":500,"y":110,"width":150,"height":60,"points":[[0,0],[150,60]],"endArrowhead":"arrow"},
+{"type":"rectangle","id":"fail","x":520,"y":170,"width":260,"height":60,"roundness":{"type":3},"backgroundColor":"#ffc9c9","fillStyle":"solid","label":{"text":"Production failures\nerrors, rejections, failed checks","fontSize":15}},
+{"type":"arrow","id":"a2","x":650,"y":230,"width":0,"height":60,"points":[[0,0],[0,60]],"endArrowhead":"arrow"},
+{"type":"rectangle","id":"crit","x":520,"y":290,"width":260,"height":70,"roundness":{"type":3},"backgroundColor":"#fff3bf","fillStyle":"solid","label":{"text":"Frontier models critique the failure,\nthe agent replays it with the fix","fontSize":15}},
+{"type":"arrow","id":"a3","x":650,"y":360,"width":-200,"height":60,"points":[[0,0],[-200,60]],"endArrowhead":"arrow","label":{"text":"verified fixes only","fontSize":14}},
+{"type":"rectangle","id":"buf","x":250,"y":420,"width":300,"height":70,"roundness":{"type":3},"backgroundColor":"#c3fae8","fillStyle":"solid","label":{"text":"Replay buffer\nnew fixes mixed with past trajectories","fontSize":15}},
+{"type":"arrow","id":"a4","x":300,"y":420,"width":-140,"height":-60,"points":[[0,0],[-140,-60]],"endArrowhead":"arrow"},
+{"type":"rectangle","id":"grpo","x":20,"y":290,"width":220,"height":70,"roundness":{"type":3},"backgroundColor":"#d0bfff","fillStyle":"solid","label":{"text":"GRPO update\non the weights","fontSize":16}},
+{"type":"arrow","id":"a5","x":130,"y":290,"width":120,"height":-210,"points":[[0,0],[120,-210]],"endArrowhead":"arrow","label":{"text":"redeploy","fontSize":14}},
+{"type":"text","id":"n","x":60,"y":520,"text":"Each turn: a smaller model, a shorter prompt, higher accuracy than the frontier baseline","fontSize":15,"strokeColor":"#757575"}]
