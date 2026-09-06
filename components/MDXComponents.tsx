@@ -13,6 +13,10 @@ import BatchingSim from './writeups/BatchingSim'
 import PagedKVSim from './writeups/PagedKVSim'
 import MoERouterSim from './writeups/MoERouterSim'
 import MoELayerDiagram from './writeups/MoELayerDiagram'
+import KVCacheBudget from './writeups/KVCacheBudget'
+import MLACompression from './writeups/MLACompression'
+import KVEvictionSim from './writeups/KVEvictionSim'
+import Sketch from './writeups/Sketch'
 import QuantumTimeline from './writeups/quantum/QuantumTimeline'
 import QubitCollapse from './writeups/quantum/QubitCollapse'
 import DoubleSlit from './writeups/quantum/DoubleSlit'
@@ -33,6 +37,10 @@ export const components: MDXComponents = {
   PagedKVSim,
   MoERouterSim,
   MoELayerDiagram,
+  KVCacheBudget,
+  MLACompression,
+  KVEvictionSim,
+  Sketch,
   QuantumTimeline,
   QubitCollapse,
   DoubleSlit,
