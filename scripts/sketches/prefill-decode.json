@@ -1,0 +1,13 @@
+[{"type":"text","id":"t","x":180,"y":20,"text":"How the cache is written, then read","fontSize":22},
+{"type":"rectangle","id":"p","x":40,"y":100,"width":180,"height":70,"roundness":{"type":3},"backgroundColor":"#a5d8ff","fillStyle":"solid","label":{"text":"Your prompt","fontSize":18}},
+{"type":"arrow","id":"a1","x":220,"y":135,"width":60,"height":0,"points":[[0,0],[60,0]],"endArrowhead":"arrow"},
+{"type":"rectangle","id":"pf","x":280,"y":100,"width":220,"height":70,"roundness":{"type":3},"backgroundColor":"#fff3bf","fillStyle":"solid","label":{"text":"Prefill\nreads all words at once","fontSize":16}},
+{"type":"arrow","id":"a2","x":390,"y":170,"width":0,"height":90,"points":[[0,0],[0,90]],"endArrowhead":"arrow","label":{"text":"writes","fontSize":14}},
+{"type":"rectangle","id":"c","x":280,"y":260,"width":220,"height":110,"roundness":{"type":3},"backgroundColor":"#c3fae8","fillStyle":"solid","label":{"text":"KV cache\nevery key and value\nfrom every word so far","fontSize":16}},
+{"type":"arrow","id":"a3","x":500,"y":315,"width":60,"height":0,"points":[[0,0],[60,0]],"endArrowhead":"arrow"},
+{"type":"text","id":"t2","x":455,"y":385,"text":"reads all of it, every step","fontSize":14,"strokeColor":"#757575"},
+{"type":"rectangle","id":"d","x":560,"y":260,"width":200,"height":110,"roundness":{"type":3},"backgroundColor":"#d0bfff","fillStyle":"solid","label":{"text":"Decode\none word at a time","fontSize":16}},
+{"type":"arrow","id":"a4","x":660,"y":260,"width":-200,"height":-40,"points":[[0,0],[0,-40],[-200,-40],[-200,0]],"endArrowhead":"arrow","strokeColor":"#8b5cf6"},
+{"type":"text","id":"t3","x":450,"y":198,"text":"adds the new word's key and value","fontSize":14,"strokeColor":"#757575"},
+{"type":"arrow","id":"a5","x":660,"y":370,"width":0,"height":60,"points":[[0,0],[0,60]],"endArrowhead":"arrow"},
+{"type":"rectangle","id":"o","x":560,"y":430,"width":200,"height":70,"roundness":{"type":3},"backgroundColor":"#b2f2bb","fillStyle":"solid","label":{"text":"Answer\none word per step","fontSize":16}}]
