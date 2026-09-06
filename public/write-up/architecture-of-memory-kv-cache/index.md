@@ -36,7 +36,7 @@ This efficiency comes with a physical memory tax. At every decode step, the enti
 
 ### The Mathematics of Cache Expansion
 
-The size of the KV cache is predictable. It grows linearly with batch size, context length, number of layers, and hidden dimension. For a standard transformer with Multi-Head Attention (MHA), the memory per token across all layers is:
+How big is that cache? Its size is predictable. It grows linearly with batch size, context length, number of layers, and hidden dimension. For a standard transformer with Multi-Head Attention (MHA), the memory per token across all layers is:
 
 $$
 M_{\text{KV}} = 2 \times n_{\text{layers}} \times n_{\text{kv\_heads}} \times d_{\text{head}} \times p_{\text{bytes}}
@@ -51,6 +51,8 @@ The factor of 2 covers the separate Key and Value matrices, and $p_{\text{bytes}
 | DeepSeek-V3 (MLA) | 61 | 1 (effective) | 576 | 128,000 | BF16 | ~9.0 GB |
 
 Look at the Llama-3-70B row. Caching a single 128,000-token sequence takes over 40 GB of HBM for the KV cache alone. That is more than half of an 80 GB NVIDIA H100, before you count the model's 140 GB of weights. Because throughput scales with batch size, and batch size is limited by whatever memory is left over, managing this cache decides whether serving an LLM is economically viable.
+
+The explorer below runs the same formula for a few models. Change the context length and the precision, and watch which column decides how many requests fit.
 
 <KVCacheBudget />
 
@@ -68,7 +70,7 @@ The early fixes targeted the $n_{\text{kv\_heads}}$ term. In **Multi-Query Atten
 
 The most aggressive change in current open-weight models is **Multi-Head Latent Attention (MLA)**, used in DeepSeek-V2 and V3. MLA does not reduce the number of KV heads. It attacks the size of each cache entry directly, by projecting the attention state into a much smaller latent vector that keeps most of the information (a low-rank representation).
 
-In a standard architecture, the full Keys and Values are cached. In MLA, the input is compressed by a down-projection matrix $W_{DKV} \in \mathbb{R}^{d_c \times d}$ into a single latent matrix $C_{KV} \in \mathbb{R}^{d_c \times n}$, where $d_c$ is a narrow latent dimension. Only this compressed $C_{KV}$ is stored in HBM. At inference time, two up-projection matrices ($W_{UK}$ and $W_{UV}$) expand the latent vector back into full Keys and Values. For DeepSeek-V3 this gives a 57× compression ratio: per token, per layer, the footprint drops from 65,536 bytes (for an MHA equivalent) to 1,152 bytes.
+In a standard architecture, the full Keys and Values are cached. In MLA, the input is compressed by a down-projection matrix $W_{DKV} \in \mathbb{R}^{d_c \times d}$ into a single latent matrix $C_{KV} \in \mathbb{R}^{d_c \times n}$, where $d_c$ is a narrow latent dimension. Only this compressed $C_{KV}$ is stored in HBM. At inference time, two up-projection matrices ($W_{UK}$ and $W_{UV}$) expand the latent vector back into full Keys and Values. For DeepSeek-V3 this gives a 57× compression ratio: per token, per layer, the footprint drops from 65,536 bytes (for an MHA equivalent) to 1,152 bytes. The figure below draws both footprints to the same scale.
 
 <MLACompression />
 
@@ -92,7 +94,7 @@ Because $W_q$ and $W_{uk}$ are static model weights, their product is computed o
 
 ### Decoupled Rotary Positional Encoding (RoPE)
 
-The hard part of implementing MLA is **Rotary Positional Encoding (RoPE)**. Standard RoPE applies a position-dependent rotation to the Keys and Queries. Because the rotation matrix is different for each position, it cannot be moved past a fixed up-projection matrix; the order of the two operations matters: $R_{pos}(W_{uk}^T A) \neq W_{uk}^T R_{pos}(A)$. If RoPE were applied the normal way, weight absorption would break, and the model would have to rebuild the full keys for every token just to apply position information.
+Weight absorption has one more obstacle: **Rotary Positional Encoding (RoPE)**. Standard RoPE applies a position-dependent rotation to the Keys and Queries. Because the rotation matrix is different for each position, it cannot be moved past a fixed up-projection matrix; the order of the two operations matters: $R_{pos}(W_{uk}^T A) \neq W_{uk}^T R_{pos}(A)$. If RoPE were applied the normal way, weight absorption would break, and the model would have to rebuild the full keys for every token just to apply position information.
 
 DeepSeek solves this with **Decoupled RoPE**. Queries and Keys are split into two parts: a content part and a positional part. The content part goes through MLA compression and weight absorption. The positional part ($d_{rope} = 64$) stays uncompressed and is shared across all heads. The KV cache therefore stores $d_c + d_{rope}$ per token per layer, which keeps exact positional information while preserving both the memory compression and the weight absorption path.
 
@@ -130,15 +132,15 @@ Even with ideal memory allocation, models with very long contexts produce more s
 
 Quantization lowers the numerical precision of the cache. Converting model weights to 8-bit or 4-bit is routine, but quantizing the KV cache as it streams in during generation introduces errors that compound from one token to the next.
 
-Uniform 4-bit quantization generally holds perplexity. Dropping to 2 bits, done the standard way, causes catastrophic failure, and the failure is not always visible in the usual metric. Research on alignment collapse shows that low-bit KV quantization can silently destroy safety behavior. Mistral-7B lost 15.2 percent of its safety refusals while perplexity rose by only 1.03×. The features that safety training relies on live in a small, fragile part of the representation, and aggressive rounding wipes them out.
-
-The **KIVI** framework (Tuning-Free Asymmetric 2-bit Quantization) found the root cause by studying how outliers are distributed in Keys and Values, which turn out to be different.
+Uniform 4-bit quantization generally holds perplexity. Dropping to 2 bits, done the standard way, causes catastrophic failure. The **KIVI** framework (Tuning-Free Asymmetric 2-bit Quantization) found the root cause by studying how outliers are distributed in Keys and Values, which turn out to be different.
 
 **Keys have large, fixed outlier channels.** A few specific channels in the Key matrix carry very large values, for every token. Grouping numbers across the token dimension lets those channels dominate and erases the rest of the signal. KIVI quantizes the Key cache **per channel**, grouping along the channel dimension, so each outlier channel's error stays isolated in that channel.
 
 **Values act as token mixers.** The Value cache has no obvious outlier channels, but it is used to compute the attention output as a weighted sum across tokens. Quantizing Values **per token** keeps one token's quantization error from corrupting its neighbors during that sum.
 
 With 2-bit Keys quantized per channel and 2-bit Values quantized per token, KIVI achieves a 2.6× reduction in peak memory with near-zero accuracy loss, which allows up to 4× larger batches and higher throughput.
+
+One caution applies to any low-bit cache: the damage is not always visible in the usual metric. Research on alignment collapse shows that low-bit KV quantization can silently destroy safety behavior. Mistral-7B lost 15.2 percent of its safety refusals while perplexity rose by only 1.03×. The features that safety training relies on live in a small, fragile part of the representation, and aggressive rounding wipes them out.
 
 Beyond asymmetric quantization, **XQuant** shows that quantizing the layer input $X$, before it is projected into Q, K, and V, saves even more. $X$ is one tensor instead of two, and it tolerates low precision better; the Keys and Values are recomputed from it on the fly. Its cross-layer variant, which quantizes the small differences in $X$ between adjacent layers, reaches 12.5× memory compression relative to FP16 with negligible perplexity loss. Alongside this, adaptive frameworks use cheap per-token features such as entropy and attention variance to assign a different precision to each token, from FP16 down to 2-bit, keeping high precision only for high-entropy tokens.
 
@@ -210,11 +212,9 @@ Moving these caches does congest the network, though. **DualPath** identified a 
 
 Even with dedicated decode engines, GPU HBM is finite. Standard pipeline parallelism also wastes it: during decode, only one batch's KV cache is active on a GPU at any moment, and the rest of the memory is occupied by inactive batches. **PipeMax** combines pipeline parallelism with KV cache offloading, evicting the inactive caches to extend the GPU's effective memory.
 
-**LMCache** and similar orchestration layers formalize a multi-tier memory hierarchy. When GPU memory fills, idle KV blocks are evicted to CPU DRAM. When DRAM fills, blocks cascade further down to local NVMe SSDs or distributed remote storage. When a user returns to a long session hours later, LMCache restores the cache asynchronously, using predictive LRU policies, and avoids recomputing the full prompt.
+**LMCache** and similar orchestration layers formalize a multi-tier memory hierarchy. When GPU memory fills, idle KV blocks are evicted to CPU DRAM. When DRAM fills, blocks cascade further down to local NVMe SSDs or distributed remote storage. When a user returns to a long session hours later, LMCache restores the cache asynchronously, using predictive LRU policies, and avoids recomputing the full prompt. Over high-bandwidth PCIe 5.0 links, this GPU to CPU to SSD pipeline lets a single server handle an order of magnitude more concurrent users than its HBM alone would allow.
 
 <Sketch name="memory-tiers" />
-
-Over high-bandwidth PCIe 5.0 links, this GPU to CPU to SSD pipeline lets a single server handle an order of magnitude more concurrent users than its HBM alone would allow.
 
 ## Synthesis and Strategic Outlook
 
