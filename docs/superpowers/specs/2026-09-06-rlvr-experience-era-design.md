@@ -107,6 +107,14 @@ and ORM versus PRM versus uPRM. TD layouts and light classDef colors, per house 
   previous one; every display equation is followed by an "In plain terms" reading.
 - A "What We Learned" bullet section added after the conclusion.
 
+## Third-round revisions (2026-09-06)
+
+- Sketch text uses Excalidraw's default handwritten font again; shapes stay clean.
+- The advantage-collapse mermaid became a sketch (`advantage-collapse.json`), at Ashim's
+  request. Three mermaid flowcharts remain (RLHF vs RLVR, noisy verifier, ORM vs PRM).
+- Another simplification pass: average sentence length about 12 words, plain words, every
+  fact kept.
+
 ## Interactive components
 
 None. Ashim chose text, formulas, tables, and sketches only.
