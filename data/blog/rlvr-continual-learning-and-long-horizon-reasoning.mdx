@@ -16,20 +16,16 @@ Historically, aligning models to human intent relied on Reinforcement Learning f
 
 ```mermaid
 flowchart TD
-    subgraph RLHF
-        H1[prompt and two candidate answers] --> H2[a human picks the better one]
-        H2 --> H3[train a reward model on those preferences]
-        H3 --> H4[the reward model scores new answers]
-    end
-    subgraph RLVR
-        V1[prompt] --> V2[the policy writes an answer]
-        V2 --> V3["a verifier checks it<br/>unit tests, a proof assistant, an exact match"]
-        V3 --> V4[reward is 1 or 0]
-    end
+    P[prompt] --> H1["RLHF<br/>a human compares two answers"]
+    H1 --> H2["train a reward model<br/>on those preferences"]
+    H2 --> H3["the reward model<br/>scores new answers"]
+    P --> V1["RLVR<br/>the policy writes an answer"]
+    V1 --> V2["a verifier checks it<br/>unit tests, a proof assistant,<br/>an exact match"]
+    V2 --> V3[reward is 1 or 0]
     classDef human fill:#FFF3BF,stroke:#B7791F,color:#111
     classDef check fill:#E9F6ED,stroke:#15803D,color:#111
-    class H2,H3,H4 human
-    class V3,V4 check
+    class H1,H2,H3 human
+    class V1,V2,V3 check
 ```
 
 To move past the scaling limits of human supervision, the field has pivoted toward **Reinforcement Learning with Verifiable Rewards (RLVR)**. By using programmatic verifiers, formal proof assistants, and explicit environmental constraints, RLVR provides an objective grounding signal for policy optimization. The integration of efficient reinforcement learning algorithms, most notably **Group Relative Policy Optimization (GRPO)**, has produced the long-horizon reasoning and spontaneous self-correction seen in modern reasoning models.
