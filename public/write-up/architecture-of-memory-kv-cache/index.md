@@ -8,21 +8,21 @@ summary: 'Modern LLM inference is memory-bound, and the KV cache is the reason. 
 
 &nbsp;
 
-The rise of Large Language Models has changed what computing infrastructure is for. As models grow in both parameter count and context length, the main bottleneck of AI has moved away from raw compute. Modern transformer inference is no longer compute-bound. It is memory-bound.
+Large language models have changed what computing infrastructure is built for. As models grow in both parameter count and context length, the main bottleneck has moved away from raw compute. Modern transformer inference is no longer limited by how fast the GPU can do math; it is limited by how fast the GPU can read memory.
 
-At the center of that shift is the **Key-Value (KV) cache**, a piece of memory the model needs in order to generate text one token at a time efficiently. Without the KV cache, the cost of inference grows with the square of the sequence length. With it, the cost grows linearly, but in exchange the model needs an unbounded, constantly growing amount of memory.
+At the center of that shift is the **Key-Value (KV) cache**, the block of memory a model needs to generate text one token at a time without redoing its earlier work. Without the KV cache, the cost of inference grows with the square of the sequence length. With it, the cost grows linearly, but in exchange the model needs an amount of memory that keeps growing and has no fixed upper bound.
 
-This report is an architectural analysis of the KV cache ecosystem. It covers the math that makes caching necessary, architectural changes like DeepSeek's Multi-Head Latent Attention (MLA), the memory management inside inference engines like vLLM and SGLang, aggressive compression through extreme quantization and token eviction, and the future of distributed serving through prefill-decode disaggregation.
+This write-up is an architectural analysis of the KV cache ecosystem. It covers the math that makes caching necessary, architectural changes like DeepSeek's Multi-Head Latent Attention (MLA), the memory management inside inference engines like vLLM and SGLang, aggressive compression through extreme quantization and token eviction, and the future of distributed serving through prefill-decode disaggregation.
 
 ## The Dual-Phase Anatomy of LLM Inference
 
-To understand why the KV cache is necessary, and why it is such a burden, you have to separate the two phases of LLM inference: the **prefill** phase and the **decode** phase. Both run forward passes through the same transformer. But they stress the hardware in opposite ways.
+To understand why the KV cache is necessary, and why it is such a burden, you have to separate the two phases of LLM inference: the **prefill** phase and the **decode** phase. Both run forward passes through the same transformer, but they stress the hardware in opposite ways.
 
 ### The Prefill Phase: Compute-Bound Parallelism
 
-When a prompt arrives, the model starts the prefill phase. It tokenizes the whole input and processes it in a single parallel forward pass. Because every token is available up front, self-attention can compute the interactions between all tokens at once. This phase is made of large, dense matrix multiplications, which is exactly the workload GPUs are built for. Thousands of streaming multiprocessors run the same operation over large blocks of data at the same time, and the GPU's compute pipelines stay full.
+When a prompt arrives, the model starts the prefill phase. It tokenizes the whole input and processes it in a single parallel forward pass. Because every token is available up front, self-attention can compute the interactions between all tokens at once. This phase consists of large, dense matrix multiplications, which is exactly the workload GPUs are built for. Thousands of streaming multiprocessors run the same operation over large blocks of data at the same time, and the GPU's compute pipelines stay full.
 
-During this pass, the model computes the Key (K) and Value (V) vectors for every token in the prompt, at every layer. Instead of throwing these away, the system stores them in the GPU's High Bandwidth Memory (HBM). That stored set is the KV cache. Prefill latency matters for the user, and it is usually measured as Time-To-First-Token (TTFT), but the phase is compute-bound: add more compute and it gets faster.
+During this pass, the model computes the Key (K) and Value (V) vectors for every token in the prompt, at every layer. Instead of throwing these away, the system stores them in the GPU's High Bandwidth Memory (HBM). That stored set is the KV cache. Prefill latency is what the user feels as the wait before the first token appears, usually measured as time to first token (TTFT). The phase is compute bound, so adding compute makes it faster.
 
 ### The Decode Phase: The Memory Bandwidth Wall
 
@@ -32,11 +32,11 @@ The KV cache removes that redundancy. The Key and Value vectors for any earlier 
 
 <Sketch name="prefill-decode" />
 
-This efficiency comes with a physical memory tax. At every decode step, the entire KV cache has to be loaded from off-chip HBM into the GPU's on-chip SRAM to compute the attention scores. That makes decode an extreme memory-bandwidth-bound operation. The GPU's compute cores sit idle while the cache streams across the memory bus, and that puts a hard ceiling on throughput.
+This efficiency comes with a physical memory tax. At every decode step, the entire KV cache has to be loaded from off-chip HBM into the GPU's on-chip SRAM to compute the attention scores. That makes decode an operation bound almost entirely by memory bandwidth. The GPU's compute cores sit idle while the cache streams across the memory bus, and that puts a hard ceiling on throughput.
 
 ### The Mathematics of Cache Expansion
 
-The size of the KV cache is deterministic. It grows linearly with batch size, context length, number of layers, and hidden dimension. For a standard transformer with Multi-Head Attention (MHA), the memory per token across all layers is:
+The size of the KV cache is predictable. It grows linearly with batch size, context length, number of layers, and hidden dimension. For a standard transformer with Multi-Head Attention (MHA), the memory per token across all layers is:
 
 $$
 M_{\text{KV}} = 2 \times n_{\text{layers}} \times n_{\text{kv\_heads}} \times d_{\text{head}} \times p_{\text{bytes}}
@@ -56,17 +56,17 @@ Look at the Llama-3-70B row. Caching a single 128,000-token sequence takes over 
 
 ## Architectural Interventions in Attention Mechanisms
 
-To fight this growth, model architects have changed the structure of self-attention itself, compressing the KV state before inference ever happens.
+To fight this growth, model architects have changed the structure of self-attention itself, so the KV state is compressed at training time rather than at serving time.
 
 ### From MQA to GQA: Reducing Head Dimensionality
 
 The early fixes targeted the $n_{\text{kv\_heads}}$ term. In **Multi-Query Attention (MQA)**, all query heads share a single Key and Value projection. That shrinks the KV cache by a factor equal to the number of heads, so 32 times on a 32-head model. But forcing every head to attend to the same representation limits the model. Heads lose the ability to specialize in different syntactic or semantic roles, and reasoning quality drops noticeably.
 
-**Grouped-Query Attention (GQA)** is the compromise. Query heads are split into groups, and each group shares one KV projection. Llama-3-70B uses 64 query heads in 8 groups, so 8 KV heads: an 8× reduction in cache size compared with MHA, while keeping enough head-specific capacity to hold task performance. GQA is now everywhere, but as contexts push past 100K tokens, even GQA caches overwhelm the hardware.
+**Grouped-Query Attention (GQA)** is the compromise. Query heads are split into groups, and each group shares one KV projection. Llama-3-70B uses 64 query heads in 8 groups, so 8 KV heads: an 8× reduction in cache size compared with MHA, while keeping enough head-specific capacity to hold task performance. GQA is now the default, but as contexts push past 100K tokens, even GQA caches overwhelm the hardware.
 
 ### DeepSeek's Multi-Head Latent Attention (MLA)
 
-The most aggressive change in current open-weight models is **Multi-Head Latent Attention (MLA)**, used in DeepSeek-V2 and V3. MLA does not reduce the number of KV heads. It attacks the dimensionality of the cache directly by projecting attention state into a compressed, low-rank latent representation.
+The most aggressive change in current open-weight models is **Multi-Head Latent Attention (MLA)**, used in DeepSeek-V2 and V3. MLA does not reduce the number of KV heads. It attacks the size of each cache entry directly, by projecting the attention state into a much smaller latent vector that keeps most of the information (a low-rank representation).
 
 In a standard architecture, the full Keys and Values are cached. In MLA, the input is compressed by a down-projection matrix $W_{DKV} \in \mathbb{R}^{d_c \times d}$ into a single latent matrix $C_{KV} \in \mathbb{R}^{d_c \times n}$, where $d_c$ is a narrow latent dimension. Only this compressed $C_{KV}$ is stored in HBM. At inference time, two up-projection matrices ($W_{UK}$ and $W_{UV}$) expand the latent vector back into full Keys and Values. For DeepSeek-V3 this gives a 57× compression ratio: per token, per layer, the footprint drops from 65,536 bytes (for an MHA equivalent) to 1,152 bytes.
 
@@ -88,11 +88,11 @@ $$
 W_{\text{absorbed}} = W_q W_{uk}^T
 $$
 
-Because $W_q$ and $W_{uk}$ are static model weights, their product is computed once, offline, when the engine starts. During inference the query is projected with this pre-computed matrix, and the dot product runs directly against the compressed $C_{KV}$ cache. The model computes attention scores natively in the smaller latent space, which cuts both memory bandwidth and FLOPs.
+Because $W_q$ and $W_{uk}$ are static model weights, their product is computed once, offline, when the engine starts. During inference the query is projected with this precomputed matrix, and the dot product runs directly against the compressed $C_{KV}$ cache. The model computes attention scores natively in the smaller latent space, which cuts both memory bandwidth and FLOPs.
 
 ### Decoupled Rotary Positional Encoding (RoPE)
 
-The hard part of implementing MLA is **Rotary Positional Encoding (RoPE)**. Standard RoPE applies a position-dependent rotation to the Keys and Queries. Because the rotation matrix is specific to each position, it does not commute with a fixed up-projection matrix: $R_{pos}(W_{uk}^T A) \neq W_{uk}^T R_{pos}(A)$. If RoPE were applied the normal way, weight absorption would break, and the model would have to rebuild full keys for every token just to apply position information.
+The hard part of implementing MLA is **Rotary Positional Encoding (RoPE)**. Standard RoPE applies a position-dependent rotation to the Keys and Queries. Because the rotation matrix is different for each position, it cannot be moved past a fixed up-projection matrix; the order of the two operations matters: $R_{pos}(W_{uk}^T A) \neq W_{uk}^T R_{pos}(A)$. If RoPE were applied the normal way, weight absorption would break, and the model would have to rebuild the full keys for every token just to apply position information.
 
 DeepSeek solves this with **Decoupled RoPE**. Queries and Keys are split into two parts: a content part and a positional part. The content part goes through MLA compression and weight absorption. The positional part ($d_{rope} = 64$) stays uncompressed and is shared across all heads. The KV cache therefore stores $d_c + d_{rope}$ per token per layer, which keeps exact positional information while preserving both the memory compression and the weight absorption path.
 
@@ -108,9 +108,9 @@ Because pages are only allocated when needed, and do not have to sit next to eac
 
 ### RadixAttention: Prefix Caching and Tree Structures
 
-PagedAttention is excellent for isolated request-response loops. It does less well on multi-turn or agentic workloads where contexts overlap heavily. When many agents share a large, static system prompt, or when a code-generation model explores several branched solutions, a flat page table recomputes and duplicates the shared KV cache for every independent sequence.
+PagedAttention is excellent for isolated request-response loops. It does less well on multi-turn or agentic workloads where contexts overlap heavily. When many agents share a large, static system prompt, or when a code generation model explores several branched solutions, a flat page table recomputes and duplicates the shared KV cache for every independent sequence.
 
-SGLang addresses this with **RadixAttention**. Instead of a flat mapping of pages, it organizes the whole KV cache as a compressed trie, a radix tree. Every node holds a run of tokens. When a new request arrives, the router walks the tree to find the longest exact prefix match.
+SGLang addresses this with **RadixAttention**. Instead of a flat mapping of pages, it organizes the whole KV cache as a compressed prefix tree, called a radix tree. Every node holds a run of tokens. When a new request arrives, the router walks the tree to find the longest exact prefix match.
 
 <Sketch name="radix-tree" />
 
@@ -118,19 +118,19 @@ If a swarm of agents shares a 5,000-token system prompt, the radix tree computes
 
 | Inference engine | Memory architecture | Best workload | Trade-offs |
 | --- | --- | --- | --- |
-| vLLM | PagedAttention | High-concurrency chat, standard serving | Mature paging and scheduling; prefix reuse is hash-based rather than a tree, which suits shared system prompts more than deep forking |
-| SGLang | RadixAttention (prefix tree) | Agentic swarms, code forking, multi-turn | The radix router runs in Python and can become CPU-bound at very high request rates, adding latency |
-| TensorRT-LLM | NVIDIA optimized paged cache | Maximum static performance | Peak throughput after compilation, but needs ahead-of-time compilation per model and GPU, and is less flexible when workloads change |
+| vLLM | PagedAttention | High concurrency chat, standard serving | Mature paging and scheduling; prefix reuse is hash-based rather than a tree, which suits shared system prompts more than deep forking |
+| SGLang | RadixAttention (prefix tree) | Agentic swarms, code forking, multi-turn chat | The radix router runs in Python and can become CPU-bound at very high request rates, adding latency |
+| TensorRT-LLM | NVIDIA optimized paged cache | Maximum static performance | Peak throughput after compilation, but needs a separate compilation step ahead of time for each model and GPU, and is less flexible when workloads change |
 
 ## Algorithmic Compression: Pushing the Boundaries
 
-Even with ideal memory allocation, ultra-long-context models produce more state than the hardware can hold. To go further, researchers apply lossy compression at run time: quantization and selective eviction.
+Even with ideal memory allocation, models with very long contexts produce more state than the hardware can hold. To go further, researchers apply lossy compression at runtime: quantization and selective eviction.
 
 ### The 2-Bit Quantization Barrier and KIVI
 
 Quantization lowers the numerical precision of the cache. Converting model weights to 8-bit or 4-bit is routine, but quantizing the KV cache as it streams in during generation introduces errors that compound from one token to the next.
 
-Uniform 4-bit quantization generally holds perplexity. Dropping to 2 bits, done the standard way, causes catastrophic failure. And the failure is not always visible where people look. Research on alignment collapse shows that low-bit KV quantization can silently destroy safety behavior: Mistral-7B lost 15.2 percent of its safety refusals while perplexity rose by only 1.03×, because the features that safety training relies on live in a small, fragile part of the representation that aggressive rounding wipes out.
+Uniform 4-bit quantization generally holds perplexity. Dropping to 2 bits, done the standard way, causes catastrophic failure, and the failure is not always visible in the usual metric. Research on alignment collapse shows that low-bit KV quantization can silently destroy safety behavior. Mistral-7B lost 15.2 percent of its safety refusals while perplexity rose by only 1.03×. The features that safety training relies on live in a small, fragile part of the representation, and aggressive rounding wipes them out.
 
 The **KIVI** framework (Tuning-Free Asymmetric 2-bit Quantization) found the root cause by studying how outliers are distributed in Keys and Values, which turn out to be different.
 
@@ -138,7 +138,7 @@ The **KIVI** framework (Tuning-Free Asymmetric 2-bit Quantization) found the roo
 
 **Values act as token mixers.** The Value cache has no obvious outlier channels, but it is used to compute the attention output as a weighted sum across tokens. Quantizing Values **per token** keeps one token's quantization error from corrupting its neighbors during that sum.
 
-With 2-bit per-channel Keys and 2-bit per-token Values, KIVI achieves a 2.6× reduction in peak memory with near-zero accuracy loss, which allows up to 4× larger batches and higher throughput.
+With 2-bit Keys quantized per channel and 2-bit Values quantized per token, KIVI achieves a 2.6× reduction in peak memory with near-zero accuracy loss, which allows up to 4× larger batches and higher throughput.
 
 Beyond asymmetric quantization, **XQuant** shows that quantizing the layer input $X$, before it is projected into Q, K, and V, saves even more. $X$ is one tensor instead of two, and it tolerates low precision better; the Keys and Values are recomputed from it on the fly. Its cross-layer variant, which quantizes the small differences in $X$ between adjacent layers, reaches 12.5× memory compression relative to FP16 with negligible perplexity loss. Alongside this, adaptive frameworks use cheap per-token features such as entropy and attention variance to assign a different precision to each token, from FP16 down to 2-bit, keeping high precision only for high-entropy tokens.
 
@@ -146,7 +146,7 @@ Beyond asymmetric quantization, **XQuant** shows that quantizing the layer input
 
 Quantization shrinks how each token is stored. Eviction removes tokens entirely. Attention matrices at inference time are typically more than 95 percent sparse: most historical tokens contribute almost nothing to the next token. Unstructured sparsity methods have pruned up to 70 percent of the cache without any fine-tuning.
 
-Frameworks like **H2O (Heavy-Hitter Oracle)** and Scissorhands use this power-law distribution and treat eviction as a dynamic submodular optimization problem. H2O keeps a running total of the attention each token has received. Tokens that keep receiving high attention, the heavy hitters, are kept permanently, and the long tail is evicted. This compresses the cache to as little as 20 percent of its dense size with little perplexity loss. Other methods, such as **SnapKV**, try to preserve local structure by keeping clustered chunks of information rather than isolated tokens.
+Frameworks like **H2O (Heavy-Hitter Oracle)** and Scissorhands exploit this skew. They treat eviction as an ongoing choice about which small set of tokens is worth keeping. H2O keeps a running total of the attention each token has received. Tokens that keep receiving high attention, the heavy hitters, are kept permanently, and the long tail is evicted. This compresses the cache to as little as 20 percent of its dense size with little perplexity loss. Other methods, such as **SnapKV**, try to preserve local structure by keeping clustered chunks of information rather than isolated tokens.
 
 But frequency-based eviction depends on statistical patterns that break on specialized workloads. Recent diagnostic work found a serious flaw in H2O on schema-dense inputs like JSON parsing or code execution, called **structural routing bias**. Structural tokens such as delimiters, whitespace, brackets, and JSON keys act as attention sinks, and accumulate up to 30× the attention mass of the actual content. H2O reads that attention as relevance. So it stubbornly keeps the structural noise and throws away the data, which leads to exact-match failures in reasoning: on one lookup task, accuracy at a 5 percent budget fell from 88 percent to zero.
 
@@ -158,7 +158,7 @@ Even with every hardware and algorithmic optimization, loading a 40 GB KV cache 
 
 The mechanism has two stages.
 
-**Drafting.** A small, cheap model, or a draft head attached to the main model, quickly proposes a sequence of $K$ candidate tokens. Its parameter and KV footprint are tiny, so drafting is nearly free.
+**Drafting.** A small, cheap model, or a draft head attached to the main model, quickly proposes a sequence of $K$ candidate tokens. Its parameters and its KV cache are both tiny, so drafting is nearly free.
 
 **Verification.** The large target model processes all $K$ drafted tokens in one parallel forward pass. Crucially, it reads its full KV cache from HBM exactly once to evaluate the entire drafted sequence.
 
@@ -166,7 +166,7 @@ Strict rejection sampling accepts only the drafted tokens that match the target 
 
 ### Feature-Level and Parallel Speculation
 
-Traditional speculative decoding needs a separate draft model, which is hard to keep aligned and adds deployment friction. **EAGLE** (Extrapolation Algorithm for Greater Language-Model Efficiency) moves speculation to the feature level. It feeds the target model's own final-layer hidden states into a lightweight draft head, so the drafter "sees" the target's internal representation. **EAGLE-3** goes further and fuses features from across all transformer layers, which pushes acceptance rates higher, especially on deterministic tasks like coding.
+Traditional speculative decoding needs a separate draft model, which is hard to keep in step with the main model and adds deployment friction. **EAGLE** (Extrapolation Algorithm for Greater Language-Model Efficiency) moves speculation to the feature level. It feeds the target model's own final-layer hidden states into a lightweight draft head, so the drafter "sees" the target's internal representation. **EAGLE-3** goes further and fuses features from across all transformer layers, which pushes acceptance rates higher, especially on deterministic tasks like coding.
 
 Drafting itself, though, is autoregressive: $K$ draft tokens need $K$ sequential passes through the draft head, and that becomes a new bottleneck as $K$ grows. **P-EAGLE** removes this ceiling by training the drafter to predict all $K$ tokens in a single parallel pass. This skips the autoregressive draft loop entirely and delivers up to a 1.69× speedup over EAGLE-3 on modern GPUs, with the gain largest for a single user and shrinking as concurrency rises.
 
@@ -184,43 +184,43 @@ Turning an algorithm into delivered throughput is a systems-engineering problem.
 
 FlashAttention (v1, v2, v3) made transformer training fast by tiling memory accesses to keep as much work as possible in SRAM and avoid slow HBM reads and writes. But FlashAttention parallelizes across batch size and query heads. In decode, the batch is small and the query length is exactly 1. For a single long-context prompt, FlashAttention leaves the GPU mostly idle, using less than 1 percent of the streaming multiprocessors.
 
-**Flash-Decoding** adds a new dimension to parallelize over: the length of the KV cache itself. It splits the cache into smaller chunks and spreads them across all available GPU cores. Each core computes a partial attention result for its chunk. To combine the partials correctly and without numerical instability, Flash-Decoding uses a log-sum-exp reduction across the splits. The result is that decode time stays nearly constant as context grows from 512 to 64,000 tokens, with up to an 8× end-to-end speedup over standard FlashAttention on long-context generation.
+**Flash-Decoding** adds a new dimension to parallelize over: the length of the KV cache itself. It splits the cache into smaller chunks and spreads them across all available GPU cores. Each core computes a partial attention result for its chunk. To combine the partials correctly and without numerical instability, Flash-Decoding uses a log-sum-exp reduction across the splits. The result is that decode time stays nearly constant as context grows from 512 to 64,000 tokens, with up to an 8× overall speedup over standard FlashAttention on long-context generation.
 
-**FlashInfer** provides a Just-In-Time (JIT) compiler that adapts these attention kernels on the fly. It maps paged KV cache layouts, like vLLM's, directly onto block-sparse matrix multiplications, keeping global memory loads coalesced and the Tensor Cores fed. With **FlashAttention-4** on NVIDIA Blackwell, the Tensor Memory Accelerator (TMA) speeds up large regular memory transfers, but developers have to balance larger page sizes, which raise memory throughput, against the internal fragmentation they cause, especially in short speculative decoding sequences.
+**FlashInfer** provides a compiler that generates these attention kernels just in time, adapting them on the fly. It maps paged KV cache layouts, like vLLM's, directly onto block-sparse matrix multiplications, keeping global memory loads coalesced and the Tensor Cores fed. With **FlashAttention-4** on NVIDIA Blackwell, the Tensor Memory Accelerator (TMA) speeds up large regular memory transfers, but developers have to balance larger page sizes, which raise memory throughput, against the internal fragmentation they cause, especially in short speculative decoding sequences.
 
 ### Leveraging Tensor Cores and Asynchronous Prefetching
 
-Systems also try to hide HBM latency entirely. An L2-cache-oriented **asynchronous prefetching** method uses idle memory bandwidth during compute-heavy cycles to pull upcoming KV blocks into the GPU's L2 cache ahead of time. That hides the HBM access behind compute and prevents warp stalls. Hardware research goes further and proposes high-density CMOS+X M3D embedded memories with hundreds of megabytes of on-chip capacity dedicated to KV cache prefetching.
+Systems also try to hide HBM latency entirely. One approach is **asynchronous prefetching** into the L2 cache: during compute-heavy cycles, idle memory bandwidth is used to pull the next KV blocks into the GPU's L2 cache ahead of time. That hides the HBM access behind useful work and prevents warp stalls. Hardware research goes further and proposes high-density CMOS+X M3D embedded memories with hundreds of megabytes of on-chip capacity dedicated to KV cache prefetching.
 
 In parallel, systems like **BitDecoding** unlock the GPU's Tensor Cores, normally reserved for dense FP16 matrix multiplication, for low-bit KV decoding. A specialized packing kernel decompresses 2-bit or 4-bit KV caches inside the Tensor Core pipeline itself. BitDecoding reaches up to a 7.5× speedup on an RTX 4090 and 8.9× on an H100 compared with FP16 Flash-Decoding.
 
 ## Distributed Inference and the Disaggregated Future
 
-As models and contexts keep growing, single-node inference is becoming a relic. The industry is moving to **Prefill-Decode (PD) Disaggregated** serving, which separates the two inference phases onto different hardware.
+As models and contexts keep growing, inference on a single node is becoming a relic. The industry is moving to **Prefill-Decode (PD) Disaggregated** serving, which separates the two inference phases onto different hardware.
 
 ### PD-Disaggregation: Splitwise, Mooncake, and DualPath
 
 In a standard monolithic deployment, prefill and decode run on the same GPU. Prefill is compute-heavy and decode is memory-heavy, so interleaving them causes severe interference. PD-Disaggregation sends incoming prompts to a dedicated pool of **Prefill Engines**, which run the dense compute work at full utilization. Once the prompt is processed, the resulting KV cache is sent over the network to a separate pool of **Decode Engines**, which are optimized for memory capacity and latency-sensitive token generation.
 
-Splitwise, DistServe, and Mooncake pioneered this design. **Mooncake**, built as a KV-cache-centric system, uses a high-performance Transfer Engine. It streams the KV cache from the prefill engine to the decode engine layer by layer, using RDMA (Remote Direct Memory Access) over a RoCE compute network. Because of that pipelining, the decode engine can start generating tokens before the entire cache has arrived, which hides the network transfer entirely.
+Splitwise, DistServe, and Mooncake pioneered this design. **Mooncake**, a system built around the KV cache, uses a high-performance Transfer Engine. It streams the KV cache from the prefill engine to the decode engine layer by layer, using RDMA (Remote Direct Memory Access) over a RoCE compute network. Because of that pipelining, the decode engine can start generating tokens before the entire cache has arrived, which hides the network transfer entirely.
 
-Moving these caches does congest the network, though. **DualPath** identified a specific bottleneck: in multi-turn conversations, the storage NICs on the prefill engines saturate while loading historical caches, and the network interfaces on the decode engines sit idle. DualPath adds a second, storage-to-decode path. The historical KV cache is loaded directly into the decode engines and forwarded back to the prefill engines over RDMA, which speeds up cache loading substantially for agentic workloads.
+Moving these caches does congest the network, though. **DualPath** identified a specific bottleneck: in multi-turn conversations, the storage NICs on the prefill engines saturate while loading historical caches, and the network interfaces on the decode engines sit idle. DualPath adds a second path, from storage straight into the decode engines. The historical KV cache is loaded directly into the decode engines and forwarded back to the prefill engines over RDMA, which speeds up cache loading substantially for agentic workloads.
 
 ### Multi-Tier Storage, Offloading, and Pipeline Parallelism
 
 Even with dedicated decode engines, GPU HBM is finite. Standard pipeline parallelism also wastes it: during decode, only one batch's KV cache is active on a GPU at any moment, and the rest of the memory is occupied by inactive batches. **PipeMax** combines pipeline parallelism with KV cache offloading, evicting the inactive caches to extend the GPU's effective memory.
 
-**LMCache** and similar orchestration layers formalize a multi-tier memory hierarchy. When GPU memory fills, idle KV blocks are evicted to CPU DRAM. When DRAM fills, blocks cascade further down to local NVMe SSDs or distributed remote storage. When a user returns to a long session hours later, LMCache restores the cache asynchronously, using predictive LRU policies, and avoids a full-prompt recomputation.
+**LMCache** and similar orchestration layers formalize a multi-tier memory hierarchy. When GPU memory fills, idle KV blocks are evicted to CPU DRAM. When DRAM fills, blocks cascade further down to local NVMe SSDs or distributed remote storage. When a user returns to a long session hours later, LMCache restores the cache asynchronously, using predictive LRU policies, and avoids recomputing the full prompt.
 
 <Sketch name="memory-tiers" />
 
-Over high-bandwidth PCIe 5.0 links, this GPU-to-CPU-to-SSD pipeline lets a single server handle an order of magnitude more concurrent users than its HBM alone would allow.
+Over high-bandwidth PCIe 5.0 links, this GPU to CPU to SSD pipeline lets a single server handle an order of magnitude more concurrent users than its HBM alone would allow.
 
 ## Synthesis and Strategic Outlook
 
-The trajectory of LLM inference is, and will remain, dictated by how the KV cache is managed. As the industry moves toward multi-million-token contexts, persistent personalized agents, and large autonomous swarms, the physics of moving data between memory and compute will stay the defining engineering bottleneck.
+The trajectory of LLM inference is, and will remain, dictated by how the KV cache is managed. As the industry moves toward multi-million token contexts, persistent personalized agents, and large autonomous swarms, the physics of moving data between memory and compute will stay the defining engineering bottleneck.
 
-The best deployments will not rely on one optimization. They will stack co-designed solutions. DeepSeek's MLA shows that the most powerful optimizations happen at the architectural level, compressing the latent space before training and relying on weight absorption at run time. That foundation has to be paired with low-level systems work, like SGLang's RadixAttention for zero-copy state sharing and Flash-Decoding's sequence-parallel kernels, to maximize memory reuse. On top of that, aggressive run-time interventions such as 2-bit asymmetric quantization, tree-based speculative decoding with P-EAGLE, and RDMA-backed prefill-decode disaggregation are moving quickly from research into production standards.
+The best deployments will not rely on one optimization. They will stack co-designed solutions. DeepSeek's MLA shows that the most powerful optimizations happen at the architectural level, compressing the latent space at training time and relying on weight absorption at runtime. That foundation has to be paired with low-level systems work, like SGLang's RadixAttention for zero-copy state sharing and Flash-Decoding's sequence-parallel kernels, to maximize memory reuse. On top of that, aggressive runtime interventions such as 2-bit asymmetric quantization, tree-based speculative decoding with P-EAGLE, and RDMA-backed prefill-decode disaggregation are moving quickly from research into production standards.
 
 The KV cache has outgrown its original purpose. It is no longer a temporary buffer of intermediate matrix products. It has become a distributed, multi-tiered, carefully managed database that holds the explicit "memory" of an AI system. Learning to orchestrate it across algorithms, runtimes, and silicon is the prerequisite for the next generation of scalable AI infrastructure.
 
