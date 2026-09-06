@@ -82,8 +82,20 @@ with `<Sketch name="..." />`. Designed with the Excalidraw MCP so Ashim sees the
   advantages -> policy update -> back to policy (Visual 1)
 - `data-flywheel`: deployed model -> production failures -> frontier critique -> corrected
   trajectories -> replay buffer -> GRPO update -> deployed model (Visual 2)
-- `openrlhf-split`: Ray scheduler above; rollout engines (vLLM) and actor engines
+- `openrlhf-split`: scheduler above (unnamed: Ashim asked for no Ray mentions); rollout engines (vLLM) and actor engines
   (DeepSpeed ZeRO-3) side by side; token-in-token-out arrow between them (Visual 3)
+
+Four mermaid flowcharts, added at Ashim's request after the first draft, for sections with
+no sketch: RLHF versus RLVR reward paths (intro), the advantage-collapse decision (all-same
+versus mixed rewards, with the fixes), the noisy-verifier phase transition on Youden's index,
+and ORM versus PRM versus uPRM. TD layouts and light classDef colors, per house rules.
+
+## Ashim's mid-course instructions (2026-09-06)
+
+- No mention of Ray anywhere in the write-up. The OpenRLHF section keeps vLLM and DeepSpeed
+  and calls the placement layer "a scheduler".
+- Add mermaid diagrams from the draft's content. The draft's own three mermaid blocks are the
+  ones drawn as sketches; the mermaids added are for other sections.
 
 ## Interactive components
 
@@ -95,7 +107,32 @@ Quantitative claims in the draft are checked against the papers before publishin
 Anything unconfirmed is attributed ("the authors report") rather than asserted.
 Corrections found are listed below.
 
-(filled in during implementation)
+- Advantage Collapse (arXiv 2605.21125): the paper reports 28% to 45% of batches collapsed
+  and AVSPO cutting that to 11% to 18% (a 58% to 63% relative reduction). The post gives the
+  ranges rather than "up to".
+- HiLL is "Hint Learning for Reinforcement Learning" (arXiv 2604.00698). The draft's
+  "Learning from Unreachable Rewards: Hint-Conditioned..." is a different, recommender paper.
+- SpecBench (arXiv 2605.21384): the paper's term is "reward hacking gap"; the compiler
+  anecdote scored 97% on visible tests and 0% held out.
+- Noisy verifiers are two papers: the asymmetric channel, backward and forward corrections,
+  and the appeals mechanism are arXiv 2510.00915; the Youden's index phase transition is
+  "Rate or Fate? RLVεR" (arXiv 2601.04411). The post attributes each.
+- The Pass@1-up, Pass@K-down finding is Yue et al. (arXiv 2504.13837). arXiv 2506.14245
+  argues the opposite and contributes CoT-Pass@K. The post presents them as claim and reply.
+- FIPO (arXiv 2603.19835): 58.0% is a peak on AIME 2024 Pass@1, from 50.0%, converging
+  near 56.0%.
+- Latent-GRPO (arXiv 2604.27998): the claim is 3 to 4 times shorter reasoning chains, not
+  3 to 4 times faster, and accuracy exceeds explicit GRPO on hard benchmarks. The named
+  problems are the absence of an intrinsic latent manifold, exploration-optimization
+  misalignment, and latent mixture non-closure. "Off-manifold exploration" is descriptive,
+  not a named mode.
+- OpenRLHF: the 1.22x to 1.68x speedups are against verl v0.4.0 (paper v6, arXiv
+  2405.11143). The "80% of training time" figure is the README's; the paper says over 90%.
+- Shopify: "up to 2,000 requests per minute", not "thousands". The $27M to $1M and 96%
+  figures are the post's own estimates. Frontier models critique and an arbiter writes a
+  repair instruction; the agent replays to produce the corrected trajectory. The flywheel
+  sketch label was changed to match.
+- HomeFlow's full title ends "with Verifiable Simulation" (arXiv 2606.01230).
 
 ## Frontmatter
 
