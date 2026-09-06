@@ -15,11 +15,10 @@ const rough = require('roughjs/bundled/rough.cjs.js')
 
 const SRC = join(process.cwd(), 'scripts', 'sketches')
 const OUT = join(process.cwd(), 'components', 'writeups', 'sketches.generated.ts')
-const HAND_FONT = "'Segoe Print', 'Bradley Hand', 'Comic Sans MS', system-ui, sans-serif"
+// Excalidraw's default handwritten look for all text, in both sketch styles.
+const FONT = "'Segoe Print', 'Bradley Hand', 'Comic Sans MS', system-ui, sans-serif"
 // A sketch whose first element is {"type":"settings","style":"clean"} is drawn with straight
-// SVG primitives (rect, polygon, ellipse, polyline) and a plain sans font instead of rough.js.
-const CLEAN_FONT = "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
-let FONT = HAND_FONT
+// SVG primitives (rect, polygon, ellipse, polyline) instead of rough.js strokes.
 let CLEAN = false
 const DEFAULT_STROKE = '#1e1e1e'
 const PAD = 16
@@ -102,7 +101,6 @@ function diamondPath(x, y, w, h) {
 function render(elements) {
   const settings = elements[0] && elements[0].type === 'settings' ? elements[0] : null
   CLEAN = !!settings && settings.style === 'clean'
-  FONT = CLEAN ? CLEAN_FONT : HAND_FONT
   const SW = CLEAN ? 1.6 : 2
   let minX = Infinity,
     minY = Infinity,
