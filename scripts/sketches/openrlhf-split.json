@@ -1,4 +1,5 @@
-[{"type":"text","id":"t","x":250,"y":10,"text":"How OpenRLHF splits the work","fontSize":22},
+[{"type":"settings","style":"clean"},
+{"type":"text","id":"t","x":250,"y":10,"text":"How OpenRLHF splits the work","fontSize":22},
 {"type":"rectangle","id":"ray","x":250,"y":50,"width":300,"height":60,"roundness":{"type":3},"backgroundColor":"#d0bfff","fillStyle":"solid","label":{"text":"Scheduler\nassigns GPUs to each job","fontSize":16}},
 {"type":"arrow","id":"a1","x":330,"y":110,"width":-140,"height":70,"points":[[0,0],[-140,70]],"endArrowhead":"arrow"},
 {"type":"arrow","id":"a2","x":470,"y":110,"width":140,"height":70,"points":[[0,0],[140,70]],"endArrowhead":"arrow"},

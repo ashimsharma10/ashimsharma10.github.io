@@ -15,7 +15,12 @@ const rough = require('roughjs/bundled/rough.cjs.js')
 
 const SRC = join(process.cwd(), 'scripts', 'sketches')
 const OUT = join(process.cwd(), 'components', 'writeups', 'sketches.generated.ts')
-const FONT = "'Segoe Print', 'Bradley Hand', 'Comic Sans MS', system-ui, sans-serif"
+const HAND_FONT = "'Segoe Print', 'Bradley Hand', 'Comic Sans MS', system-ui, sans-serif"
+// A sketch whose first element is {"type":"settings","style":"clean"} is drawn with straight
+// SVG primitives (rect, polygon, ellipse, polyline) and a plain sans font instead of rough.js.
+const CLEAN_FONT = "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+let FONT = HAND_FONT
+let CLEAN = false
 const DEFAULT_STROKE = '#1e1e1e'
 const PAD = 16
 
@@ -73,7 +78,32 @@ function arrowhead(x, y, angle, stroke, seed) {
   return parts.join('')
 }
 
+const f1 = (n) => Number(n).toFixed(1)
+
+function cleanPath(d, stroke, sw, fill) {
+  const fillAttr = fill === 'none' ? 'fill="none"' : `fill="${fill}" fill-opacity="0.45"`
+  return `<path d="${d}" ${fillAttr} stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/>`
+}
+
+function cleanArrowhead(x, y, angle, stroke) {
+  const len = 12
+  const pts = [
+    [x, y],
+    [x + len * Math.cos(angle + Math.PI * 0.82), y + len * Math.sin(angle + Math.PI * 0.82)],
+    [x + len * Math.cos(angle - Math.PI * 0.82), y + len * Math.sin(angle - Math.PI * 0.82)],
+  ]
+  return `<polygon points="${pts.map(([a, b]) => `${f1(a)},${f1(b)}`).join(' ')}" fill="${stroke}" stroke="none"/>`
+}
+
+function diamondPath(x, y, w, h) {
+  return `M${x + w / 2},${y} L${x + w},${y + h / 2} L${x + w / 2},${y + h} L${x},${y + h / 2} Z`
+}
+
 function render(elements) {
+  const settings = elements[0] && elements[0].type === 'settings' ? elements[0] : null
+  CLEAN = !!settings && settings.style === 'clean'
+  FONT = CLEAN ? CLEAN_FONT : HAND_FONT
+  const SW = CLEAN ? 1.6 : 2
   let minX = Infinity,
     minY = Infinity,
     maxX = -Infinity,
@@ -81,18 +111,43 @@ function render(elements) {
   const parts = []
   elements.forEach((el, i) => {
     const seed = i + 1
-    if (el.type === 'rectangle') {
+    if (el.type === 'settings') {
+      return
+    }
+    if (el.type === 'rectangle' || el.type === 'diamond' || el.type === 'ellipse') {
       const { x, y, width: w, height: h } = el
       const stroke = color(el.strokeColor)
       const fill =
         el.backgroundColor && el.backgroundColor !== 'transparent' ? el.backgroundColor : 'none'
-      const d = gen.path(roundedRectPath(x, y, w, h, el.roundness ? 12 : 0), {
-        roughness: 1,
-        seed,
-        fill: fill === 'none' ? undefined : fill,
-        fillStyle: 'solid',
-      })
-      parts.push(drawableToSvg(d, stroke, el.strokeWidth ?? 2, fill))
+      const sw = el.strokeWidth ?? SW
+      if (CLEAN) {
+        if (el.type === 'ellipse') {
+          const fillAttr = fill === 'none' ? 'fill="none"' : `fill="${fill}" fill-opacity="0.45"`
+          parts.push(
+            `<ellipse cx="${x + w / 2}" cy="${y + h / 2}" rx="${w / 2}" ry="${h / 2}" ${fillAttr} stroke="${stroke}" stroke-width="${sw}"/>`
+          )
+        } else {
+          const d =
+            el.type === 'diamond'
+              ? diamondPath(x, y, w, h)
+              : roundedRectPath(x, y, w, h, el.roundness ? 10 : 0)
+          parts.push(cleanPath(d, stroke, sw, fill))
+        }
+      } else {
+        const opts = {
+          roughness: 1,
+          seed,
+          fill: fill === 'none' ? undefined : fill,
+          fillStyle: 'solid',
+        }
+        const d =
+          el.type === 'ellipse'
+            ? gen.ellipse(x + w / 2, y + h / 2, w, h, opts)
+            : el.type === 'diamond'
+              ? gen.path(diamondPath(x, y, w, h), opts)
+              : gen.path(roundedRectPath(x, y, w, h, el.roundness ? 12 : 0), opts)
+        parts.push(drawableToSvg(d, stroke, sw, fill))
+      }
       if (el.label) {
         parts.push(
           text(
@@ -112,12 +167,20 @@ function render(elements) {
     } else if (el.type === 'arrow') {
       const pts = el.points.map(([dx, dy]) => [el.x + dx, el.y + dy])
       const stroke = color(el.strokeColor)
-      const d = gen.linearPath(pts, { roughness: 0.8, seed })
-      parts.push(drawableToSvg(d, stroke, el.strokeWidth ?? 2))
+      const sw = el.strokeWidth ?? SW
       const [ax, ay] = pts[pts.length - 1]
       const [bx, by] = pts[pts.length - 2]
       const angle = Math.atan2(ay - by, ax - bx)
-      if (el.endArrowhead !== null) parts.push(arrowhead(ax, ay, angle, stroke, seed))
+      if (CLEAN) {
+        parts.push(
+          `<polyline points="${pts.map(([a, b]) => `${f1(a)},${f1(b)}`).join(' ')}" fill="none" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round" stroke-linecap="round"/>`
+        )
+        if (el.endArrowhead !== null) parts.push(cleanArrowhead(ax, ay, angle, stroke))
+      } else {
+        const d = gen.linearPath(pts, { roughness: 0.8, seed })
+        parts.push(drawableToSvg(d, stroke, sw))
+        if (el.endArrowhead !== null) parts.push(arrowhead(ax, ay, angle, stroke, seed))
+      }
       if (el.label) {
         // Label sits beside the midpoint, offset perpendicular to the segment.
         const [mx, my] = [(pts[0][0] + ax) / 2, (pts[0][1] + ay) / 2]

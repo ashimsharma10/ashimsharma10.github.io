@@ -1,4 +1,5 @@
-[{"type":"text","id":"t","x":260,"y":10,"text":"The production data flywheel","fontSize":22},
+[{"type":"settings","style":"clean"},
+{"type":"text","id":"t","x":260,"y":10,"text":"The production data flywheel","fontSize":22},
 {"type":"rectangle","id":"dep","x":250,"y":50,"width":300,"height":60,"roundness":{"type":3},"backgroundColor":"#a5d8ff","fillStyle":"solid","label":{"text":"Deployed model\nserving real traffic","fontSize":16}},
 {"type":"arrow","id":"a1","x":500,"y":110,"width":150,"height":60,"points":[[0,0],[150,60]],"endArrowhead":"arrow"},
 {"type":"rectangle","id":"fail","x":520,"y":170,"width":260,"height":60,"roundness":{"type":3},"backgroundColor":"#ffc9c9","fillStyle":"solid","label":{"text":"Production failures\nerrors, rejections, failed checks","fontSize":15}},

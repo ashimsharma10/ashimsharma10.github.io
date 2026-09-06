@@ -1,7 +1,7 @@
 # RLVR, Continual Learning, and Long-Horizon Reasoning Write-up — Design
 
 Date: 2026-09-06
-Slug: `rlvr-continual-learning-and-long-horizon-reasoning`
+Slug: `rlvr-and-the-experience-era`
 Status: approved by Ashim in chat (option 1: follow the draft section for section;
 hand-drawn sketches; no interactive demos; a standalone post).
 
@@ -97,6 +97,16 @@ and ORM versus PRM versus uPRM. TD layouts and light classDef colors, per house 
 - Add mermaid diagrams from the draft's content. The draft's own three mermaid blocks are the
   ones drawn as sketches; the mermaids added are for other sections.
 
+## Second-round revisions (2026-09-06, after Ashim's review)
+
+- Title shortened to "RLVR and the Experience Era of LLMs"; slug shortened to match.
+- Sketches redrawn with clean shapes instead of the rough "pencil" look: the renderer
+  gained a per-sketch `{"type":"settings","style":"clean"}` mode (straight rectangles,
+  diamonds, ellipses, filled arrowheads, sans font). The KV cache sketches are untouched.
+- Every paragraph shortened; each section opens with a sentence that links back to the
+  previous one; every display equation is followed by an "In plain terms" reading.
+- A "What We Learned" bullet section added after the conclusion.
+
 ## Interactive components
 
 None. Ashim chose text, formulas, tables, and sketches only.
@@ -137,7 +147,7 @@ Corrections found are listed below.
 ## Frontmatter
 
 ```
-title: 'The Convergence of Reinforcement Learning with Verifiable Rewards, Continual Learning, and Long-Horizon Reasoning in Large Language Models'
+title: 'RLVR and the Experience Era of LLMs'
 tags: ['rlvr', 'reinforcement-learning', 'grpo', 'llm', 'continual-learning', 'reasoning']
 ```
 
@@ -145,7 +155,7 @@ tags: ['rlvr', 'reinforcement-learning', 'grpo', 'llm', 'continual-learning', 'r
 
 1. Fact-check the numbers; record corrections above.
 2. Draw the three sketches (Excalidraw MCP for preview, JSON on disk), run the renderer.
-3. Write `data/blog/rlvr-continual-learning-and-long-horizon-reasoning.mdx`.
+3. Write `data/blog/rlvr-and-the-experience-era.mdx`.
 4. Extend the chatbot topic lists in `worker/src/prompts.ts` (coverage list, scope
    examples, SEARCH_TOOL description). No dashes in those strings.
 5. `npm run build`; commit the generated mirrors (`public/write-up/<slug>/index.md`,
