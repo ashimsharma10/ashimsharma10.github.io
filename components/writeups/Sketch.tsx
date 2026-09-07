@@ -6,8 +6,8 @@ import { SKETCHES } from './sketches.generated'
 // Figure rendered ahead of time from an Excalidraw-style element list by
 // scripts/render-sketches.mjs. Strokes use currentColor so the same SVG works in both
 // themes; the pastel fills are semi-transparent tints for the same reason.
-// Clicking the figure opens it enlarged in a pop-up; Escape, a click outside, or the
-// close button dismisses it.
+// Clicking the figure opens it enlarged in a pop-up. Clicking anywhere in the pop-up
+// (the cursor shows zoom-out), pressing Escape, or the close button returns to the page.
 export default function Sketch({ name, alt }: { name: string; alt?: string }) {
   const svg = SKETCHES[name]
   const [open, setOpen] = useState(false)
@@ -56,12 +56,12 @@ export default function Sketch({ name, alt }: { name: string; alt?: string }) {
           aria-modal="true"
           aria-label={alt ?? 'Enlarged figure'}
           onClick={() => setOpen(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex cursor-zoom-out items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
         >
           <div
             ref={panelRef}
-            onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-[1100px] rounded-2xl bg-white p-6 text-gray-900 shadow-2xl dark:bg-gray-900 dark:text-gray-100"
+            title="Click to go back"
+            className="relative w-full max-w-[1100px] cursor-zoom-out rounded-2xl bg-white p-6 text-gray-900 shadow-2xl dark:bg-gray-900 dark:text-gray-100"
           >
             <button
               type="button"
