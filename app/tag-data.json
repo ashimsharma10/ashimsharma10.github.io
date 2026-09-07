@@ -59,7 +59,7 @@
   "riemann-hypothesis": 1,
   "primes": 1,
   "rlvr": 1,
-  "reinforcement-learning": 1,
+  "reinforcement-learning": 2,
   "grpo": 1,
   "continual-learning": 2,
   "reasoning": 1,
@@ -67,5 +67,10 @@
   "data-engineering": 1,
   "azure": 1,
   "system-design": 1,
-  "vllm": 1
+  "vllm": 1,
+  "world-models": 1,
+  "robotics": 1,
+  "physical-ai": 1,
+  "jepa": 1,
+  "model-based-rl": 1
 }
