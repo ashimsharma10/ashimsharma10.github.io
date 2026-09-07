@@ -35,6 +35,7 @@ export default function Sketch({ name, alt }: { name: string; alt?: string }) {
   }, [open])
 
   if (!svg) return null
+  const close = () => setOpen(false)
   return (
     <>
       <figure
@@ -46,7 +47,7 @@ export default function Sketch({ name, alt }: { name: string; alt?: string }) {
           onClick={() => setOpen(true)}
           aria-label={alt ? `Enlarge figure: ${alt}` : 'Enlarge figure'}
           title="Click to enlarge"
-          className="w-full max-w-[720px] cursor-zoom-in rounded-lg transition-transform duration-200 hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+          className="focus-visible:ring-primary-500 w-full max-w-[720px] cursor-zoom-in rounded-lg transition-transform duration-200 hover:scale-[1.02] focus:outline-none focus-visible:ring-2"
           dangerouslySetInnerHTML={{ __html: svg }}
         />
       </figure>
@@ -55,23 +56,34 @@ export default function Sketch({ name, alt }: { name: string; alt?: string }) {
           role="dialog"
           aria-modal="true"
           aria-label={alt ?? 'Enlarged figure'}
-          onClick={() => setOpen(false)}
-          className="fixed inset-0 z-50 flex cursor-zoom-out items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
         >
+          <button
+            type="button"
+            onClick={close}
+            aria-label="Close enlarged figure"
+            className="absolute inset-0 cursor-zoom-out bg-black/70 backdrop-blur-sm"
+          />
           <div
             ref={panelRef}
-            title="Click to go back"
-            className="relative w-full max-w-[1100px] cursor-zoom-out rounded-2xl bg-white p-6 text-gray-900 shadow-2xl dark:bg-gray-900 dark:text-gray-100"
+            className="relative w-full max-w-[1100px] rounded-2xl bg-white p-6 text-gray-900 shadow-2xl dark:bg-gray-900 dark:text-gray-100"
           >
             <button
               type="button"
-              onClick={() => setOpen(false)}
+              onClick={close}
               aria-label="Close"
-              className="absolute right-3 top-3 rounded-full px-2 text-2xl leading-none text-gray-500 hover:text-gray-900 dark:hover:text-gray-100"
+              className="absolute top-3 right-3 rounded-full px-2 text-2xl leading-none text-gray-500 hover:text-gray-900 dark:hover:text-gray-100"
             >
               &times;
             </button>
-            <div dangerouslySetInnerHTML={{ __html: svg }} />
+            <button
+              type="button"
+              onClick={close}
+              title="Click to go back"
+              aria-label="Back to the page"
+              className="block w-full cursor-zoom-out focus:outline-none"
+              dangerouslySetInnerHTML={{ __html: svg }}
+            />
           </div>
         </div>
       )}
