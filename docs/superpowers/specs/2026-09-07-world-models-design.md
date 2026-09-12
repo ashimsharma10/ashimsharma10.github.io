@@ -92,3 +92,25 @@ brief was confirmed. Corrections applied:
 4. `npm run build`; commit the generated mirrors.
 5. Preview in the browser pane; commit locally. No push until Ashim confirms.
 6. Post-merge: deploy the worker and run `npm run ingest`.
+
+## Second-round revisions (2026-09-12, after Ashim asked for a senior-researcher proofread)
+
+Gaps found in the first draft and fixed:
+
+- No history before 2018. Added Schmidhuber's 1990 neural world model and Sutton's Dyna, plus
+  a timeline flowchart from 1990 to 2025 in the opening section.
+- LeCun's voice was thin. Added his four core positions in his own terms (pixel generation
+  is "doomed to fail", SSL is the cake and RL the cherry, a cat knows more physics than an
+  LLM, objective-driven AI), his (1-e)^n compounding-error argument as an xychart in the
+  failure-modes section, and a new sketch of his six-module blueprint (`lecun-modules`)
+  replacing the six-module table.
+- Newer foundation world models were missing. Added Genie 2 and Genie 3, Wayve's GAIA, 1X's
+  humanoid world model, Sora's "world simulator" claim, and V-JEPA 2's scale (1B encoder,
+  1M hours of video).
+- Physical AI section now says why learned world models beat physics engines (the
+  sim-to-real gap).
+- Every paragraph tightened; the text is about a quarter shorter than the first draft
+  while covering more.
+
+Figures now: 8 sketches, 4 mermaid blocks (timeline, dream pipeline, MPPI loop, Physical AI
+loop) plus 1 xychart, 6 tables.
