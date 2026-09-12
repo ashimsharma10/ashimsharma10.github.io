@@ -114,3 +114,19 @@ Gaps found in the first draft and fixed:
 
 Figures now: 8 sketches, 4 mermaid blocks (timeline, dream pipeline, MPPI loop, Physical AI
 loop) plus 1 xychart, 6 tables.
+
+## Third-round revisions (2026-09-12)
+
+Ashim asked for simpler, shorter, human-sounding text with no dashes or stock AI words, and
+one realistic analogy with a visual.
+
+- Added the flight simulator analogy as a sketch (`flight-simulator`): real flight versus
+  the simulator, then six matched pairs (pilot = policy, simulator = world model, hours in
+  the sim = training in the dream, a sim bug the pilot exploits = a model gap, the sim's
+  weather drifting = horizon drift, the check ride = sim-to-real transfer). The analogy is
+  picked up again in the exploitation, horizon drift, and Physical AI sections.
+- Plainer wording throughout (bugs, not gaps; guesses too high, not overestimates), shorter
+  bullets, and the Forrester paragraph and a few restatements cut. Scanned for dashes and
+  stock words; none left.
+
+Figures now: 9 sketches, 4 mermaid flowcharts, 1 xychart, 5 tables.
