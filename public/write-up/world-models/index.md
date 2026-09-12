@@ -32,18 +32,11 @@ An agent without a model needs millions of real tries, which is fine in a video 
 
 *Visual 2: The same agent can learn by acting in the world or by acting in a model of it. Real experience is what trains the model.*
 
-The idea is old. Schmidhuber planned inside a neural world model in 1990, and Sutton's Dyna mixed real and imagined steps in 1991. What changed since is the size of the models and the amount of video they can learn from.
+The idea itself is old. Schmidhuber planned inside a neural world model in 1990, and Sutton's Dyna mixed real and imagined steps in 1991. What changed is the size of the models and how much video they can learn from.
 
-```mermaid
-flowchart TD
-    A["1990 to 1991<br/>Schmidhuber's neural world model, Sutton's Dyna<br/>learn a model, plan in it"] --> B["2018<br/>World Models, Ha and Schmidhuber<br/>V + M + C, train in the dream"]
-    B --> C["2019<br/>PlaNet and MuZero<br/>plan in latent space, MuZero drops the decoder"]
-    C --> D["2020 to 2023<br/>DreamerV2, DreamerV3<br/>one configuration for 150 tasks"]
-    D --> E["2022<br/>LeCun's JEPA proposal, TD-MPC<br/>predict representations, plan continuous actions"]
-    E --> F["2024 to 2025<br/>Genie, Cosmos, V-JEPA 2<br/>world models learned from internet video"]
-    classDef y fill:#e9ecef,stroke:#495057,color:#111
-    class A,B,C,D,E,F y
-```
+<Sketch name="timeline" alt="A vertical timeline from 1990 to 2025: Schmidhuber's neural world model, Sutton's Dyna, Ha and Schmidhuber's World Models, PlaNet and MuZero, DreamerV2, LeCun's JEPA proposal and TD-MPC, DreamerV3, Genie and V-JEPA, then Cosmos, Genie 3 and V-JEPA 2; purple cards learn one game or robot, a yellow card is LeCun's blueprint, green cards learn from internet video" />
+
+*Visual 3: Three lineages. Purple learns one game or one robot at a time, yellow is LeCun's blueprint, green learns from internet video.*
 
 ## The Foundational V+M+C Architecture
 
@@ -51,7 +44,7 @@ The modern recipe is David Ha and Jürgen Schmidhuber's 2018 paper "World Models
 
 <Sketch name="vmc-pipeline" alt="A vertical pipeline: a frame goes into V, which produces z; z and the action go into M, which produces h; z and h go into the linear controller C, which produces the action; the environment returns the next frame" />
 
-*Visual 3: V sees, M remembers and predicts, C acts. Almost all the parameters live in V and M.*
+*Visual 4: V sees, M remembers and predicts, C acts. Almost all the parameters live in V and M.*
 
 - **V, the Vision model,** squeezes each 64×64 frame into 32 numbers, the latent $z_t$, with a Variational Autoencoder (VAE).
 - **M, the Memory model,** predicts the next latent from the current one, the action, and its own memory $h_t$. It is a recurrent network with a mixture-density head (MDN-RNN), so it outputs a spread of possible futures rather than one blurry average.
@@ -102,7 +95,7 @@ A plain recurrent network is deterministic, so it can only hold one future. A pu
 
 <Sketch name="rssm" alt="A chain of deterministic states h(t-1), h(t), h(t+1) connected by a GRU; below h(t), a prior z predicted from h alone and a posterior z that also sees the image, joined by a KL loss; z and the action feed the next h" />
 
-*Visual 4: The prior guesses $z_t$ from memory alone, the posterior also sees the image, and a KL term pulls the two together. When imagining, only the prior is used.*
+*Visual 5: The prior guesses $z_t$ from memory alone, the posterior also sees the image, and a KL term pulls the two together. When imagining, only the prior is used.*
 
 From DreamerV2 on, $z_t$ is discrete: 32 categorical variables with 32 classes each. They do not collapse the way Gaussian latents do, and they can hold several futures without a mixture head. Gradients pass through the samples with a straight-through estimator.
 
@@ -137,7 +130,7 @@ If an imagined step gives the same reward and the same future value as the real 
 
 <Sketch name="muzero" alt="Past frames go through the representation function h into hidden state s0; the dynamics function g takes s0 and an action to s1 and a reward, then to s2; the prediction function f maps each state to a policy and a value; a note says there is no decoder" />
 
-*Visual 5: MuZero's three functions. Search unrolls $g$ from $s_0$, and the loss only cares about rewards, values and policies.*
+*Visual 6: MuZero's three functions. Search unrolls $g$ from $s_0$, and the loss only cares about rewards, values and policies.*
 
 MuZero is that principle as a system. **Representation $h$** turns recent frames into a hidden state. **Dynamics $g$** takes a state and an action and returns the next state and a reward. **Prediction $f$** turns a state into a policy and a value. Tree search unrolls $g$ and uses the value at the leaves instead of playing games to the end. The result matched AlphaZero in Chess, Go and Shogi and set a record on Atari.
 
@@ -183,7 +176,7 @@ Genie is an 11-billion-parameter world model trained only on unlabelled videos o
 
 <Sketch name="genie" alt="Training: video frames go through a tokenizer, frame pairs go through a latent action model that infers one of 8 actions, and both feed a MaskGIT dynamics model that predicts the next tokens. Playing: an image prompt and a chosen action go into the dynamics model, which produces the next frame, and the loop repeats" />
 
-*Visual 6: Genie learns actions from video alone. At play time the latent action model is gone and the player supplies the action.*
+*Visual 7: Genie learns actions from video alone. At play time the latent action model is gone and the player supplies the action.*
 
 - **Video tokenizer.** Turns frames into discrete tokens.
 - **Latent Action Model (LAM).** Looks at two consecutive frames and infers the action that caused the change. It has only 8 slots, so the actions end up meaning things like jump and move right.
@@ -207,7 +200,7 @@ Every model above shares one weakness. To imagine step $t+2$ it feeds its own pr
 
 <Sketch name="horizon-drift" alt="Five boxes from green to red: a tiny error at step 1 grows through steps 2 and 3, becomes a hallucination at step 4, and an impossible state at step 5; below, three fixes: a short horizon with a critic, scheduled sampling, and a Dyna-style loop with real data" />
 
-*Visual 7: Compounding rollout error. The policy trains against the red states and then fails in reality.*
+*Visual 8: Compounding rollout error. The policy trains against the red states and then fails in reality.*
 
 LeCun uses the same arithmetic against autoregressive language models. If each step has a small chance $e$ of going wrong, the chance of still being on track after $n$ steps is $(1-e)^n$, and that falls off fast.
 
@@ -240,13 +233,13 @@ Compounding error is worst when the model has to predict every pixel. That is th
 
 <Sketch name="lecun-modules" alt="LeCun's six modules: a configurator on top sets the goal; perception feeds a JEPA world model, which feeds a cost module; the actor proposes a plan to the world model and receives the gradient of the cost; short-term memory feeds the world model; a note says acting is optimization" />
 
-*Visual 8: LeCun's blueprint. The actor proposes a plan, the world model imagines the outcome, the cost scores it, and the plan is adjusted until the imagined cost is low.*
+*Visual 9: LeCun's blueprint. The actor proposes a plan, the world model imagines the outcome, the cost scores it, and the plan is adjusted until the imagined cost is low.*
 
 The world model in that blueprint is a **Joint Embedding Predictive Architecture (JEPA)**. It predicts the representation of the future frame, not the frame itself. V-JEPA, the video version, uses three networks and no decoder.
 
 <Sketch name="vjepa" alt="A video clip with hidden patches: the visible part goes through a context encoder and a predictor to a predicted embedding; the hidden part goes through a slow-moving target encoder to a target embedding; the loss is the L1 distance between the two" />
 
-*Visual 9: V-JEPA predicts embeddings, not pixels. The loss is a distance in representation space.*
+*Visual 10: V-JEPA predicts embeddings, not pixels. The loss is a distance in representation space.*
 
 - **Context encoder.** Embeds the visible frames. It acts as a filter: noise, textures and backgrounds are dropped, and the capacity goes to object permanence and collisions.
 - **Target encoder.** A slow-moving copy of the context encoder embeds the hidden part.
