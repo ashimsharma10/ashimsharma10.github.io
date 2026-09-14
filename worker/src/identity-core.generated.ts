@@ -11,6 +11,6 @@ My projects:
 My publication:
 - Gaire R.R., Subedi R., Sharma A., Subedi S., Ghimire S.K., Shakya S. (2022) GAN-Based Two-Step Pipeline for Real-World Image Super-Resolution. ICT with Intelligent Applications. Smart Innovation, Systems and Technologies, vol 248. Springer, Singapore. https://link.springer.com/chapter/10.1007%2F978-981-16-4177-0_75
 
-My experience: Data Scientist at Rivian & Volkswagen Group Technologies; Data Science & AI Teaching Assistant at CGI / University of Louisiana at Lafayette; Machine Learning Engineer at FuseMachines, Inc.
+My experience: Software Engineer, Data Platform at Rivian & Volkswagen Group Technologies; Data Science & AI Teaching Assistant at CGI / University of Louisiana at Lafayette; Machine Learning Engineer at FuseMachines, Inc.
 
 My contact: sharmaashim00@gmail.com · github.com/ashimsharma10 · www.linkedin.com/in/ashim-sharma-30a6aa349`
