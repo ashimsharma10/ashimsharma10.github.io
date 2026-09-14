@@ -9,7 +9,7 @@ const aboutData = {
     {
       period: 'May 2025 – Aug 2025',
       location: 'Palo Alto, CA',
-      role: 'Data Scientist',
+      role: 'Software Engineer, Data Platform',
       company: 'Rivian & Volkswagen Group Technologies',
       logoUrl: '/static/images/logos/rivian.png',
       logoInitial: 'R',
