@@ -127,9 +127,43 @@ None.
 
 ## Fact check
 
-A background agent is checking the brief's numbers, paper names and method names against the
-papers and blog posts. Its corrections are recorded here before the draft is written. (Filled
-in below when the agent reports.)
+A background agent checked the brief's numbers, paper names and method names against the
+papers and blog posts. Confirmed as written: the GEM metrics, EWC and its diagonal Fisher,
+"EWC Done Right" with Logits Reversal (CVPR 2026), L2-SP (Li, Grandvalet and Davoine, ICML
+2018), O-LoRA, Spurious Forgetting (ICLR 2025; freezing the bottom layers lifted sequential
+fine-tuning accuracy from 11% to 44%), L-MoE (Oct 2025), Text-to-LoRA (ICML 2025) and
+Doc-to-LoRA (Feb 2026, Perceiver-based), Letta's token-space post, Mem0 (Apr 2025), the
+Continual Reasoning Gym and Continual Prompt Replay (Aug 2026), DAPO, Intuitor, Reflexion,
+PSI and its thresholds, PagedAttention, SuRe, CER, FOREVER, Stripe's 59% to 97%, Llama 4's
+online RL wording, and NVIDIA's Adaptive Data Flywheel (MAPE) paper.
+
+Corrections applied to the draft:
+
+- Cursor Tab: the post says 21% fewer suggestions and a 28% higher accept rate, with a new
+  checkpoint every 1.5 to 2 hours. Not "a 28% increase in acceptance".
+- "Low-Rank Circuit Projection (LRCP)" and the "94.2% of ancestral capabilities" figure come
+  from a single-author, unreviewed preprint (arXiv 2601.18699) with an inconsistent timeline.
+  Dropped. The mechanistic picture (early attention dispersion, deep MLP and router collapse)
+  is kept as a description, without that citation.
+- "Policy Entropy as a Reward (PEA)" does not exist; PEA is Prototype Entropy Alignment
+  (AAAI 2026), a different idea. The entropy fix is described through DAPO's Clip-Higher and a
+  plain entropy bonus instead.
+- O-LoRA enforces orthogonality with a loss term against the earlier tasks' LoRA subspaces,
+  not a hard projection. The sketch and text say "kept orthogonal", not "projected".
+- The claim that RL forgets less than supervised fine-tuning is not from the Continual
+  Reasoning Gym paper; it is attributed to "RL's Razor" (Shenfeld et al., 2025) instead. The
+  Gym paper supplies the shared-reasoning and prompt-replay points.
+- vLLM's prefix cache does not share KV blocks across adapters (the block hash includes the
+  LoRA id). The "base-aligned block hashing" sentence is dropped.
+- Titles fixed: SDFT is "Self-Distillation Enables Continual Learning" (Jan 2026), which uses
+  the model conditioned on a demonstration as the teacher of the same model without it; the
+  function vector method is "Unlocking the Power of Function Vectors..." (ICLR 2025). Mem0's
+  user, session and agent scopes come from its product docs, not the paper. CER is training
+  free and in-context.
+- Anthropic side: the memory tool is `memory_20250818`, name `memory`, client-side, and no
+  longer needs a beta header (the `context-management-2025-06-27` beta is only for context
+  editing). Claude Code auto-memory lives under the project's memory directory with a
+  `MEMORY.md` index; Skills are `SKILL.md` folders; hooks fire on lifecycle events.
 
 ## Implementation checklist
 
