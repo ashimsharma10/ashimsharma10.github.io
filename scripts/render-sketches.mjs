@@ -16,7 +16,11 @@ const rough = require('roughjs/bundled/rough.cjs.js')
 const SRC = join(process.cwd(), 'scripts', 'sketches')
 const OUT = join(process.cwd(), 'components', 'writeups', 'sketches.generated.ts')
 // Excalidraw's default handwritten look for all text, in both sketch styles.
-const FONT = "'Segoe Print', 'Bradley Hand', 'Comic Sans MS', system-ui, sans-serif"
+const HAND_FONT = "'Segoe Print', 'Bradley Hand', 'Comic Sans MS', system-ui, sans-serif"
+// A sketch whose settings element carries {"font":"sans"} uses the site's own text font
+// (Space Grotesk via its CSS variable), falling back to the platform sans-serif.
+const SANS_FONT = "var(--font-space-grotesk), system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+let FONT = HAND_FONT
 // A sketch whose first element is {"type":"settings","style":"clean"} is drawn with straight
 // SVG primitives (rect, polygon, ellipse, polyline) instead of rough.js strokes.
 let CLEAN = false
@@ -52,6 +56,10 @@ function drawableToSvg(drawable, stroke, strokeWidth, fill) {
     .join('')
 }
 
+// The sans stack uses a CSS variable, which only a style attribute can carry.
+const fontAttr = () =>
+  FONT === SANS_FONT ? `style="font-family:${SANS_FONT}"` : `font-family="${FONT}"`
+
 function text(x, y, str, size, fill, anchor = 'start') {
   const lines = str.split('\n')
   const lh = size * 1.25
@@ -59,7 +67,7 @@ function text(x, y, str, size, fill, anchor = 'start') {
   return lines
     .map(
       (l, i) =>
-        `<text x="${x}" y="${y0 + i * lh}" font-size="${size}" font-family="${FONT}" fill="${fill}" text-anchor="${anchor}" dominant-baseline="middle">${esc(l)}</text>`
+        `<text x="${x}" y="${y0 + i * lh}" font-size="${size}" ${fontAttr()} fill="${fill}" text-anchor="${anchor}" dominant-baseline="middle">${esc(l)}</text>`
     )
     .join('')
 }
@@ -101,6 +109,7 @@ function diamondPath(x, y, w, h) {
 function render(elements) {
   const settings = elements[0] && elements[0].type === 'settings' ? elements[0] : null
   CLEAN = !!settings && settings.style === 'clean'
+  FONT = settings && settings.font === 'sans' ? SANS_FONT : HAND_FONT
   const SW = CLEAN ? 1.6 : 2
   let minX = Infinity,
     minY = Infinity,

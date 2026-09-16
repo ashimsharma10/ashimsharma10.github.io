@@ -1,8 +1,8 @@
-[{"type":"settings","style":"clean"},
-{"type":"text","id":"t","x":100,"y":10,"text":"O-LoRA: new updates stay orthogonal to old tasks","fontSize":24},
-{"type":"rectangle","id":"band","x":120,"y":310,"width":340,"height":44,"roundness":{"type":3},"backgroundColor":"#d0bfff","fillStyle":"solid","label":{"text":"subspace learned by earlier tasks","fontSize":15}},
-{"type":"arrow","id":"new","x":120,"y":310,"width":0,"height":-230,"points":[[0,0],[0,-230]],"endArrowhead":"arrow","strokeColor":"#0ca678","strokeWidth":3},
-{"type":"text","id":"nl","x":135,"y":80,"text":"the new task's LoRA update,\nkept orthogonal to the old subspace","fontSize":15,"strokeColor":"#0ca678"},
-{"type":"arrow","id":"naive","x":120,"y":310,"width":300,"height":-170,"points":[[0,0],[300,-170]],"endArrowhead":"arrow","strokeColor":"#c92a2a"},
-{"type":"text","id":"nn","x":430,"y":120,"text":"a plain fine-tuning update:\nlands partly inside the old\nsubspace and overwrites it","fontSize":15,"strokeColor":"#c92a2a"},
-{"type":"text","id":"note","x":120,"y":380,"text":"Each task gets its own low-rank adapter. A loss term pushes the next task's\nupdate away from every earlier adapter's directions, so old knowledge survives.","fontSize":15,"strokeColor":"#757575"}]
+[{"type":"settings","style":"clean","font":"sans"},
+{"type":"text","id":"t","x":60,"y":10,"text":"O-LoRA: new updates stay orthogonal to old tasks","fontSize":25},
+{"type":"rectangle","id":"band","x":100,"y":310,"width":340,"height":44,"roundness":{"type":3},"backgroundColor":"#d0bfff","fillStyle":"solid","label":{"text":"subspace learned by earlier tasks","fontSize":16}},
+{"type":"arrow","id":"new","x":100,"y":310,"width":0,"height":0,"points":[[0,0],[0,-230]],"endArrowhead":"arrow","strokeColor":"#0ca678","strokeWidth":3},
+{"type":"text","id":"nl","x":115,"y":80,"text":"the new task's LoRA update,\nkept orthogonal to the old subspace","fontSize":16,"strokeColor":"#0ca678"},
+{"type":"arrow","id":"naive","x":100,"y":310,"width":0,"height":0,"points":[[0,0],[300,-170]],"endArrowhead":"arrow","strokeColor":"#c92a2a"},
+{"type":"text","id":"nn","x":440,"y":120,"text":"a plain fine-tuning update:\nlands partly inside the old\nsubspace and overwrites it","fontSize":16,"strokeColor":"#c92a2a"},
+{"type":"text","id":"note","x":100,"y":380,"text":"Each task gets its own low-rank adapter. A loss term pushes the\nnext task's update away from every earlier adapter's directions,\nso old knowledge survives.","fontSize":16,"strokeColor":"#757575"}]

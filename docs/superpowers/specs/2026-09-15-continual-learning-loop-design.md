@@ -174,3 +174,31 @@ Corrections applied to the draft:
    `public/llms*.txt`, `app/tag-data.json`).
 5. Preview in the browser pane; commit locally. No push until Ashim confirms.
 6. Post-merge: deploy the worker and run `npm run ingest`.
+
+## Second-round revisions (2026-09-15, after Ashim's localhost review)
+
+Ashim asked for: a standard readable font in the sketches instead of the handwritten one,
+sizes up by 2pt, the mermaid chart replaced with a sketch, more natural flow, simpler and
+shorter text, no stock AI words or dashes.
+
+- `scripts/render-sketches.mjs` gained a per-sketch `"font":"sans"` setting on the settings
+  element. Older posts' sketches keep the handwritten font.
+- All six sketches re-laid out for the larger sans text and kept under 720px wide so the
+  page shows them at full size: the two loop rings became two-column rings, the forgetting
+  map and the two lanes moved their notes to one side, and `continual-rlvr` replaced the
+  mermaid flowchart.
+- Prose rewritten section by section in shorter, plainer sentences. Body text is about
+  1,390 words (from about 1,650). Tables, equations and the Python snippet unchanged.
+
+Figures now: 6 sketches, 0 mermaid, 8 tables, 3 equations, 1 code block.
+
+## Third-round revisions (2026-09-15)
+
+Ashim asked for a shorter RLVR section, sketch text 1pt smaller, and a simpler, better
+looking font.
+
+- The RLVR section is now one paragraph, the sketch, and a three-row table (about 100 words
+  of prose). Body text is about 1,330 words.
+- The renderer's `"font":"sans"` mode now emits a style attribute with the site's own text
+  font, `var(--font-space-grotesk)`, falling back to the platform sans-serif, so figure text
+  matches the page. Sizes: title 25, box labels 17, notes 16, arrow labels 15.
