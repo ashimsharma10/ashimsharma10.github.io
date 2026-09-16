@@ -1,0 +1,12 @@
+[{"type":"settings","style":"clean","font":"sans"},
+{"type":"text","id":"t","x":150,"y":10,"text":"Where an agent's knowledge can live","fontSize":25},
+{"type":"text","id":"h1","x":40,"y":60,"text":"layer","fontSize":16,"strokeColor":"#757575"},
+{"type":"text","id":"h2","x":520,"y":60,"text":"how it changes","fontSize":16,"strokeColor":"#757575"},
+{"type":"rectangle","id":"ctx","x":40,"y":90,"width":460,"height":56,"roundness":{"type":3},"backgroundColor":"#e9ecef","fillStyle":"solid","label":{"text":"context window: this session only","fontSize":17}},
+{"type":"text","id":"c1","x":520,"y":97,"text":"gone when the\nsession ends","fontSize":16,"strokeColor":"#757575"},
+{"type":"rectangle","id":"mem","x":40,"y":160,"width":460,"height":56,"roundness":{"type":3},"backgroundColor":"#c3fae8","fillStyle":"solid","label":{"text":"fast lane: memory files, skills, prompts","fontSize":17}},
+{"type":"text","id":"c2","x":520,"y":167,"text":"a text edit, seconds,\nundone with a diff","fontSize":16,"strokeColor":"#757575"},
+{"type":"rectangle","id":"lora","x":40,"y":230,"width":460,"height":56,"roundness":{"type":3},"backgroundColor":"#d0bfff","fillStyle":"solid","label":{"text":"slow lane: LoRA adapters, one per user","fontSize":17}},
+{"type":"text","id":"c3","x":520,"y":226,"text":"a gradient update,\nhours, gated by a\nregression eval","fontSize":16,"strokeColor":"#757575"},
+{"type":"rectangle","id":"base","x":40,"y":300,"width":460,"height":56,"roundness":{"type":3},"backgroundColor":"#a5d8ff","fillStyle":"solid","label":{"text":"base model weights, shared by everyone","fontSize":17}},
+{"type":"text","id":"c4","x":520,"y":307,"text":"frozen; a retrain is\na new model","fontSize":16,"strokeColor":"#757575"}]
