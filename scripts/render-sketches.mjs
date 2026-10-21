@@ -30,7 +30,8 @@ const PAD = 16
 const gen = rough.generator()
 
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-const color = (c) => (!c || c === DEFAULT_STROKE ? 'currentColor' : c)
+let INK = 'currentColor' // settings.ink overrides currentColor, e.g. "#111" for a fixed black-on-white card
+const color = (c) => (!c || c === DEFAULT_STROKE ? INK : c)
 
 function roundedRectPath(x, y, w, h, r) {
   r = Math.min(r, w / 2, h / 2)
@@ -110,6 +111,7 @@ function render(elements) {
   const settings = elements[0] && elements[0].type === 'settings' ? elements[0] : null
   CLEAN = !!settings && settings.style === 'clean'
   FONT = settings && settings.font === 'sans' ? SANS_FONT : HAND_FONT
+  INK = (settings && settings.ink) || 'currentColor'
   const SW = CLEAN ? 1.6 : 2
   let minX = Infinity,
     minY = Infinity,
@@ -127,18 +129,19 @@ function render(elements) {
       const fill =
         el.backgroundColor && el.backgroundColor !== 'transparent' ? el.backgroundColor : 'none'
       const sw = el.strokeWidth ?? SW
+      const dash = el.strokeStyle === 'dashed' ? ' stroke-dasharray="6 5"' : ''
       if (CLEAN) {
         if (el.type === 'ellipse') {
           const fillAttr = fill === 'none' ? 'fill="none"' : `fill="${fill}" fill-opacity="0.45"`
           parts.push(
-            `<ellipse cx="${x + w / 2}" cy="${y + h / 2}" rx="${w / 2}" ry="${h / 2}" ${fillAttr} stroke="${stroke}" stroke-width="${sw}"/>`
+            `<ellipse cx="${x + w / 2}" cy="${y + h / 2}" rx="${w / 2}" ry="${h / 2}" ${fillAttr} stroke="${stroke}" stroke-width="${sw}"${dash}/>`
           )
         } else {
           const d =
             el.type === 'diamond'
               ? diamondPath(x, y, w, h)
               : roundedRectPath(x, y, w, h, el.roundness ? 10 : 0)
-          parts.push(cleanPath(d, stroke, sw, fill))
+          parts.push(cleanPath(d, stroke, sw, fill).replace(`stroke-width="${sw}"`, `stroke-width="${sw}"${dash}`))
         }
       } else {
         const opts = {
@@ -146,6 +149,7 @@ function render(elements) {
           seed,
           fill: fill === 'none' ? undefined : fill,
           fillStyle: 'solid',
+          ...(el.strokeStyle === 'dashed' ? { strokeLineDash: [6, 5] } : {}),
         }
         const d =
           el.type === 'ellipse'
@@ -162,7 +166,7 @@ function render(elements) {
             y + h / 2,
             el.label.text,
             el.label.fontSize ?? 16,
-            'currentColor',
+            INK,
             'middle'
           )
         )
@@ -175,16 +179,21 @@ function render(elements) {
       const pts = el.points.map(([dx, dy]) => [el.x + dx, el.y + dy])
       const stroke = color(el.strokeColor)
       const sw = el.strokeWidth ?? SW
+      const dash = el.strokeStyle === 'dashed' ? ' stroke-dasharray="6 5"' : ''
       const [ax, ay] = pts[pts.length - 1]
       const [bx, by] = pts[pts.length - 2]
       const angle = Math.atan2(ay - by, ax - bx)
       if (CLEAN) {
         parts.push(
-          `<polyline points="${pts.map(([a, b]) => `${f1(a)},${f1(b)}`).join(' ')}" fill="none" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round" stroke-linecap="round"/>`
+          `<polyline points="${pts.map(([a, b]) => `${f1(a)},${f1(b)}`).join(' ')}" fill="none" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round" stroke-linecap="round"${dash}/>`
         )
         if (el.endArrowhead !== null) parts.push(cleanArrowhead(ax, ay, angle, stroke))
       } else {
-        const d = gen.linearPath(pts, { roughness: 0.8, seed })
+        const d = gen.linearPath(pts, {
+          roughness: 0.8,
+          seed,
+          ...(el.strokeStyle === 'dashed' ? { strokeLineDash: [6, 5] } : {}),
+        })
         parts.push(drawableToSvg(d, stroke, sw))
         if (el.endArrowhead !== null) parts.push(arrowhead(ax, ay, angle, stroke, seed))
       }
@@ -198,7 +207,7 @@ function render(elements) {
             vertical ? my : my - 12,
             el.label.text,
             el.label.fontSize ?? 14,
-            'currentColor',
+            INK,
             vertical ? 'start' : 'middle'
           )
         )
@@ -212,7 +221,7 @@ function render(elements) {
     } else if (el.type === 'text') {
       const size = el.fontSize ?? 16
       const muted = el.strokeColor === '#757575'
-      const fill = muted ? 'currentColor' : color(el.strokeColor)
+      const fill = muted ? INK : color(el.strokeColor)
       const lines = el.text.split('\n')
       const approxW = Math.max(...lines.map((l) => l.length)) * size * 0.5
       parts.push(
@@ -229,7 +238,12 @@ function render(elements) {
   const vb = [minX - PAD, minY - PAD, maxX - minX + 2 * PAD, maxY - minY + 2 * PAD].map((n) =>
     Math.round(n)
   )
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb.join(' ')}" width="100%" role="img">${parts.join('')}</svg>`
+  // A fixed ink colour gets a white card behind it so the figure reads in both themes.
+  const card =
+    INK === 'currentColor'
+      ? ''
+      : `<rect x="${vb[0]}" y="${vb[1]}" width="${vb[2]}" height="${vb[3]}" rx="12" fill="#ffffff"/>`
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb.join(' ')}" width="100%" role="img">${card}${parts.join('')}</svg>`
 }
 
 const out = {}

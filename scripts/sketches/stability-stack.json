@@ -1,0 +1,12 @@
+[{"type":"settings","style":"clean"},
+{"type":"text","id":"t","x":150,"y":10,"text":"What bounds what during training","fontSize":25},
+{"type":"rectangle","id":"b1","x":40,"y":60,"width":440,"height":56,"roundness":{"type":3},"backgroundColor":"#a5d8ff","fillStyle":"solid","label":{"text":"Optimizer: Per-Head Muon\nplus weight clipping","fontSize":17}},
+{"type":"text","id":"n1","x":500,"y":58,"text":"every head gets an update\nof similar scale; attention\nlogits kept in range","fontSize":16,"strokeColor":"#757575"},
+{"type":"rectangle","id":"b2","x":40,"y":130,"width":440,"height":56,"roundness":{"type":3},"backgroundColor":"#fff3bf","fillStyle":"solid","label":{"text":"Activations: SiTU-GLU softcap","fontSize":17}},
+{"type":"text","id":"n2","x":500,"y":136,"text":"gate bounded at 4,\nup branch at 25","fontSize":16,"strokeColor":"#757575"},
+{"type":"rectangle","id":"b3","x":40,"y":200,"width":440,"height":56,"roundness":{"type":3},"backgroundColor":"#d0bfff","fillStyle":"solid","label":{"text":"Expert sum: RMSNorm\nbefore the up-projection","fontSize":17}},
+{"type":"text","id":"n3","x":500,"y":206,"text":"one scale for the\nrouted branch","fontSize":16,"strokeColor":"#757575"},
+{"type":"rectangle","id":"b4","x":40,"y":270,"width":440,"height":56,"roundness":{"type":3},"backgroundColor":"#c3fae8","fillStyle":"solid","label":{"text":"Routing: Quantile Balancing","fontSize":17}},
+{"type":"text","id":"n4","x":500,"y":276,"text":"every expert keeps\nits target share","fontSize":16,"strokeColor":"#757575"},
+{"type":"rectangle","id":"b5","x":40,"y":340,"width":440,"height":56,"roundness":{"type":3},"backgroundColor":"#e9ecef","fillStyle":"solid","label":{"text":"Post-training: QAT,\nMXFP4 experts, MXFP8 activations","fontSize":17}},
+{"type":"text","id":"n5","x":500,"y":338,"text":"trained through SFT and\nRL, so serving matches\ntraining","fontSize":16,"strokeColor":"#757575"}]
